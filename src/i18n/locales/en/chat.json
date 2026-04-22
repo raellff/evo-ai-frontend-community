@@ -713,8 +713,8 @@
       "equal_to": "Equal to",
       "not_equal_to": "Not equal to",
       "contains": "Contains",
-      "is_present": "Has labels",
-      "is_not_present": "Does not have labels",
+      "is_present": "Has value",
+      "is_not_present": "Has no value",
       "is_greater_than": "Is after",
       "is_less_than": "Is before",
       "days_before": "Days ago"
@@ -729,7 +729,8 @@
       "created_at": "Creation Date",
       "last_activity_at": "Last Activity",
       "priority": "Priority",
-      "pipeline_id": "Pipeline"
+      "pipeline_id": "Pipeline",
+      "contact_id": "Contact"
     },
     "options": {
       "status": {
