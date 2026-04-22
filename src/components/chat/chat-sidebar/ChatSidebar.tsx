@@ -31,6 +31,7 @@ import {
   Pin,
   Archive,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useChatContext } from '@/contexts/chat/ChatContext';
 import { Conversation, ConversationFilter } from '@/types/chat/api';
 import { formatConversationTime, formatDetailedTime } from '@/utils/time/timeHelpers';
@@ -39,8 +40,15 @@ import { NoConversations } from '../empty-states';
 import ContactAvatar from '../contact/ContactAvatar';
 import ConversationBadges from '../conversation/ConversationBadges';
 import ConversationsFilter from '../conversation/ConversationsFilter';
+import GlobalSearchPanel from '../search/GlobalSearchPanel';
 import { BaseFilter } from '@/types/core';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useDebounce } from '@/hooks/useDebounce';
+import type {
+  SearchConversationResult,
+  SearchContactResult,
+  SearchMessageResult,
+} from '@/types/chat/search';
 
 interface ChatSidebarProps {
   mobileView: 'list' | 'chat';
@@ -149,13 +157,53 @@ const ChatSidebar = ({
     }
   }, [filters.state.activeFilters, conversationFilters]);
 
-  // Debounce da busca para nÃ£o sobrecarregar a API
-  // const debouncedSearchTerm = useDebounce(searchInput, 500);
+  const navigate = useNavigate();
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const debouncedSearchTerm = useDebounce(searchInput, 500);
 
-  // Apply search with debounce
   const handleSearchChange = (value: string) => {
     onSearchChange(value);
+    if (value.trim().length > 0) {
+      setIsSearchPanelOpen(true);
+    }
   };
+
+  const handleSearchFocus = () => {
+    if (searchInput.trim().length > 0) {
+      setIsSearchPanelOpen(true);
+    }
+  };
+
+  const handleSelectConversation = useCallback(
+    (item: SearchConversationResult) => {
+      navigate(`/conversations/${item.display_id}`);
+      onSearchChange('');
+      setIsSearchPanelOpen(false);
+    },
+    [navigate, onSearchChange],
+  );
+
+  const handleSelectContact = useCallback(
+    (item: SearchContactResult) => {
+      navigate(`/contacts/${item.id}`);
+      onSearchChange('');
+      setIsSearchPanelOpen(false);
+    },
+    [navigate, onSearchChange],
+  );
+
+  const handleSelectMessage = useCallback(
+    (item: SearchMessageResult) => {
+      if (item.conversation_id != null) {
+        navigate(`/conversations/${item.conversation_id}`, {
+          state: { scrollToMessageId: item.id },
+        });
+      }
+      onSearchChange('');
+      setIsSearchPanelOpen(false);
+    },
+    [navigate, onSearchChange],
+  );
 
   const handleApplyFilters = async (newFilters: BaseFilter[]) => {
     setConversationFilters(newFilters);
@@ -517,7 +565,17 @@ const ChatSidebar = ({
             placeholder={t('chatSidebar.searchPlaceholder')}
             value={searchInput}
             onChange={e => handleSearchChange(e.target.value)}
+            onFocus={handleSearchFocus}
             className="pl-10"
+          />
+          <GlobalSearchPanel
+            isOpen={isSearchPanelOpen && searchInput.trim().length > 0}
+            searchTerm={debouncedSearchTerm}
+            rawInputValue={searchInput}
+            onClose={() => setIsSearchPanelOpen(false)}
+            onSelectConversation={handleSelectConversation}
+            onSelectContact={handleSelectContact}
+            onSelectMessage={handleSelectMessage}
           />
         </div>
 
