@@ -69,9 +69,6 @@ export default function GlobalSearchPanel({
 
   if (!isOpen) return null;
 
-  const hasAnyResult =
-    conversations.length > 0 || contacts.length > 0 || messages.length > 0;
-
   const limitedConversations = conversations.slice(0, SECTION_DISPLAY_LIMIT);
   const limitedContacts = contacts.slice(0, SECTION_DISPLAY_LIMIT);
   const limitedMessages = messages.slice(0, SECTION_DISPLAY_LIMIT);
@@ -114,52 +111,68 @@ export default function GlobalSearchPanel({
             <CommandEmpty>{t('globalSearch.noResults')}</CommandEmpty>
           )}
 
-          {hasAnyResult && limitedConversations.length > 0 && (
-            <CommandGroup heading={t('globalSearch.sections.conversations')}>
-              {limitedConversations.map(item => (
-                <SearchResultConversation
-                  key={`conv-${item.id}`}
-                  item={item}
-                  query={term}
-                  onSelect={result => {
-                    onSelectConversation(result);
-                    onClose();
-                  }}
-                />
-              ))}
-            </CommandGroup>
-          )}
+          {status === 'success' && !isEmpty && (
+            <>
+              <CommandGroup heading={t('globalSearch.sections.conversations')}>
+                {limitedConversations.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    {t('globalSearch.sections.conversationsEmpty')}
+                  </div>
+                ) : (
+                  limitedConversations.map(item => (
+                    <SearchResultConversation
+                      key={`conv-${item.id}`}
+                      item={item}
+                      query={term}
+                      onSelect={result => {
+                        onSelectConversation(result);
+                        onClose();
+                      }}
+                    />
+                  ))
+                )}
+              </CommandGroup>
 
-          {hasAnyResult && limitedContacts.length > 0 && (
-            <CommandGroup heading={t('globalSearch.sections.contacts')}>
-              {limitedContacts.map(item => (
-                <SearchResultContact
-                  key={`contact-${item.id}`}
-                  item={item}
-                  query={term}
-                  onSelect={result => {
-                    onSelectContact(result);
-                    onClose();
-                  }}
-                />
-              ))}
-            </CommandGroup>
-          )}
+              <CommandGroup heading={t('globalSearch.sections.contacts')}>
+                {limitedContacts.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    {t('globalSearch.sections.contactsEmpty')}
+                  </div>
+                ) : (
+                  limitedContacts.map(item => (
+                    <SearchResultContact
+                      key={`contact-${item.id}`}
+                      item={item}
+                      query={term}
+                      onSelect={result => {
+                        onSelectContact(result);
+                        onClose();
+                      }}
+                    />
+                  ))
+                )}
+              </CommandGroup>
 
-          {hasAnyResult && limitedMessages.length > 0 && (
-            <CommandGroup heading={t('globalSearch.sections.messages')}>
-              {limitedMessages.map(item => (
-                <SearchResultMessage
-                  key={`msg-${item.id}`}
-                  item={item}
-                  query={term}
-                  onSelect={result => {
-                    onSelectMessage(result);
-                    onClose();
-                  }}
-                />
-              ))}
-            </CommandGroup>
+              <CommandGroup heading={t('globalSearch.sections.messages')}>
+                {limitedMessages.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    {t('globalSearch.sections.messagesEmpty')}
+                  </div>
+                ) : (
+                  limitedMessages.map(item => (
+                    <SearchResultMessage
+                      key={`msg-${item.id}`}
+                      item={item}
+                      query={term}
+                      onSelect={result => {
+                        onSelectMessage(result);
+                        onClose();
+                      }}
+                    />
+                  ))
+                )}
+              </CommandGroup>
+            </>
           )}
         </CommandList>
       </Command>

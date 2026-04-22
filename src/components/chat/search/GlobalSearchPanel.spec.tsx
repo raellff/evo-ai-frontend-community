@@ -177,6 +177,36 @@ describe('GlobalSearchPanel', () => {
     expect(props.onClose).toHaveBeenCalled();
   });
 
+  it('calls onClose when the user clicks outside the panel', () => {
+    const props = { ...baseProps, onClose: vi.fn() };
+    const { container } = render(
+      <>
+        <div data-testid="outside">outside</div>
+        <GlobalSearchPanel {...props} />
+      </>,
+    );
+
+    const outside = container.querySelector('[data-testid="outside"]') as HTMLElement;
+    fireEvent.mouseDown(outside);
+
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  it('shows per-section empty fallback when only some sections have results', () => {
+    mockUseGlobalSearch.mockReturnValue(
+      buildResult({
+        conversations: [conversation],
+        contacts: [],
+        messages: [],
+      }),
+    );
+    render(<GlobalSearchPanel {...baseProps} />);
+
+    expect(screen.queryByText('globalSearch.sections.conversationsEmpty')).not.toBeInTheDocument();
+    expect(screen.getByText('globalSearch.sections.contactsEmpty')).toBeInTheDocument();
+    expect(screen.getByText('globalSearch.sections.messagesEmpty')).toBeInTheDocument();
+  });
+
   it('limits each section to 5 results', () => {
     const manyConversations = Array.from({ length: 8 }, (_, i) => ({
       ...conversation,

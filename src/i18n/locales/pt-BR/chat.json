@@ -894,7 +894,10 @@
     "sections": {
       "conversations": "Conversas",
       "contacts": "Contatos",
-      "messages": "Mensagens"
+      "messages": "Mensagens",
+      "conversationsEmpty": "Nenhuma conversa encontrada",
+      "contactsEmpty": "Nenhum contato encontrado",
+      "messagesEmpty": "Nenhuma mensagem encontrada"
     }
   }
 }
