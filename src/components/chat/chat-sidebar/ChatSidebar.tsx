@@ -44,6 +44,7 @@ import GlobalSearchPanel from '../search/GlobalSearchPanel';
 import { BaseFilter } from '@/types/core';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
+import chatService from '@/services/chat/chatService';
 import type {
   SearchConversationResult,
   SearchContactResult,
@@ -176,7 +177,7 @@ const ChatSidebar = ({
 
   const handleSelectConversation = useCallback(
     (item: SearchConversationResult) => {
-      navigate(`/conversations/${item.display_id}`);
+      navigate(`/conversations/${item.id}`);
       onSearchChange('');
       setIsSearchPanelOpen(false);
     },
@@ -193,14 +194,25 @@ const ChatSidebar = ({
   );
 
   const handleSelectMessage = useCallback(
-    (item: SearchMessageResult) => {
-      if (item.conversation_id != null) {
-        navigate(`/conversations/${item.conversation_id}`, {
-          state: { scrollToMessageId: item.id },
-        });
-      }
-      onSearchChange('');
+    async (item: SearchMessageResult) => {
       setIsSearchPanelOpen(false);
+      onSearchChange('');
+
+      if (item.conversation_id == null) return;
+
+      try {
+        const raw = await chatService.getConversation(String(item.conversation_id));
+        const envelope = raw as { data?: { uuid?: string; id?: string }; uuid?: string; id?: string } | null;
+        const conv = envelope?.data?.id ? envelope.data : envelope;
+        const uuid = conv?.uuid || conv?.id;
+        if (uuid) {
+          navigate(`/conversations/${uuid}`, {
+            state: { scrollToMessageId: item.id },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load conversation from message result:', error);
+      }
     },
     [navigate, onSearchChange],
   );
