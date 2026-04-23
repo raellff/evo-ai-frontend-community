@@ -747,6 +747,12 @@
         "twilio": "Twilio SMS",
         "twitter": "Twitter"
       }
+    },
+    "errors": {
+      "assigneeMeNoSession": {
+        "title": "Filtro 'Minhas conversas' não aplicado",
+        "description": "Sua sessão expirou. Faça login novamente para usar este filtro."
+      }
     }
   },
   "conversationStatusIcon": {

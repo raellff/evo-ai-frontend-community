@@ -1,5 +1,7 @@
+import { toast } from 'sonner';
 import { ConversationFilter, ConversationListParams } from '@/types/chat/api';
 import { useAuthStore } from '@/store/authStore';
+import i18n from '@/i18n/config';
 
 const ADDITIONAL_ATTRIBUTE_KEYS = [
   'browser_language',
@@ -31,6 +33,9 @@ const rewriteAssigneeRow = (filter: ConversationFilter): ConversationFilter | nu
         console.warn(
           '[filterConverters] assignee "me" filter dropped: no current user in auth store (session expired?)',
         );
+        toast.error(i18n.t('chat:conversationsFilter.errors.assigneeMeNoSession.title'), {
+          description: i18n.t('chat:conversationsFilter.errors.assigneeMeNoSession.description'),
+        });
         return null;
       }
       return { ...filter, attribute_key: 'assignee_id', filter_operator: 'equal_to', values: [currentUserId] };
