@@ -692,11 +692,12 @@
       },
       "status": {
         "approved": "Aprobado",
-        "pending": "Pendiente",
+        "pending": "Esperando aprobación",
         "rejected": "Rechazado",
         "paused": "Pausado",
         "active": "Activo",
-        "inactive": "Inactivo"
+        "inactive": "Inactivo",
+        "unknown": "Estado desconocido"
       },
       "preview": {
         "title": "Vista Previa",
