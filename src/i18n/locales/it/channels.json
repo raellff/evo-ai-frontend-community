@@ -669,11 +669,12 @@
       },
       "status": {
         "approved": "Approvato",
-        "pending": "In Attesa",
+        "pending": "In attesa di approvazione",
         "rejected": "Rifiutato",
         "paused": "In Pausa",
         "active": "Attivo",
-        "inactive": "Inattivo"
+        "inactive": "Inattivo",
+        "unknown": "Stato sconosciuto"
       },
       "preview": {
         "title": "Anteprima",
