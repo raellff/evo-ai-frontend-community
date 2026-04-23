@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
 import InboxesService from '@/services/channels/inboxesService';
 import chatService from '@/services/chat/chatService';
+import { contactsService } from '@/services/contacts/contactsService';
 import { Inbox } from '@/types/channels/inbox';
 import type { Pipeline } from '@/types/chat/api';
+import type { Contact } from '@/types/contacts/contact';
+
+interface FilterOption {
+  label: string;
+  value: string;
+}
 
 interface FilterOptions {
-  inboxes: Array<{ label: string; value: string }>;
-  teams: Array<{ label: string; value: string }>;
-  labels: Array<{ label: string; value: string }>;
-  pipelines: Array<{ label: string; value: string }>;
+  inboxes: FilterOption[];
+  teams: FilterOption[];
+  labels: FilterOption[];
+  pipelines: FilterOption[];
+  contacts: FilterOption[];
   loading: boolean;
   error: string | null;
 }
@@ -30,6 +38,7 @@ export const useFilterOptions = (params: UseFilterOptionsParams = {}): FilterOpt
     teams: [],
     labels: [],
     pipelines: [],
+    contacts: [],
     loading: false,
     error: null,
   });
@@ -41,10 +50,11 @@ export const useFilterOptions = (params: UseFilterOptionsParams = {}): FilterOpt
       setOptions(prev => ({ ...prev, loading: true, error: null }));
 
       try {
-        // ✅ Carregar inboxes e pipelines
-        const [inboxesResponse, pipelinesResponse] = await Promise.allSettled([
+        // ✅ Carregar inboxes, pipelines e contatos (primeiros 100 por atividade)
+        const [inboxesResponse, pipelinesResponse, contactsResponse] = await Promise.allSettled([
           InboxesService.list(),
           chatService.getAvailablePipelines(),
+          contactsService.getContacts({ per_page: 100, sort: 'last_activity_at', order: 'desc' }),
         ]);
 
         // ✅ Processar inboxes
@@ -82,14 +92,32 @@ export const useFilterOptions = (params: UseFilterOptionsParams = {}): FilterOpt
         }
 
         // ❌ Teams e Labels temporariamente vazios (APIs não implementadas no chatService)
-        const teams: Array<{ label: string; value: string }> = [];
-        const labels: Array<{ label: string; value: string }> = [];
+        const teams: FilterOption[] = [];
+        const labels: FilterOption[] = [];
+
+        const contacts: FilterOption[] = [];
+        if (contactsResponse.status === 'fulfilled') {
+          const contactsData = contactsResponse.value?.data ?? [];
+          if (Array.isArray(contactsData)) {
+            contacts.push(
+              ...contactsData.map((contact: Contact) => {
+                const identifier = contact.email || contact.phone_number || contact.identifier || '';
+                const label = identifier ? `${contact.name} (${identifier})` : contact.name;
+                return {
+                  label,
+                  value: String(contact.id),
+                };
+              }),
+            );
+          }
+        }
 
         setOptions({
           inboxes,
           teams,
           labels,
           pipelines,
+          contacts,
           loading: false,
           error: null,
         });
@@ -100,6 +128,9 @@ export const useFilterOptions = (params: UseFilterOptionsParams = {}): FilterOpt
         }
         if (pipelinesResponse.status === 'rejected') {
           console.warn('Erro ao carregar pipelines:', pipelinesResponse.reason);
+        }
+        if (contactsResponse.status === 'rejected') {
+          console.warn('Erro ao carregar contatos:', contactsResponse.reason);
         }
       } catch (error) {
         console.error('Erro ao carregar opções de filtro:', error);
