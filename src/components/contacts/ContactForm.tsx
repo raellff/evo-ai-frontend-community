@@ -156,7 +156,7 @@ export default function ContactForm({
       const lastName = nameParts.slice(1).join(' ') || '';
 
       setFormData({
-        type: contact.type || 'person',
+        type: (contact.type === 'group' ? 'person' : contact.type) || 'person',
         firstName,
         lastName,
         email: contact.email || '',

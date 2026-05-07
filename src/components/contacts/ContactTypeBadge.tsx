@@ -1,14 +1,24 @@
 import { Badge } from '@evoapi/design-system';
-import { User, Building2 } from 'lucide-react';
+import { User, Building2, Users } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface ContactTypeBadgeProps {
-  type: 'person' | 'company';
+  type: 'person' | 'company' | 'group';
   className?: string;
 }
 
 export default function ContactTypeBadge({ type, className = '' }: ContactTypeBadgeProps) {
   const { t } = useLanguage('contacts');
+
+  if (type === 'group') {
+    return (
+      <Badge variant="outline" className={`gap-1 ${className}`}>
+        <Users className="h-3 w-3" />
+        {t('type.group')}
+      </Badge>
+    );
+  }
+
   const isPerson = type === 'person';
 
   return (
