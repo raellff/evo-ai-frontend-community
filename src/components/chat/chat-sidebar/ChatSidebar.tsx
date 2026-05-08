@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@evoapi/design-system/button';
+import { Checkbox } from '@evoapi/design-system/checkbox';
 import { Input } from '@evoapi/design-system/input';
 import { Badge } from '@evoapi/design-system/badge';
 import {
@@ -93,6 +94,11 @@ interface ChatSidebarProps {
   onAssignTeam: (conversation: Conversation) => void;
   onAssignTag: (conversation: Conversation) => void;
   onDeleteConversation: (conversation: Conversation) => void;
+  selectedConversationIds: Set<string>;
+  onToggleSelect: (displayId: string) => void;
+  onClearSelection: () => void;
+  onBulkResolve: () => Promise<void>;
+  isBulkResolving?: boolean;
 }
 
 const ChatSidebar = ({
@@ -117,6 +123,11 @@ const ChatSidebar = ({
   onAssignTeam,
   onAssignTag,
   onDeleteConversation,
+  selectedConversationIds,
+  onToggleSelect,
+  onClearSelection,
+  onBulkResolve,
+  isBulkResolving = false,
 }: ChatSidebarProps) => {
   const { t } = useLanguage('chat');
   const chatContext = useChatContext();
@@ -144,6 +155,11 @@ const ChatSidebar = ({
   const [showArchived, setShowArchived] = useState(false);
   const sidebarScrollRef = useRef<HTMLDivElement | null>(null);
   const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    onClearSelection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showArchived]);
 
   // Pipeline state
   const [allPipelines, setAllPipelines] = useState<Pipeline[]>([]);
@@ -885,7 +901,7 @@ const ChatSidebar = ({
       data-tour="chat-sidebar"
       className={`
         ${mobileView === 'list' ? 'flex' : 'hidden'} md:flex
-        w-full md:w-80 border-r bg-card/50 flex-col h-full
+        w-full md:w-96 border-r bg-card/50 flex-col h-full
       `}
     >
       {/* Search and Filter Header */}
@@ -973,6 +989,37 @@ const ChatSidebar = ({
         )}
       </div>
 
+      {/* Bulk Action Toolbar */}
+      {selectedConversationIds.size > 0 && (
+        <div className="px-3 py-2 border-b bg-primary/5 flex flex-col gap-1.5 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              {selectedConversationIds.size}{' '}
+              {selectedConversationIds.size === 1
+                ? t('chatSidebar.conversation')
+                : t('chatSidebar.conversations')}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 cursor-pointer"
+              onClick={onClearSelection}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            className="h-7 w-full cursor-pointer"
+            onClick={onBulkResolve}
+            disabled={isBulkResolving}
+          >
+            <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+            {t('chatHeader.actions.markAsResolved')}
+          </Button>
+        </div>
+      )}
+
       {/* Conversations List */}
       <div
         ref={sidebarScrollRef}
@@ -1044,6 +1091,16 @@ const ChatSidebar = ({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div
+                        className="mt-1 flex-shrink-0"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedConversationIds.has(String(conversation.display_id))}
+                          onCheckedChange={() => onToggleSelect(String(conversation.display_id))}
+                          className="bg-white dark:bg-zinc-700 border-2 border-zinc-400 dark:border-zinc-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        />
+                      </div>
                       <ContactAvatar
                         contact={conversation.contact}
                         channelType={channelType}

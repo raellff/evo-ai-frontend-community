@@ -302,6 +302,7 @@
     "searchPlaceholder": "Search conversations...",
     "conversation": "conversation",
     "conversations": "conversations",
+    "selected": "selected",
     "filter": "filter",
     "filters": "filters",
     "filtersButton": "Filters",

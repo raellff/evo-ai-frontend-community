@@ -46,6 +46,7 @@ import type { AssignmentOption, AssignmentType } from '@/components/chat/assignm
 import { labelsService } from '@/services/contacts/labelsService';
 import { useAppDataStore } from '@/store/appDataStore';
 import type { Label } from '@/types/settings';
+import { conversationAPI } from '@/services/conversations/conversationService';
 
 const ContactSidebar = React.lazy(() => import('@/components/chat/contact-sidebar/ContactSidebar'));
 
@@ -103,6 +104,10 @@ const Chat = () => {
   const [assignmentType, setAssignmentType] = useState<AssignmentType>('agent');
   const [conversationToAssign, setConversationToAssign] = useState<Conversation | null>(null);
 
+  // Bulk selection state
+  const [selectedConversationIds, setSelectedConversationIds] = useState<Set<string>>(new Set());
+  const [isBulkResolving, setIsBulkResolving] = useState(false);
+
   // Dashboard Apps state (lazy loaded, not auto-fetched)
   const [dashboardApps] = useState<DashboardApp[]>([]);
   const [activeTab, setActiveTab] = useState<string>('chat');
@@ -132,6 +137,7 @@ const Chat = () => {
   // 🎯 FILTROS: Usar handlers dos hooks customizados (DEFINIR ANTES DOS useEffect)
   const handleApplyFilters = useCallback(
     async (newFilters: BaseFilter[]) => {
+      setSelectedConversationIds(new Set());
       try {
         await filterHandlers.handleApplyFilters(newFilters);
       } catch (error) {
@@ -180,12 +186,50 @@ const Chat = () => {
   }, [permissionsReady]);
 
   const handleClearFilters = useCallback(async () => {
+    setSelectedConversationIds(new Set());
     await filterHandlers.handleClearFilters();
   }, [filterHandlers]);
 
   const reloadCurrentFilters = useCallback(async () => {
     await filterHandlers.reloadCurrentFilters();
   }, [filterHandlers]);
+
+  const handleToggleConversationSelection = useCallback((displayId: string) => {
+    setSelectedConversationIds(prev => {
+      const next = new Set(prev);
+      if (next.has(displayId)) {
+        next.delete(displayId);
+      } else {
+        next.add(displayId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedConversationIds(new Set());
+  }, []);
+
+  const handleBulkResolve = useCallback(async () => {
+    if (selectedConversationIds.size === 0) return;
+    const displayIds = Array.from(selectedConversationIds);
+    const resolvedConversations = conversations.state.conversations
+      .filter(c => selectedConversationIds.has(String(c.display_id)));
+    setIsBulkResolving(true);
+    try {
+      await conversationAPI.bulkResolve(displayIds);
+      toast.success(`${displayIds.length} conversa(s) resolvida(s)`);
+      setSelectedConversationIds(new Set());
+      for (const conv of resolvedConversations) {
+        conversations.updateConversation({ ...conv, status: 'resolved' });
+      }
+    } catch (error) {
+      console.error('Bulk resolve error:', error);
+      toast.error('Erro ao resolver conversas em lote');
+    } finally {
+      setIsBulkResolving(false);
+    }
+  }, [selectedConversationIds, conversations]);
 
   // 🔄 CARREGAMENTO SIMPLES: Apenas carregar mensagens quando conversa muda
   useEffect(() => {
@@ -714,6 +758,11 @@ const Chat = () => {
           onAssignTeam={handleAssignTeam}
           onAssignTag={handleAssignTag}
           onDeleteConversation={handleDeleteConversation}
+          selectedConversationIds={selectedConversationIds}
+          onToggleSelect={handleToggleConversationSelection}
+          onClearSelection={handleClearSelection}
+          onBulkResolve={handleBulkResolve}
+          isBulkResolving={isBulkResolving}
         />
 
         {/* Chat Area */}
