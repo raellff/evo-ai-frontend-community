@@ -19,9 +19,8 @@ class NotificameService {
    */
   async verifyConnection(payload: NotificameVerifyPayload): Promise<NotificameVerifyResponse> {
     const response = await api.post(`/channels/notificame/verify`, {
-      api_url: payload.api_url,
-      admin_token: payload.admin_token,
-      instance_id: payload.instance_id,
+      api_token: payload.api_token,
+      channel_id: payload.channel_id,
       phone_number: payload.phone_number,
     });
 
