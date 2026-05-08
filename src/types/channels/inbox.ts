@@ -671,9 +671,8 @@ export interface EmailChannel {
 // ============================================
 
 export interface NotificameVerifyPayload {
-  api_url: string;
-  admin_token: string;
-  instance_id: string;
+  api_token: string;
+  channel_id: string;
   phone_number: string;
 }
 
