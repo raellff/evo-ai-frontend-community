@@ -89,6 +89,18 @@ export default function ConditionRow({ control, index, formData, onRemove }: Pro
     ? getOperatorsForAttributeInEvent(attributeKey, eventName)
     : (descriptor?.operators ?? []);
 
+  // When the event_name (or attribute) changes and the current operator is no
+  // longer in the allowed list, clear it. Without this, a user that switches
+  // from `conversation_updated` to `conversation_created` after picking
+  // `attribute_changed` would save a rule whose operator can never match.
+  useEffect(() => {
+    if (!formCtx) return;
+    if (!operator) return;
+    if (availableOperators.includes(operator as (typeof availableOperators)[number])) return;
+    formCtx.setValue(`conditions.${index}.filter_operator`, '', { shouldDirty: true });
+    formCtx.setValue(`conditions.${index}.values`, [], { shouldDirty: true });
+  }, [availableOperators, operator, index, formCtx]);
+
   const optionsKey = descriptor?.optionLoaderKey
     ? optionLoaderToData[descriptor.optionLoaderKey]
     : undefined;
