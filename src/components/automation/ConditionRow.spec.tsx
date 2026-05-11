@@ -59,4 +59,31 @@ describe('ConditionRow', () => {
     render(<Wrapper defaultValues={defaults} />);
     expect(screen.getByText(/form\.fields\.conditionRow\.attribute/)).toBeTruthy();
   });
+
+  it('renders From and To labels when filter_operator is attribute_changed', () => {
+    const defaults: AutomationRuleFormData = {
+      name: 'Test',
+      description: '',
+      event_name: 'conversation_updated',
+      active: true,
+      mode: 'simple',
+      conditions: [
+        {
+          attribute_key: 'status',
+          filter_operator: 'attribute_changed',
+          query_operator: 'AND',
+          values: { from: [], to: [] },
+        },
+      ],
+      actions: [
+        {
+          action_name: 'send_message',
+          action_params: ['hello'],
+        },
+      ],
+    };
+    render(<Wrapper defaultValues={defaults} />);
+    expect(screen.getAllByText(/form\.fields\.conditionRow\.from/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/form\.fields\.conditionRow\.to/).length).toBeGreaterThan(0);
+  });
 });

@@ -16,13 +16,38 @@ const automationEventNames = [
   'contact_updated',
 ] as const satisfies readonly AutomationEventType[];
 
-const conditionSchema = z.object({
-  attribute_key: z.string().min(1),
-  filter_operator: z.string().min(1),
-  query_operator: z.enum(['AND', 'OR', 'and', 'or']).optional(),
-  values: z.array(z.union([z.string(), z.number()])),
-  custom_attribute_type: z.string().optional(),
+const valuesArraySchema = z.array(z.union([z.string(), z.number()]));
+
+// attribute_changed uses a structured payload: { from: [...], to: [...] }.
+// Other operators keep the flat array shape. The two branches share the rest
+// of the condition fields.
+export const fromToValuesSchema = z.object({
+  from: valuesArraySchema,
+  to: valuesArraySchema,
 });
+
+const conditionSchema = z.union([
+  z.object({
+    attribute_key: z.string().min(1),
+    filter_operator: z.literal('attribute_changed'),
+    query_operator: z.enum(['AND', 'OR', 'and', 'or']).optional(),
+    values: fromToValuesSchema,
+    custom_attribute_type: z.string().optional(),
+  }),
+  z.object({
+    attribute_key: z.string().min(1),
+    // Reject 'attribute_changed' here so its from/to shape cannot be
+    // accidentally accepted under the flat-array branch when the form sends
+    // a malformed values payload.
+    filter_operator: z
+      .string()
+      .min(1)
+      .refine((op) => op !== 'attribute_changed', { message: 'invalid_values_shape' }),
+    query_operator: z.enum(['AND', 'OR', 'and', 'or']).optional(),
+    values: valuesArraySchema,
+    custom_attribute_type: z.string().optional(),
+  }),
+]);
 
 const actionUnionSchema = z.discriminatedUnion('action_name', [
   z.object({ action_name: z.literal('send_message'), action_params: actionRegistry.send_message.schema }),
