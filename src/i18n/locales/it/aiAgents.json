@@ -707,6 +707,8 @@
         "allowContactEditDescription": "Consente all'agente di modificare le informazioni di contatto durante la conversazione",
         "allowPipelineManipulation": "Consentire di manipolare le pipeline",
         "allowPipelineManipulationDescription": "Consente all'agente di spostare le conversazioni tra pipeline e fasi in base alle regole configurate",
+        "allowManageLabels": "Consentire la gestione delle etichette",
+        "allowManageLabelsDescription": "Consente all'agente di aggiungere e rimuovere etichette nella conversazione corrente",
         "configureRules": "Configura regole",
         "configureAutomation": "Automazione",
         "timezone": "Fuso orario dell'agente",

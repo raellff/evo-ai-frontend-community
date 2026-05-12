@@ -707,6 +707,8 @@
         "allowContactEditDescription": "Permet à l'agent de modifier les informations de contact pendant la conversation",
         "allowPipelineManipulation": "Permettre la manipulation des pipelines",
         "allowPipelineManipulationDescription": "Permet à l'agent de déplacer des conversations entre les pipelines et les étapes selon des règles définies",
+        "allowManageLabels": "Autoriser la gestion des étiquettes",
+        "allowManageLabelsDescription": "Permet à l'agent d'ajouter et de supprimer des étiquettes sur la conversation en cours",
         "timezone": "Fuseau horaire de l'agent",
         "timezoneDescription": "Définit le fuseau horaire utilisé par l'agent pour la planification et les rappels",
         "sendAsReply": "Envoyer le message comme réponse dans la conversation",

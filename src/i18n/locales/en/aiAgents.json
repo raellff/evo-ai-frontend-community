@@ -712,6 +712,8 @@
         "allowContactEditDescription": "Allows the agent to edit contact information during the conversation",
         "allowPipelineManipulation": "Allow pipeline manipulation",
         "allowPipelineManipulationDescription": "Allows the agent to move conversations between pipelines and stages according to defined rules",
+        "allowManageLabels": "Allow label management",
+        "allowManageLabelsDescription": "Allows the agent to add and remove labels on the current conversation",
         "timezone": "Agent timezone",
         "timezoneDescription": "Defines the timezone used by the agent for scheduling and reminders",
         "sendAsReply": "Send message as reply in conversation",
