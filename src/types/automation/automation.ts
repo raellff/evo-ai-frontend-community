@@ -30,6 +30,29 @@ export interface AutomationAction {
   action_params: string[] | Record<string, unknown>;
 }
 
+// Automation rule run (execution log)
+export type AutomationRuleRunStatus = 'matched' | 'no_match' | 'error' | 'skipped';
+
+export interface AutomationRuleRunStep {
+  at: string;
+  label: string;
+  level: 'info' | 'success' | 'warn' | 'error';
+  data?: Record<string, unknown>;
+}
+
+export interface AutomationRuleRun {
+  id: string;
+  automation_rule_id: string;
+  event_name: string;
+  status: AutomationRuleRunStatus;
+  started_at: string;
+  finished_at?: string;
+  duration_ms?: number;
+  error_message?: string;
+  payload?: Record<string, unknown>;
+  steps: AutomationRuleRunStep[];
+}
+
 // Automation file interface (existing)
 export interface AutomationFile {
   id: string;

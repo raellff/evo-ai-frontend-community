@@ -36,6 +36,10 @@
       "create": "New automation",
       "edit": "Edit automation"
     },
+    "tabs": {
+      "settings": "Settings",
+      "logs": "Logs"
+    },
     "fields": {
       "name": "Name",
       "namePlaceholder": "e.g. Notify sales when conversation enters Won",
@@ -189,6 +193,29 @@
       "confirm": "Delete all",
       "cancel": "Cancel",
       "deleting": "Deleting..."
+    }
+  },
+  "logs": {
+    "title": "Execution logs",
+    "description": "Most recent executions of this automation rule.",
+    "refresh": "Refresh",
+    "empty": "No executions recorded yet for this rule.",
+    "filters": {
+      "all": "All statuses",
+      "matched": "Matched",
+      "no_match": "No match",
+      "skipped": "Skipped",
+      "error": "Error"
+    },
+    "status": {
+      "matched": "Matched",
+      "no_match": "No match",
+      "skipped": "Skipped",
+      "error": "Error"
+    },
+    "detail": {
+      "timeline": "Timeline",
+      "payload": "Payload"
     }
   },
   "messages": {

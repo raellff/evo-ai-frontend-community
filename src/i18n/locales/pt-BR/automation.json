@@ -36,6 +36,10 @@
       "create": "Nova automação",
       "edit": "Editar automação"
     },
+    "tabs": {
+      "settings": "Configuração",
+      "logs": "Logs"
+    },
     "fields": {
       "name": "Nome",
       "namePlaceholder": "Ex: Notificar vendas quando conversa entrar em Ganho",
@@ -189,6 +193,29 @@
       "confirm": "Excluir todas",
       "cancel": "Cancelar",
       "deleting": "Excluindo..."
+    }
+  },
+  "logs": {
+    "title": "Logs de execução",
+    "description": "Execuções mais recentes desta automação.",
+    "refresh": "Atualizar",
+    "empty": "Nenhuma execução registrada ainda para esta regra.",
+    "filters": {
+      "all": "Todos os status",
+      "matched": "Disparou",
+      "no_match": "Não casou",
+      "skipped": "Ignorada",
+      "error": "Erro"
+    },
+    "status": {
+      "matched": "Disparou",
+      "no_match": "Não casou",
+      "skipped": "Ignorada",
+      "error": "Erro"
+    },
+    "detail": {
+      "timeline": "Linha do tempo",
+      "payload": "Payload"
     }
   },
   "messages": {

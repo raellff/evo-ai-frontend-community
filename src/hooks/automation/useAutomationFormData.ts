@@ -3,6 +3,7 @@ import { automationService } from '@/services/automation/automationService';
 import { pipelinesService } from '@/services/pipelines/pipelinesService';
 import { cannedResponsesService } from '@/services/cannedResponses/cannedResponsesService';
 import messageTemplatesService from '@/services/channels/messageTemplatesService';
+import type { MessageTemplateVariable } from '@/types/channels/inbox';
 
 export interface AutomationFormDataOption {
   id: string | number;
@@ -15,7 +16,7 @@ export interface MessageTemplateOption extends AutomationFormDataOption {
   templateName: string;
   language: string;
   namespace?: string;
-  variables?: string[];
+  variables?: MessageTemplateVariable[];
 }
 
 export interface AutomationFormData {
@@ -135,7 +136,7 @@ export function useAutomationFormData(): {
           );
           allTemplates = templatesResults.flatMap((res, idx) => {
             if (res.status !== 'fulfilled' || !res.value) return [];
-            const payload = res.value as { data?: { id?: string | number; name?: string; language?: string; namespace?: string; variables?: string[] }[] };
+            const payload = res.value as { data?: { id?: string | number; name?: string; language?: string; namespace?: string; variables?: MessageTemplateVariable[] }[] };
             const list = payload.data ?? [];
             const channel = inboxesArray[idx];
             return list

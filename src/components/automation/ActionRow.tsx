@@ -18,6 +18,7 @@ import {
 } from '@/pages/Customer/Automation/registries';
 import type { AutomationFormData } from '@/hooks/automation/useAutomationFormData';
 import type { AutomationActionType } from '@/types/automation';
+import type { MessageTemplateVariable } from '@/types/channels/inbox';
 
 interface Props {
   control: Control<AutomationRuleFormData>;
@@ -177,6 +178,13 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
                 },
               ]);
             };
+            const defaultAutomationParams = (variables: MessageTemplateVariable[] = []) =>
+              variables.reduce<Record<string, string>>((acc, variable) => {
+                acc[variable.name] = variable.source
+                  ? `{{${variable.source}}}`
+                  : variable.default_value ?? variable.example ?? '';
+                return acc;
+              }, {});
             return (
               <div className="space-y-2">
                 <Select
@@ -190,7 +198,7 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
                         name: tpl.templateName,
                         language: tpl.language,
                         namespace: tpl.namespace,
-                        processed_params: {},
+                        processed_params: defaultAutomationParams(tpl.variables),
                       },
                     ]);
                   }}
@@ -207,7 +215,7 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
                   </SelectContent>
                 </Select>
                 {selectedTemplate?.variables?.map((variable, variableIndex) => {
-                  const key = variable || String(variableIndex + 1);
+                  const key = variable.name || String(variableIndex + 1);
                   return (
                     <Input
                       key={key}

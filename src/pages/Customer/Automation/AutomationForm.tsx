@@ -9,6 +9,10 @@ import {
   Input,
   Textarea,
   Switch,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@evoapi/design-system';
 import { ArrowLeft } from 'lucide-react';
 import { automationService } from '@/services/automation/automationService';
@@ -22,6 +26,7 @@ import {
   ActionsBuilder,
 } from '@/components/automation';
 import { useAutomationFormData } from '@/hooks/automation/useAutomationFormData';
+import AutomationLogsPanel from './AutomationLogsPanel';
 
 const DEFAULTS: AutomationRuleFormData = {
   name: '',
@@ -131,6 +136,30 @@ export default function AutomationForm({ mode }: Props) {
         </h1>
       </div>
 
+      {mode === 'edit' && id ? (
+        <Tabs defaultValue="settings" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="settings">{t('form.tabs.settings')}</TabsTrigger>
+            <TabsTrigger value="logs">{t('form.tabs.logs')}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="settings" className="pt-4 overflow-y-auto">
+            {renderForm()}
+          </TabsContent>
+
+          <TabsContent value="logs" className="pt-4 overflow-y-auto">
+            <AutomationLogsPanel automationRuleId={id} />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        renderForm()
+      )}
+    </div>
+    </FormProvider>
+  );
+
+  function renderForm() {
+    return (
       <form onSubmit={onSubmit} className="space-y-6 flex-1">
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="name">
@@ -212,7 +241,6 @@ export default function AutomationForm({ mode }: Props) {
           </Button>
         </div>
       </form>
-    </div>
-    </FormProvider>
-  );
+    );
+  }
 }
