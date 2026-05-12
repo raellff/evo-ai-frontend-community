@@ -3,7 +3,18 @@ import { automationService } from '@/services/automation/automationService';
 import { pipelinesService } from '@/services/pipelines/pipelinesService';
 import { cannedResponsesService } from '@/services/cannedResponses/cannedResponsesService';
 import messageTemplatesService from '@/services/channels/messageTemplatesService';
-import type { MessageTemplateVariable } from '@/types/channels/inbox';
+
+export interface MessageTemplateVariable {
+  name: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  default_value?: string;
+  source?: string;
+  example?: string;
+  position?: number;
+  component?: string;
+}
 
 export interface AutomationFormDataOption {
   id: string | number;

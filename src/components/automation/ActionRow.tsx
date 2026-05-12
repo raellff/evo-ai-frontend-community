@@ -18,7 +18,7 @@ import {
 } from '@/pages/Customer/Automation/registries';
 import type { AutomationFormData } from '@/hooks/automation/useAutomationFormData';
 import type { AutomationActionType } from '@/types/automation';
-import type { MessageTemplateVariable } from '@/types/channels/inbox';
+import type { MessageTemplateVariable } from '@/hooks/automation/useAutomationFormData';
 
 interface Props {
   control: Control<AutomationRuleFormData>;
