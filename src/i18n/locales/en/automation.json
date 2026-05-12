@@ -142,8 +142,6 @@
         "team_id": "Team",
         "priority": "Priority",
         "labels": "Labels",
-        "browser_language": "Browser language",
-        "conversation_language": "Conversation language",
         "country_code": "Country code",
         "referer": "Referer",
         "mail_subject": "Mail subject",

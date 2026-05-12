@@ -77,20 +77,6 @@ export const conditionAttributeRegistry: Record<string, ConditionAttributeDescri
     validFor: ['conversation', 'contact', 'pipeline'],
     i18nKey: 'form.fields.attributes.labels',
   },
-  browser_language: {
-    attributeKey: 'browser_language',
-    dataType: 'text',
-    operators: fromType('text', ['equal_to', 'not_equal_to']),
-    validFor: ['conversation', 'pipeline'],
-    i18nKey: 'form.fields.attributes.browser_language',
-  },
-  conversation_language: {
-    attributeKey: 'conversation_language',
-    dataType: 'text',
-    operators: fromType('text', ['equal_to', 'not_equal_to']),
-    validFor: ['conversation', 'pipeline'],
-    i18nKey: 'form.fields.attributes.conversation_language',
-  },
   country_code: {
     attributeKey: 'country_code',
     dataType: 'text',

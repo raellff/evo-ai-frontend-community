@@ -8,7 +8,6 @@ const BACKEND_CONDITION_KEYS = [
   'country_code',
   'status',
   'message_type',
-  'browser_language',
   'assignee_id',
   'team_id',
   'referer',
@@ -18,7 +17,6 @@ const BACKEND_CONDITION_KEYS = [
   'mail_subject',
   'phone_number',
   'priority',
-  'conversation_language',
   'pipeline_id',
   'pipeline_stage_id',
   'labels',
@@ -28,7 +26,7 @@ const BACKEND_CONDITION_KEYS = [
 ];
 
 describe('conditionAttributeRegistry', () => {
-  it('exposes all 22 backend condition attributes', () => {
+  it('exposes all 20 backend condition attributes', () => {
     const registryKeys = Object.keys(conditionAttributeRegistry).sort();
     expect(registryKeys).toEqual([...BACKEND_CONDITION_KEYS].sort());
   });

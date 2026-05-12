@@ -142,8 +142,6 @@
         "team_id": "Time",
         "priority": "Prioridade",
         "labels": "Etiquetas",
-        "browser_language": "Idioma do navegador",
-        "conversation_language": "Idioma da conversa",
         "country_code": "Código do país",
         "referer": "Referência",
         "mail_subject": "Assunto do email",
