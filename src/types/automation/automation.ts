@@ -149,6 +149,8 @@ export type AutomationFilterOperator =
 // Action types for automation actions
 export type AutomationActionType =
   | 'send_message'
+  | 'send_canned_response'
+  | 'send_template'
   | 'add_label'
   | 'remove_label'
   | 'send_email_to_team'

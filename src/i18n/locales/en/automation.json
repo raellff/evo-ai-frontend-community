@@ -68,6 +68,8 @@
         "addRow": "Add action",
         "empty": "Add at least one action.",
         "send_message": "Send message",
+        "send_canned_response": "Send canned response",
+        "send_template": "Send template",
         "add_label": "Add label",
         "remove_label": "Remove label",
         "send_email_to_team": "Send email to team",
@@ -105,6 +107,8 @@
         "noParams": "No parameters required",
         "params": {
           "send_message": "Message content",
+          "send_canned_response": "Pick a canned response",
+          "send_template": "Pick a template",
           "send_webhook_event": "Webhook URL",
           "send_email_transcript": "Recipient email",
           "assign_team": "Pick a team",
@@ -123,7 +127,7 @@
           "create_pipeline_task_assignee": "Assignee user ID (optional)",
           "create_pipeline_task_due_in": "Due in (e.g., 2d, 1w)",
           "send_attachment_ids": "Attachment IDs (comma-separated)",
-          "send_attachment_inbox": "Inbox ID (optional)"
+          "send_attachment_inbox": "Channel ID (optional)"
         }
       },
       "operators": {
@@ -144,7 +148,7 @@
       "attributes": {
         "status": "Status",
         "assignee_id": "Assignee",
-        "inbox_id": "Inbox",
+        "inbox_id": "Channel",
         "team_id": "Team",
         "priority": "Priority",
         "labels": "Labels",

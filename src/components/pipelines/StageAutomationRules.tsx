@@ -12,6 +12,7 @@ import {
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import type { StageAutomationRule, StageAutomationTrigger, StageAutomationAction } from '@/types/analytics/pipelines';
 import type { PipelineStage } from '@/types/analytics';
+import type { Label } from '@/types/settings/labels';
 
 interface Agent {
   id: string;
@@ -25,6 +26,7 @@ interface StageAutomationRulesProps {
   currentStageId?: string;
   stages?: PipelineStage[];
   agents?: Agent[];
+  labels?: Label[];
 }
 
 const EMPTY_RULE: StageAutomationRule = {
@@ -35,6 +37,9 @@ const EMPTY_RULE: StageAutomationRule = {
 };
 
 const CONVERSATION_STATUSES = ['open', 'resolved', 'pending', 'snoozed'] as const;
+
+const ANY_VALUE_SENTINEL = '__any__';
+const PLACEHOLDER_SENTINEL = '__placeholder__';
 
 function generateKey() {
   return `rule-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -47,6 +52,7 @@ export default function StageAutomationRules({
   currentStageId,
   stages = [],
   agents = [],
+  labels = [],
 }: StageAutomationRulesProps) {
   const { t } = useLanguage('pipelines');
 
@@ -77,18 +83,56 @@ export default function StageAutomationRules({
   const renderTriggerValue = (rule: StageAutomationRule, index: number) => {
     if (rule.trigger === 'custom_attribute_updated') return null;
 
+    if (rule.trigger === 'label_added') {
+      return (
+        <Select
+          value={rule.trigger_value || ANY_VALUE_SENTINEL}
+          onValueChange={v =>
+            updateRule(index, { trigger_value: v === ANY_VALUE_SENTINEL ? '' : v })
+          }
+          disabled={disabled}
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder={t('stageAutomation.anyLabel')} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY_VALUE_SENTINEL}>{t('stageAutomation.anyLabel')}</SelectItem>
+            {labels.length === 0 ? (
+              <SelectItem value={PLACEHOLDER_SENTINEL} disabled>
+                {t('stageAutomation.noLabels')}
+              </SelectItem>
+            ) : (
+              labels.map(l => (
+                <SelectItem key={l.id} value={l.title}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="w-3 h-3 rounded-full inline-block shrink-0"
+                      style={{ backgroundColor: l.color }}
+                    />
+                    {l.title}
+                  </span>
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      );
+    }
+
     if (rule.trigger === 'conversation_status_changed') {
       return (
         <Select
-          value={rule.trigger_value || ''}
-          onValueChange={v => updateRule(index, { trigger_value: v })}
+          value={rule.trigger_value || ANY_VALUE_SENTINEL}
+          onValueChange={v =>
+            updateRule(index, { trigger_value: v === ANY_VALUE_SENTINEL ? '' : v })
+          }
           disabled={disabled}
         >
           <SelectTrigger className="flex-1">
             <SelectValue placeholder={t('stageAutomation.anyValue')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{t('stageAutomation.anyValue')}</SelectItem>
+            <SelectItem value={ANY_VALUE_SENTINEL}>{t('stageAutomation.anyValue')}</SelectItem>
             {CONVERSATION_STATUSES.map(s => (
               <SelectItem key={s} value={s}>
                 {t(`kanban.search.status.${s}`) || s}
@@ -123,7 +167,7 @@ export default function StageAutomationRules({
           </SelectTrigger>
           <SelectContent>
             {otherStages.length === 0 ? (
-              <SelectItem value="" disabled>{t('stageAutomation.noOtherStages')}</SelectItem>
+              <SelectItem value={PLACEHOLDER_SENTINEL} disabled>{t('stageAutomation.noOtherStages')}</SelectItem>
             ) : (
               otherStages.map(s => (
                 <SelectItem key={s.id} value={s.id}>
@@ -154,7 +198,7 @@ export default function StageAutomationRules({
           </SelectTrigger>
           <SelectContent>
             {agents.length === 0 ? (
-              <SelectItem value="" disabled>{t('stageAutomation.noAgents')}</SelectItem>
+              <SelectItem value={PLACEHOLDER_SENTINEL} disabled>{t('stageAutomation.noAgents')}</SelectItem>
             ) : (
               agents.map(a => (
                 <SelectItem key={a.id} value={a.id}>

@@ -390,11 +390,13 @@
     "when": "When",
     "then": "Then",
     "anyValue": "Any",
+    "anyLabel": "Any label",
     "labelNamePlaceholder": "Label name...",
     "selectStage": "Select stage...",
     "selectAgent": "Select agent...",
     "noOtherStages": "No other stages available",
     "noAgents": "No agents available",
+    "noLabels": "No labels available",
     "triggers": {
       "label_added": "Label added",
       "conversation_status_changed": "Conversation status changed",

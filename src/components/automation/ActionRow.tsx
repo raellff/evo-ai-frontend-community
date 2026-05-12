@@ -116,6 +116,86 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
         />
       );
 
+    case 'send_canned_response':
+      return (
+        <Controller
+          control={control}
+          name={`actions.${index}.action_params`}
+          render={({ field }) => {
+            const raw = (field.value as Array<unknown>)?.[0];
+            const currentId =
+              raw && typeof raw === 'object' && 'canned_response_id' in raw
+                ? (raw as { canned_response_id: string | number }).canned_response_id
+                : (raw as string | number | undefined);
+            const selectedValue = currentId != null ? String(currentId) : '';
+            return (
+              <Select
+                value={selectedValue}
+                onValueChange={(value) =>
+                  field.onChange([{ canned_response_id: value }])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('form.fields.actionRow.params.send_canned_response')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.cannedResponses.map((opt) => (
+                    <SelectItem key={String(opt.id)} value={String(opt.id)}>
+                      {opt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }}
+        />
+      );
+
+    case 'send_template':
+      return (
+        <Controller
+          control={control}
+          name={`actions.${index}.action_params`}
+          render={({ field }) => {
+            const current = ((field.value as Array<Record<string, unknown>>)?.[0] ?? {}) as {
+              name?: string;
+              language?: string;
+              namespace?: string;
+              template_id?: string;
+            };
+            const selectedValue = current.template_id != null ? String(current.template_id) : '';
+            return (
+              <Select
+                value={selectedValue}
+                onValueChange={(value) => {
+                  const tpl = formData.messageTemplates.find((t) => String(t.id) === value);
+                  if (!tpl) return;
+                  field.onChange([
+                    {
+                      template_id: String(tpl.id),
+                      name: tpl.templateName,
+                      language: tpl.language,
+                      namespace: tpl.namespace,
+                    },
+                  ]);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('form.fields.actionRow.params.send_template')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.messageTemplates.map((opt) => (
+                    <SelectItem key={String(opt.id)} value={String(opt.id)}>
+                      {opt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }}
+        />
+      );
+
     case 'assign_team':
       return (
         <SelectParam

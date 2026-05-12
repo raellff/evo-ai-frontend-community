@@ -390,11 +390,13 @@
     "when": "Quando",
     "then": "Então",
     "anyValue": "Qualquer",
+    "anyLabel": "Qualquer etiqueta",
     "labelNamePlaceholder": "Nome da etiqueta...",
     "selectStage": "Selecionar etapa...",
     "selectAgent": "Selecionar agente...",
     "noOtherStages": "Nenhuma outra etapa disponível",
     "noAgents": "Nenhum agente disponível",
+    "noLabels": "Nenhuma etiqueta disponível",
     "triggers": {
       "label_added": "Etiqueta adicionada",
       "conversation_status_changed": "Status da conversa alterado",

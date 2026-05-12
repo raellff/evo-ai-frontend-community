@@ -23,6 +23,8 @@ import {
 } from '@evoapi/design-system';
 import { PipelineStage } from '@/types/analytics';
 import type { StageAutomationRule } from '@/types/analytics/pipelines';
+import type { Label as ConversationLabel } from '@/types/settings/labels';
+import { labelsService } from '@/services/contacts/labelsService';
 import { LocalAttributeDefinition, LocalAttributeDefinitionPayload } from '@/types/pipelines/localAttributeDefinition';
 import PipelineStageCustomAttributes from './PipelineStageCustomAttributes';
 import StageAutomationRules from './StageAutomationRules';
@@ -80,8 +82,27 @@ export default function EditStageModal({
   const [description, setDescription] = useState('');
   const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
   const [automationRules, setAutomationRules] = useState<StageAutomationRule[]>([]);
+  const [labels, setLabels] = useState<ConversationLabel[]>([]);
 
   const stageColors = getStageColors(t);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    labelsService
+      .getLabels({ per_page: 200 })
+      .then(res => {
+        if (cancelled) return;
+        setLabels(res.data ?? []);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLabels([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   // Initialize form when modal opens or stage changes
   useEffect(() => {
@@ -292,6 +313,7 @@ export default function EditStageModal({
               currentStageId={stage?.id}
               stages={stages}
               agents={agents}
+              labels={labels}
             />
           </TabsContent>
 

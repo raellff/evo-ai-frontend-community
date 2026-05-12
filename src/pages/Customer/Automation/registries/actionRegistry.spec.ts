@@ -3,6 +3,8 @@ import { actionRegistry, ALL_ACTION_NAMES } from './actionRegistry';
 
 const BACKEND_ACTION_NAMES = [
   'send_message',
+  'send_canned_response',
+  'send_template',
   'add_label',
   'remove_label',
   'send_email_to_team',
@@ -22,7 +24,7 @@ const BACKEND_ACTION_NAMES = [
 ];
 
 describe('actionRegistry', () => {
-  it('exposes all 17 backend actions', () => {
+  it('exposes all backend actions', () => {
     expect(ALL_ACTION_NAMES.sort()).toEqual([...BACKEND_ACTION_NAMES].sort());
   });
 

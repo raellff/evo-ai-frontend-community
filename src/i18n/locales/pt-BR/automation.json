@@ -68,6 +68,8 @@
         "addRow": "Adicionar ação",
         "empty": "Adicione ao menos uma ação.",
         "send_message": "Enviar mensagem",
+        "send_canned_response": "Enviar resposta pronta",
+        "send_template": "Enviar template",
         "add_label": "Adicionar etiqueta",
         "remove_label": "Remover etiqueta",
         "send_email_to_team": "Enviar email ao time",
@@ -105,6 +107,8 @@
         "noParams": "Sem parâmetros",
         "params": {
           "send_message": "Conteúdo da mensagem",
+          "send_canned_response": "Escolha uma resposta pronta",
+          "send_template": "Escolha um template",
           "send_webhook_event": "URL do webhook",
           "send_email_transcript": "Email do destinatário",
           "assign_team": "Escolha um time",
@@ -123,7 +127,7 @@
           "create_pipeline_task_assignee": "ID do responsável (opcional)",
           "create_pipeline_task_due_in": "Vencimento (ex.: 2d, 1w)",
           "send_attachment_ids": "IDs dos anexos separados por vírgula",
-          "send_attachment_inbox": "ID da caixa (opcional)"
+          "send_attachment_inbox": "ID do canal (opcional)"
         }
       },
       "operators": {
@@ -144,7 +148,7 @@
       "attributes": {
         "status": "Status",
         "assignee_id": "Atendente",
-        "inbox_id": "Caixa",
+        "inbox_id": "Canal",
         "team_id": "Time",
         "priority": "Prioridade",
         "labels": "Etiquetas",

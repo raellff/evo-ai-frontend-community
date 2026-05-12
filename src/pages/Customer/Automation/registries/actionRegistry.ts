@@ -55,6 +55,23 @@ const createPipelineTaskSchema = z.tuple([
   }),
 ]);
 
+const sendCannedResponseSchema = z.tuple([
+  z.union([
+    requiredIdSchema,
+    z.object({ canned_response_id: requiredIdSchema }),
+  ]),
+]);
+
+const sendTemplateSchema = z.tuple([
+  z.object({
+    template_id: z.string().min(1).optional(),
+    name: z.string().min(1),
+    language: z.string().optional(),
+    namespace: z.string().optional(),
+    components: z.array(z.any()).optional(),
+  }),
+]);
+
 export interface ActionDescriptor {
   actionName: AutomationActionType;
   schema: z.ZodTypeAny;
@@ -68,6 +85,18 @@ export const actionRegistry: Record<AutomationActionType, ActionDescriptor> = {
     schema: sendMessageSchema,
     defaultParams: [''],
     i18nKey: 'form.fields.actions.send_message',
+  },
+  send_canned_response: {
+    actionName: 'send_canned_response',
+    schema: sendCannedResponseSchema,
+    defaultParams: [{ canned_response_id: '' }],
+    i18nKey: 'form.fields.actions.send_canned_response',
+  },
+  send_template: {
+    actionName: 'send_template',
+    schema: sendTemplateSchema,
+    defaultParams: [{ template_id: '', name: '', language: '' }],
+    i18nKey: 'form.fields.actions.send_template',
   },
   add_label: {
     actionName: 'add_label',

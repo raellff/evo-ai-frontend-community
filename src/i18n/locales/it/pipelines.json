@@ -356,6 +356,8 @@
     "selectAgent": "Seleziona agente...",
     "noOtherStages": "Nessun'altra fase disponibile",
     "noAgents": "Nessun agente disponibile",
+    "anyLabel": "Qualsiasi etichetta",
+    "noLabels": "Nessuna etichetta disponibile",
     "triggers": {
       "label_added": "Etichetta aggiunta",
       "conversation_status_changed": "Stato conversazione modificato",

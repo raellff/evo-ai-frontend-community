@@ -357,6 +357,8 @@
     "selectAgent": "Sélectionner un agent...",
     "noOtherStages": "Aucune autre étape disponible",
     "noAgents": "Aucun agent disponible",
+    "anyLabel": "Toute étiquette",
+    "noLabels": "Aucune étiquette disponible",
     "triggers": {
       "label_added": "Étiquette ajoutée",
       "conversation_status_changed": "Statut de conversation modifié",

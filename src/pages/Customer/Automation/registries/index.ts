@@ -64,6 +64,8 @@ const conditionSchema = z
 
 const actionUnionSchema = z.discriminatedUnion('action_name', [
   z.object({ action_name: z.literal('send_message'), action_params: actionRegistry.send_message.schema }),
+  z.object({ action_name: z.literal('send_canned_response'), action_params: actionRegistry.send_canned_response.schema }),
+  z.object({ action_name: z.literal('send_template'), action_params: actionRegistry.send_template.schema }),
   z.object({ action_name: z.literal('add_label'), action_params: actionRegistry.add_label.schema }),
   z.object({ action_name: z.literal('remove_label'), action_params: actionRegistry.remove_label.schema }),
   z.object({ action_name: z.literal('send_email_to_team'), action_params: actionRegistry.send_email_to_team.schema }),

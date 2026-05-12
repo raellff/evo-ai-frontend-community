@@ -19,6 +19,8 @@ const emptyFormData: AutomationFormData = {
   priorities: [],
   statuses: [],
   messageTypes: [],
+  cannedResponses: [],
+  messageTemplates: [],
 };
 
 function Wrapper({ defaultValues }: { defaultValues: AutomationRuleFormData }) {
