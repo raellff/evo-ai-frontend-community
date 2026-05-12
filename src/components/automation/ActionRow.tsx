@@ -162,35 +162,62 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
               language?: string;
               namespace?: string;
               template_id?: string;
+              processed_params?: Record<string, string>;
             };
             const selectedValue = current.template_id != null ? String(current.template_id) : '';
+            const selectedTemplate = formData.messageTemplates.find((t) => String(t.id) === selectedValue);
+            const setTemplateParam = (key: string, value: string) => {
+              field.onChange([
+                {
+                  ...current,
+                  processed_params: {
+                    ...(current.processed_params ?? {}),
+                    [key]: value,
+                  },
+                },
+              ]);
+            };
             return (
-              <Select
-                value={selectedValue}
-                onValueChange={(value) => {
-                  const tpl = formData.messageTemplates.find((t) => String(t.id) === value);
-                  if (!tpl) return;
-                  field.onChange([
-                    {
-                      template_id: String(tpl.id),
-                      name: tpl.templateName,
-                      language: tpl.language,
-                      namespace: tpl.namespace,
-                    },
-                  ]);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('form.fields.actionRow.params.send_template')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {formData.messageTemplates.map((opt) => (
-                    <SelectItem key={String(opt.id)} value={String(opt.id)}>
-                      {opt.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Select
+                  value={selectedValue}
+                  onValueChange={(value) => {
+                    const tpl = formData.messageTemplates.find((t) => String(t.id) === value);
+                    if (!tpl) return;
+                    field.onChange([
+                      {
+                        template_id: String(tpl.id),
+                        name: tpl.templateName,
+                        language: tpl.language,
+                        namespace: tpl.namespace,
+                        processed_params: {},
+                      },
+                    ]);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('form.fields.actionRow.params.send_template')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formData.messageTemplates.map((opt) => (
+                      <SelectItem key={String(opt.id)} value={String(opt.id)}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedTemplate?.variables?.map((variable, variableIndex) => {
+                  const key = variable || String(variableIndex + 1);
+                  return (
+                    <Input
+                      key={key}
+                      value={current.processed_params?.[key] ?? ''}
+                      onChange={(e) => setTemplateParam(key, e.target.value)}
+                      placeholder={key}
+                    />
+                  );
+                })}
+              </div>
             );
           }}
         />

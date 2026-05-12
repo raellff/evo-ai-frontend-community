@@ -15,6 +15,7 @@ export interface MessageTemplateOption extends AutomationFormDataOption {
   templateName: string;
   language: string;
   namespace?: string;
+  variables?: string[];
 }
 
 export interface AutomationFormData {
@@ -134,7 +135,7 @@ export function useAutomationFormData(): {
           );
           allTemplates = templatesResults.flatMap((res, idx) => {
             if (res.status !== 'fulfilled' || !res.value) return [];
-            const payload = res.value as { data?: { id?: string | number; name?: string; language?: string; namespace?: string }[] };
+            const payload = res.value as { data?: { id?: string | number; name?: string; language?: string; namespace?: string; variables?: string[] }[] };
             const list = payload.data ?? [];
             const channel = inboxesArray[idx];
             return list
@@ -147,6 +148,7 @@ export function useAutomationFormData(): {
                 templateName: tpl.name as string,
                 language: tpl.language ?? '',
                 namespace: tpl.namespace,
+                variables: tpl.variables ?? [],
               }));
           });
         }

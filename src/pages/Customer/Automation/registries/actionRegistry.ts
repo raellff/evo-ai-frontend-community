@@ -68,6 +68,7 @@ const sendTemplateSchema = z.tuple([
     name: z.string().min(1),
     language: z.string().optional(),
     namespace: z.string().optional(),
+    processed_params: z.record(z.string()).optional(),
     components: z.array(z.any()).optional(),
   }),
 ]);
