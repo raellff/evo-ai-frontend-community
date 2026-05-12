@@ -31,6 +31,8 @@ import {
 import { Conversation } from '@/types/chat/api';
 import ContactAvatar from '@/components/chat/contact/ContactAvatar';
 import { getStatusLabel, isPendingStatus } from '@/utils/chat/conversationStatus';
+import { isPhoneBearingChannel } from '@/utils/channelUtils';
+import { formatContactPhone } from '@/utils/contact/formatContactPhone';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface ChatHeaderProps {
@@ -88,6 +90,9 @@ const ChatHeader = ({
   const isArchived = Boolean(conversation.custom_attributes?.archived);
 
   const inboxName = conversation.inbox?.name || '';
+  const phoneDisplay = isPhoneBearingChannel(conversation.inbox?.channel_type)
+    ? formatContactPhone(conversation.contact?.phone_number)
+    : null;
 
   const renderConversationStatusDropdown = () => {
     return (
@@ -288,9 +293,20 @@ const ChatHeader = ({
             <ContactAvatar contact={conversation.contact} />
           </div>
           <div>
-            <h3 className="font-semibold">
-              {conversation.contact?.name || t('chatHeader.contactNoName')}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold">
+                {conversation.contact?.name || t('chatHeader.contactNoName')}
+              </h3>
+              {phoneDisplay && (
+                <span
+                  className="text-sm text-muted-foreground"
+                  title={t('chatHeader.phoneNumber')}
+                  aria-label={`${t('chatHeader.phoneNumber')}: ${phoneDisplay}`}
+                >
+                  {phoneDisplay}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               {inboxName && (
                 <>

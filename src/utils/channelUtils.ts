@@ -32,6 +32,32 @@ const CHANNEL_TYPE_TRANSLATIONS: Record<string, string> = {
   'twilio_sms': 'SMS - Twilio',
 };
 
+// Channel types where a phone number is the contact's primary identifier.
+// Used to gate UI affordances (e.g. showing the phone in conversation lists)
+// so we never render a phone field for website/email/API contacts.
+const PHONE_BEARING_CHANNEL_TYPES = new Set<string>([
+  'Channel::Whatsapp',
+  'Channel::WhatsappCloud',
+  'Channel::Whatsapp360Dialog',
+  'Channel::TwilioSms',
+  'Channel::Sms',
+  'Channel::Telegram',
+  'whatsapp',
+  'whatsappcloud',
+  'whatsapp_cloud',
+  'whatsapp360dialog',
+  'whatsapp_360dialog',
+  'twiliosms',
+  'twilio_sms',
+  'sms',
+  'telegram',
+]);
+
+export function isPhoneBearingChannel(channelType?: string | null): boolean {
+  if (!channelType) return false;
+  return PHONE_BEARING_CHANNEL_TYPES.has(channelType);
+}
+
 // Provider-specific translations for detailed display
 const PROVIDER_TRANSLATIONS: Record<string, string> = {
   'whatsapp_cloud': 'WhatsApp Cloud',
