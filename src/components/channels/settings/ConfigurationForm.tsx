@@ -30,9 +30,11 @@ import {
   CheckCircle,
   Smartphone,
   QrCode,
+  Info,
 } from 'lucide-react';
 import { EvolutionApiService, ZapiService } from '@/services/channels/channelConfigurationService';
 import InboxesService from '@/services/channels/inboxesService';
+import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
 
 interface ConfigurationFormProps {
   inboxId: string;
@@ -494,6 +496,16 @@ const EvolutionWhatsAppConfig: React.FC<{
   onUpdate: (data: any) => void;
 }> = ({ inbox, onUpdate }) => {
   const { t } = useLanguage('channels');
+  const globalConfig = useGlobalConfig();
+  const isEvolutionGo = inbox?.provider === 'evolution_go';
+  const hasGlobalConfig = isEvolutionGo
+    ? globalConfig.hasEvolutionGoConfig === true
+    : globalConfig.hasEvolutionConfig === true;
+  const usingGlobalFallback =
+    hasGlobalConfig &&
+    !inbox?.provider_config?.api_url &&
+    !inbox?.provider_config?.admin_token;
+
   const [instanceSettings, setInstanceSettings] = useState({
     rejectCall: true,
     msgCall: 'Não aceito chamadas',
@@ -1274,6 +1286,22 @@ const EvolutionWhatsAppConfig: React.FC<{
                 </p>
               </div>
 
+              {usingGlobalFallback && (
+                <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-3">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                        {t('settings.configuration.whatsapp.instance.connection.usingGlobalConfig', 'Using Admin Settings defaults')}
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                        {t('settings.configuration.whatsapp.instance.connection.usingGlobalConfigHint', 'The API URL and Token are configured globally in Admin Settings. Fill the fields below only to override the global values for this channel.')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium mb-2">
                   {t('settings.configuration.whatsapp.instance.connection.apiUrlLabel')}
@@ -1283,7 +1311,9 @@ const EvolutionWhatsAppConfig: React.FC<{
                   onChange={e =>
                     setConnectionSettings(prev => ({ ...prev, apiUrl: e.target.value }))
                   }
-                  placeholder={t('settings.configuration.whatsapp.instance.connection.apiUrlPlaceholder')}
+                  placeholder={usingGlobalFallback
+                    ? t('settings.configuration.whatsapp.instance.connection.apiUrlGlobalPlaceholder', 'Using global config — fill to override')
+                    : t('settings.configuration.whatsapp.instance.connection.apiUrlPlaceholder')}
                 />
               </div>
 
@@ -1297,7 +1327,9 @@ const EvolutionWhatsAppConfig: React.FC<{
                   onChange={e =>
                     setConnectionSettings(prev => ({ ...prev, adminToken: e.target.value }))
                   }
-                  placeholder={t('settings.configuration.whatsapp.instance.connection.adminTokenPlaceholder')}
+                  placeholder={usingGlobalFallback
+                    ? t('settings.configuration.whatsapp.instance.connection.adminTokenGlobalPlaceholder', 'Using global config — fill to override')
+                    : t('settings.configuration.whatsapp.instance.connection.adminTokenPlaceholder')}
                 />
                 {inbox?.provider_config?.admin_token && (
                   <p className="mt-1 text-xs text-muted-foreground">
