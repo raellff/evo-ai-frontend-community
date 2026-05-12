@@ -102,6 +102,13 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     action: 'read',
   },
   {
+    name: t('menu.customer.automation'),
+    href: '/automation',
+    icon: Workflow,
+    resource: 'automation_rules',
+    action: 'read',
+  },
+  {
     id: 'customer-agents',
     name: t('menu.customer.agents'),
     href: '/agents/list',
@@ -137,13 +144,6 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     href: '/channels',
     icon: Layers,
     resource: 'channels',
-    action: 'read',
-  },
-  {
-    name: t('menu.customer.automation'),
-    href: '/automation',
-    icon: Workflow,
-    resource: 'automation_rules',
     action: 'read',
   },
   {
