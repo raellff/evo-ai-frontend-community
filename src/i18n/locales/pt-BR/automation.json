@@ -145,6 +145,11 @@
         "is_less_than": "Menor que",
         "days_before": "Dias antes",
         "starts_with": "Começa com",
+        "labels": {
+          "equal_to": "Tem esta etiqueta",
+          "not_equal_to": "Não tem esta etiqueta",
+          "attribute_changed": "Etiqueta mudou"
+        },
         "attribute_changed": "Atributo mudou",
         "is_in": "Está em",
         "is_not_in": "Não está em"

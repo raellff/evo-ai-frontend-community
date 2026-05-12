@@ -147,7 +147,12 @@
         "starts_with": "Starts with",
         "attribute_changed": "Attribute changed",
         "is_in": "Is in",
-        "is_not_in": "Is not in"
+        "is_not_in": "Is not in",
+        "labels": {
+          "equal_to": "Has this label",
+          "not_equal_to": "Does not have this label",
+          "attribute_changed": "Label changed"
+        }
       },
       "attributes": {
         "status": "Status",

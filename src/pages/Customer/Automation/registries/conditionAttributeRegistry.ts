@@ -72,7 +72,11 @@ export const conditionAttributeRegistry: Record<string, ConditionAttributeDescri
   labels: {
     attributeKey: 'labels',
     dataType: 'labels',
-    operators: [...fromType('labels'), 'attribute_changed'],
+    // Labels are a set, so "is present / is not present" doesn't apply per-label
+    // (the conversation either has labels at all or not — but the user wants a
+    // specific one). Restrict to "has this label" / "doesn't have this label" +
+    // attribute_changed for transitions.
+    operators: fromType('labels', ['equal_to', 'not_equal_to', 'attribute_changed']),
     optionLoaderKey: 'labels',
     validFor: ['conversation', 'contact', 'pipeline'],
     i18nKey: 'form.fields.attributes.labels',

@@ -191,11 +191,17 @@ export default function ConditionRow({ control, index, formData, onRemove }: Pro
                 <SelectValue placeholder={t('form.fields.conditionRow.operator')} />
               </SelectTrigger>
               <SelectContent>
-                {availableOperators.map((op) => (
-                  <SelectItem key={op} value={op}>
-                    {t(`form.fields.operators.${op}`)}
-                  </SelectItem>
-                ))}
+                {availableOperators.map((op) => {
+                  const specificKey = `form.fields.operators.${attributeKey}.${op}`;
+                  const genericKey = `form.fields.operators.${op}`;
+                  const specific = t(specificKey);
+                  const label = specific === specificKey ? t(genericKey) : specific;
+                  return (
+                    <SelectItem key={op} value={op}>
+                      {label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           )}
