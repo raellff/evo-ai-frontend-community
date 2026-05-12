@@ -395,6 +395,7 @@
     "selectStage": "Select stage...",
     "selectAgent": "Select agent...",
     "selectPipeline": "Select pipeline...",
+    "selectLabel": "Select label...",
     "noOtherStages": "No other stages available",
     "noOtherPipelines": "No other pipelines available",
     "noStagesInPipeline": "No stages in the selected pipeline",

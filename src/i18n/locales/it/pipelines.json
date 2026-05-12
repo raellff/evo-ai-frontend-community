@@ -355,6 +355,7 @@
     "selectStage": "Seleziona fase...",
     "selectAgent": "Seleziona agente...",
     "selectPipeline": "Seleziona pipeline...",
+    "selectLabel": "Seleziona etichetta...",
     "noOtherStages": "Nessun'altra fase disponibile",
     "noOtherPipelines": "Nessun'altra pipeline disponibile",
     "noStagesInPipeline": "Nessuna fase nella pipeline selezionata",

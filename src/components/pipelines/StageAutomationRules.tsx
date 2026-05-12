@@ -281,6 +281,39 @@ export default function StageAutomationRules({
       );
     }
 
+    if (rule.action === 'apply_label') {
+      return (
+        <Select
+          value={rule.action_value || ''}
+          onValueChange={v => updateRule(index, { action_value: v })}
+          disabled={disabled}
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder={t('stageAutomation.selectLabel')} />
+          </SelectTrigger>
+          <SelectContent>
+            {labels.length === 0 ? (
+              <SelectItem value={PLACEHOLDER_SENTINEL} disabled>
+                {t('stageAutomation.noLabels')}
+              </SelectItem>
+            ) : (
+              labels.map(l => (
+                <SelectItem key={l.id} value={l.title}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="w-3 h-3 rounded-full inline-block shrink-0"
+                      style={{ backgroundColor: l.color }}
+                    />
+                    {l.title}
+                  </span>
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      );
+    }
+
     return (
       <Input
         className="flex-1"
