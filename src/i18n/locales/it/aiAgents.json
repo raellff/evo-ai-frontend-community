@@ -1208,11 +1208,11 @@
           "description": "Orchestra attività tra sotto-agenti, ognuna con un output definito"
         },
         "sequential": {
-          "label": "Sequential",
+          "label": "Sequenziale",
           "description": "Esegue sotto-agenti in catena, passando il risultato di ogni fase alla successiva"
         },
         "parallel": {
-          "label": "Parallel",
+          "label": "Parallelo",
           "description": "Esegue più sotto-agenti contemporaneamente per attività indipendenti"
         },
         "loop": {

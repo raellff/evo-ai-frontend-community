@@ -1244,11 +1244,11 @@
           "description": "Orquesta tareas entre sub-agentes, cada una con una salida definida"
         },
         "sequential": {
-          "label": "Sequential",
+          "label": "Secuencial",
           "description": "Ejecuta sub-agentes en cadena, pasando el resultado de cada etapa a la siguiente"
         },
         "parallel": {
-          "label": "Parallel",
+          "label": "Paralelo",
           "description": "Ejecuta múltiples sub-agentes al mismo tiempo para tareas independientes"
         },
         "loop": {

@@ -1210,11 +1210,11 @@
           "description": "Orchestre des tâches entre sous-agents, chacune avec une sortie définie"
         },
         "sequential": {
-          "label": "Sequential",
+          "label": "Séquentiel",
           "description": "Exécute les sous-agents en chaîne, passant le résultat de chaque étape à la suivante"
         },
         "parallel": {
-          "label": "Parallel",
+          "label": "Parallèle",
           "description": "Exécute plusieurs sous-agents simultanément pour des tâches indépendantes"
         },
         "loop": {

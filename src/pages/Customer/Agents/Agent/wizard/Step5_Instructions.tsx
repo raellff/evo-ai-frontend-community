@@ -79,28 +79,27 @@ const Step5_Instructions = ({ data, onChange, onNext, onBack }: Step5Props) => {
               {data.instruction && data.instruction.trim() && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span tabIndex={showAIActions ? undefined : 0}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleReview}
-                        disabled={isReviewing || !showAIActions}
-                        className="gap-2"
-                      >
-                        {isReviewing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            {t('wizard.promptGenerator.buttons.reviewing')}
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 className="h-4 w-4 text-blue-500" />
-                            {t('wizard.promptGenerator.buttons.review')}
-                          </>
-                        )}
-                      </Button>
-                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleReview}
+                      disabled={isReviewing || !showAIActions}
+                      aria-disabled={isReviewing || !showAIActions}
+                      className="gap-2"
+                    >
+                      {isReviewing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {t('wizard.promptGenerator.buttons.reviewing')}
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 text-blue-500" />
+                          {t('wizard.promptGenerator.buttons.review')}
+                        </>
+                      )}
+                    </Button>
                   </TooltipTrigger>
                   {!showAIActions && (
                     <TooltipContent>
@@ -111,19 +110,18 @@ const Step5_Instructions = ({ data, onChange, onNext, onBack }: Step5Props) => {
               )}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span tabIndex={showAIActions ? undefined : 0}>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => showAIActions && setShowPromptModal(true)}
-                      disabled={!showAIActions}
-                      className="gap-2"
-                    >
-                      <Sparkles className="h-4 w-4 text-purple-500" />
-                      {t('wizard.step5.generateWithAI')}
-                    </Button>
-                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPromptModal(true)}
+                    disabled={!showAIActions}
+                    aria-disabled={!showAIActions}
+                    className="gap-2"
+                  >
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    {t('wizard.step5.generateWithAI')}
+                  </Button>
                 </TooltipTrigger>
                 {!showAIActions && (
                   <TooltipContent>
