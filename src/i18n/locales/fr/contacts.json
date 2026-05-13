@@ -339,7 +339,8 @@
   },
   "type": {
     "person": "Personne",
-    "company": "Entreprise"
+    "company": "Entreprise",
+    "group": "Groupe"
   },
   "filter": {
     "title": "Filtrer les Contacts",

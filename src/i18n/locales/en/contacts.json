@@ -347,7 +347,8 @@
   },
   "type": {
     "person": "Person",
-    "company": "Company"
+    "company": "Company",
+    "group": "Group"
   },
   "filter": {
     "title": "Filter Contacts",
