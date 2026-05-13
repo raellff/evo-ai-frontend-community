@@ -52,6 +52,8 @@ import Labels from '@/pages/Customer/Settings/Labels';
 import CustomAttributes from '@/pages/Customer/Settings/CustomAttributes';
 import CannedResponses from '@/pages/Customer/Settings/CannedResponses';
 import { Macros } from '@/pages/Customer/Settings/Macros';
+import Products from '@/pages/Customer/Settings/Products';
+import Templates from '@/pages/Customer/Settings/Templates/Templates';
 import { Integrations } from '@/pages/Customer/Settings/Integrations';
 import EmailTemplateEditor from '@/pages/Customer/Settings/EmailTemplateEditor';
 import WebhooksPage from '../pages/Customer/Settings/Integrations/WebhooksPage';
@@ -605,6 +607,21 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/products"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="products" action="read">
+                      <Products />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/settings/macros"
             element={
               <PrivateRoute>
@@ -612,6 +629,21 @@ const AppRouter = () => {
                   <MainLayout>
                     <PermissionRoute resource="macros" action="read">
                       <Macros />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/templates"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="templates" action="read">
+                      <Templates />
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>

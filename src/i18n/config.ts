@@ -24,6 +24,8 @@ import ptBRLayout from './locales/pt-BR/layout.json';
 import ptBRCommon from './locales/pt-BR/common.json';
 import ptBRAccountSettings from './locales/pt-BR/accountSettings.json';
 import ptBRCannedResponses from './locales/pt-BR/cannedResponses.json';
+import ptBRProducts from './locales/pt-BR/products.json';
+import ptBRTemplates from './locales/pt-BR/templates.json';
 import ptBRCustomAttributes from './locales/pt-BR/customAttributes.json';
 import ptBRLabels from './locales/pt-BR/labels.json';
 import ptBRMacros from './locales/pt-BR/macros.json';
@@ -116,6 +118,8 @@ import enLayout from './locales/en/layout.json';
 import enCommon from './locales/en/common.json';
 import enAccountSettings from './locales/en/accountSettings.json';
 import enCannedResponses from './locales/en/cannedResponses.json';
+import enProducts from './locales/en/products.json';
+import enTemplates from './locales/en/templates.json';
 import enCustomAttributes from './locales/en/customAttributes.json';
 import enLabels from './locales/en/labels.json';
 import enMacros from './locales/en/macros.json';
@@ -340,6 +344,8 @@ const resources = {
     common: ptBRCommon,
     accountSettings: ptBRAccountSettings,
     cannedResponses: ptBRCannedResponses,
+    products: ptBRProducts,
+    templates: ptBRTemplates,
     customAttributes: ptBRCustomAttributes,
     labels: ptBRLabels,
     macros: ptBRMacros,
@@ -438,6 +444,8 @@ const resources = {
     common: enCommon,
     accountSettings: enAccountSettings,
     cannedResponses: enCannedResponses,
+    products: enProducts,
+    templates: enTemplates,
     customAttributes: enCustomAttributes,
     labels: enLabels,
     macros: enMacros,

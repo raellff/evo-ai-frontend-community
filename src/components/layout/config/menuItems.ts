@@ -22,6 +22,7 @@ import {
   List,
   GraduationCap,
   Shield,
+  Package,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -99,6 +100,13 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     href: '/pipelines',
     icon: SquareKanban,
     resource: 'pipelines',
+    action: 'read',
+  },
+  {
+    name: t('menu.customer.products'),
+    href: '/products',
+    icon: Package,
+    resource: 'products',
     action: 'read',
   },
   {
@@ -203,6 +211,13 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         href: '/settings/macros',
         icon: Settings,
         resource: 'macros',
+        action: 'read',
+      },
+      {
+        name: t('menu.settings.templates'),
+        href: '/settings/templates',
+        icon: Package,
+        resource: 'templates',
         action: 'read',
       },
       {
