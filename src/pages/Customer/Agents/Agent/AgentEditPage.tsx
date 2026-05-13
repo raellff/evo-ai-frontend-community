@@ -45,6 +45,7 @@ type SidebarMenu =
   | 'integrations'
   | 'mcpServers'
   | 'channels'
+  | 'products'
   | 'settings';
 
 interface AgentFormData {

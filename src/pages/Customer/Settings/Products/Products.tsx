@@ -63,7 +63,7 @@ export default function Products() {
       setProducts(res.data ?? []);
       const pagination = res.meta?.pagination;
       setTotalPages(pagination?.total_pages ?? 1);
-      setTotalCount(pagination?.total_count ?? (res.data?.length ?? 0));
+      setTotalCount(pagination?.total ?? (res.data?.length ?? 0));
     } catch (error) {
       console.error(error);
       toast.error(t('messages.loadError'));
