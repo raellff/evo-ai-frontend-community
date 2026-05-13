@@ -46,6 +46,7 @@ import type { AssignmentOption, AssignmentType } from '@/components/chat/assignm
 import { labelsService } from '@/services/contacts/labelsService';
 import { useAppDataStore } from '@/store/appDataStore';
 import type { Label } from '@/types/settings';
+import chatService from '@/services/chat/chatService';
 
 const ContactSidebar = React.lazy(() => import('@/components/chat/contact-sidebar/ContactSidebar'));
 
@@ -103,6 +104,10 @@ const Chat = () => {
   const [assignmentType, setAssignmentType] = useState<AssignmentType>('agent');
   const [conversationToAssign, setConversationToAssign] = useState<Conversation | null>(null);
 
+  // Bulk selection state
+  const [selectedConversationIds, setSelectedConversationIds] = useState<Set<string>>(new Set());
+  const [isBulkResolving, setIsBulkResolving] = useState(false);
+
   // Dashboard Apps state (lazy loaded, not auto-fetched)
   const [dashboardApps] = useState<DashboardApp[]>([]);
   const [activeTab, setActiveTab] = useState<string>('chat');
@@ -132,6 +137,7 @@ const Chat = () => {
   // 🎯 FILTROS: Usar handlers dos hooks customizados (DEFINIR ANTES DOS useEffect)
   const handleApplyFilters = useCallback(
     async (newFilters: BaseFilter[]) => {
+      setSelectedConversationIds(new Set());
       try {
         await filterHandlers.handleApplyFilters(newFilters);
       } catch (error) {
@@ -180,12 +186,61 @@ const Chat = () => {
   }, [permissionsReady]);
 
   const handleClearFilters = useCallback(async () => {
+    setSelectedConversationIds(new Set());
     await filterHandlers.handleClearFilters();
   }, [filterHandlers]);
 
   const reloadCurrentFilters = useCallback(async () => {
     await filterHandlers.reloadCurrentFilters();
   }, [filterHandlers]);
+
+  const MAX_BULK_SELECTION = 200;
+
+  const handleToggleConversationSelection = useCallback((displayId: string) => {
+    setSelectedConversationIds(prev => {
+      const next = new Set(prev);
+      if (next.has(displayId)) {
+        next.delete(displayId);
+      } else if (next.size < MAX_BULK_SELECTION) {
+        next.add(displayId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedConversationIds(new Set());
+  }, []);
+
+  const handleBulkResolve = useCallback(async () => {
+    if (selectedConversationIds.size === 0) return;
+    if (!can('conversations', 'update')) {
+      toast.error(t('chatHeader.actions.bulkResolveNoPermission'));
+      return;
+    }
+    const displayIds = Array.from(selectedConversationIds);
+    setIsBulkResolving(true);
+    try {
+      const result = await chatService.bulkResolve(displayIds);
+      setSelectedConversationIds(new Set());
+      if (result.failed_ids.length === 0) {
+        toast.success(t('chatHeader.actions.bulkResolveSuccess', { count: result.success_ids.length }));
+      } else if (result.success_ids.length > 0) {
+        toast.warning(t('chatHeader.actions.bulkResolvePartialSuccess', {
+          success: result.success_ids.length,
+          failed: result.failed_ids.length,
+        }));
+      } else {
+        toast.error(t('chatHeader.actions.bulkResolveError'));
+      }
+      await reloadCurrentFilters();
+    } catch (error) {
+      console.error('Bulk resolve error:', error);
+      toast.error(t('chatHeader.actions.bulkResolveError'));
+    } finally {
+      setIsBulkResolving(false);
+    }
+  }, [selectedConversationIds, can, reloadCurrentFilters, t]);
 
   // 🔄 CARREGAMENTO SIMPLES: Apenas carregar mensagens quando conversa muda
   useEffect(() => {
@@ -655,6 +710,8 @@ const Chat = () => {
       return;
     }
 
+    setSelectedConversationIds(new Set());
+
     // 🔒 MARCAR NAVEGAÇÃO MANUAL para evitar URL sync
     isManualNavigationRef.current = true;
 
@@ -714,6 +771,12 @@ const Chat = () => {
           onAssignTeam={handleAssignTeam}
           onAssignTag={handleAssignTag}
           onDeleteConversation={handleDeleteConversation}
+          selectedConversationIds={selectedConversationIds}
+          onToggleSelect={handleToggleConversationSelection}
+          onClearSelection={handleClearSelection}
+          onBulkResolve={handleBulkResolve}
+          isBulkResolving={isBulkResolving}
+          canBulkResolve={can('conversations', 'update')}
         />
 
         {/* Chat Area */}

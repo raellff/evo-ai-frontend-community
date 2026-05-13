@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@evoapi/design-system/button';
+import { Checkbox } from '@evoapi/design-system/checkbox';
 import { Input } from '@evoapi/design-system/input';
 import { Badge } from '@evoapi/design-system/badge';
 import {
@@ -93,6 +94,12 @@ interface ChatSidebarProps {
   onAssignTeam: (conversation: Conversation) => void;
   onAssignTag: (conversation: Conversation) => void;
   onDeleteConversation: (conversation: Conversation) => void;
+  selectedConversationIds: Set<string>;
+  onToggleSelect: (displayId: string) => void;
+  onClearSelection: () => void;
+  onBulkResolve: () => Promise<void>;
+  isBulkResolving?: boolean;
+  canBulkResolve?: boolean;
 }
 
 const ChatSidebar = ({
@@ -117,6 +124,12 @@ const ChatSidebar = ({
   onAssignTeam,
   onAssignTag,
   onDeleteConversation,
+  selectedConversationIds,
+  onToggleSelect,
+  onClearSelection,
+  onBulkResolve,
+  isBulkResolving = false,
+  canBulkResolve = true,
 }: ChatSidebarProps) => {
   const { t } = useLanguage('chat');
   const chatContext = useChatContext();
@@ -144,6 +157,10 @@ const ChatSidebar = ({
   const [showArchived, setShowArchived] = useState(false);
   const sidebarScrollRef = useRef<HTMLDivElement | null>(null);
   const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    onClearSelection();
+  }, [showArchived, onClearSelection]);
 
   // Pipeline state
   const [allPipelines, setAllPipelines] = useState<Pipeline[]>([]);
@@ -885,7 +902,7 @@ const ChatSidebar = ({
       data-tour="chat-sidebar"
       className={`
         ${mobileView === 'list' ? 'flex' : 'hidden'} md:flex
-        w-full md:w-80 border-r bg-card/50 flex-col h-full
+        w-full ${selectedConversationIds.size > 0 ? 'md:w-96' : 'md:w-80'} border-r bg-card/50 flex-col h-full
       `}
     >
       {/* Search and Filter Header */}
@@ -973,6 +990,34 @@ const ChatSidebar = ({
         )}
       </div>
 
+      {/* Bulk Action Toolbar */}
+      {selectedConversationIds.size > 0 && (
+        <div className="px-3 py-2 border-b bg-primary/5 flex flex-col gap-1.5 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              {t('chatSidebar.selectedCount', { count: selectedConversationIds.size })}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 cursor-pointer"
+              onClick={onClearSelection}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            className="h-7 w-full cursor-pointer"
+            onClick={onBulkResolve}
+            disabled={isBulkResolving || !canBulkResolve}
+          >
+            <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+            {t('chatHeader.actions.markAsResolved')}
+          </Button>
+        </div>
+      )}
+
       {/* Conversations List */}
       <div
         ref={sidebarScrollRef}
@@ -1044,6 +1089,22 @@ const ChatSidebar = ({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div
+                        className="mt-1 flex-shrink-0"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedConversationIds.has(String(conversation.display_id))}
+                          onCheckedChange={(checked: boolean | 'indeterminate') => {
+                            const isSelected = selectedConversationIds.has(String(conversation.display_id));
+                            if ((checked === true && !isSelected) || (checked === false && isSelected)) {
+                              onToggleSelect(String(conversation.display_id));
+                            }
+                          }}
+                          aria-label={t('chatSidebar.selectConversation')}
+                          className="bg-white dark:bg-zinc-700 border-2 border-zinc-400 dark:border-zinc-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        />
+                      </div>
                       <ContactAvatar
                         contact={conversation.contact}
                         channelType={channelType}
