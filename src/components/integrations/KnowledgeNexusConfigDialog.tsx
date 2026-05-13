@@ -2,14 +2,25 @@ import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   Input,
   Label,
   Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@evoapi/design-system';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import type { KnowledgeNexusConfig } from '@/hooks/useIntegrations';
+import {
+  agentIntegrationsService,
+  type NexusSpace,
+} from '@/services/agents/agentIntegrationsService';
 
 export type { KnowledgeNexusConfig };
 
@@ -66,8 +77,73 @@ const KnowledgeNexusConfigDialog = ({
         default_top_k: initialConfig?.default_top_k ?? DEFAULT_TOP_K,
         timeout_seconds: initialConfig?.timeout_seconds ?? DEFAULT_TIMEOUT,
       });
+      setSpaces(null);
+      setSpacesError(null);
+      setManualSpaceMode(false);
     }
   }, [open, initialConfig]);
+
+  const [spaces, setSpaces] = useState<NexusSpace[] | null>(null);
+  const [loadingSpaces, setLoadingSpaces] = useState(false);
+  const [spacesError, setSpacesError] = useState<string | null>(null);
+  // When the Nexus call fails (CORS, 401, network), let the user fall back to
+  // typing the UUID by hand instead of being blocked.
+  const [manualSpaceMode, setManualSpaceMode] = useState(false);
+
+  const fetchSpaces = async () => {
+    const baseUrl = config.nexus_base_url.trim().replace(/\/$/, '');
+    const apiKey = config.nexus_api_key.trim();
+    if (!baseUrl || !apiKey) {
+      setSpacesError(
+        t('edit.integrations.knowledgeNexus.spacesNeedCreds') ||
+          'Enter the base URL and API key first.'
+      );
+      return;
+    }
+    setLoadingSpaces(true);
+    setSpacesError(null);
+    try {
+      const list = await agentIntegrationsService.listKnowledgeNexusSpaces(baseUrl, apiKey);
+      setSpaces(list);
+      if (list.length === 0) {
+        setSpacesError(
+          t('edit.integrations.knowledgeNexus.spacesEmpty') ||
+            'No spaces found for this API key.'
+        );
+      }
+    } catch (error: unknown) {
+      console.error('Error fetching Nexus spaces:', error);
+      setSpaces(null);
+      // The backend proxy maps upstream auth/scope/connectivity errors to
+      // 401/403/502 — surface the message when available, otherwise a hint.
+      const responseObj = (error as { response?: { data?: { message?: string } } }).response;
+      const apiMsg = responseObj?.data?.message;
+      setSpacesError(
+        apiMsg ||
+          t('edit.integrations.knowledgeNexus.spacesError') ||
+          'Could not load spaces. Check the URL and API key, or paste the Space ID manually.'
+      );
+    } finally {
+      setLoadingSpaces(false);
+    }
+  };
+
+  // Auto-load the list once URL + a freshly-typed API key are both present.
+  // We only auto-fetch when the user actually typed a key (not on saved-key
+  // re-edits, where the key was never sent down).
+  useEffect(() => {
+    if (!open) return;
+    if (manualSpaceMode) return;
+    const baseUrl = config.nexus_base_url.trim();
+    const apiKey = config.nexus_api_key.trim();
+    if (!baseUrl || !apiKey) return;
+    // debounce slightly so we don't fire on every keystroke
+    const handle = setTimeout(() => {
+      fetchSpaces();
+    }, 400);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, config.nexus_base_url, config.nexus_api_key, manualSpaceMode]);
 
   const apiKeyOk = config.nexus_api_key.trim() !== '' || hasSavedApiKey;
   const isValid =
@@ -103,14 +179,13 @@ const KnowledgeNexusConfigDialog = ({
           <DialogTitle>
             {t('edit.integrations.knowledgeNexus.configTitle') || 'Configurar Knowledge Nexus'}
           </DialogTitle>
+          <DialogDescription>
+            {t('edit.integrations.knowledgeNexus.intro') ||
+              'Conecte este agente a uma base de conhecimento do EvoNexus para que ele possa buscar informações curadas antes de responder.'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          <p className="text-sm text-muted-foreground">
-            {t('edit.integrations.knowledgeNexus.intro') ||
-              'Conecte este agente a uma base de conhecimento do EvoNexus para que ele possa buscar informações curadas antes de responder.'}
-          </p>
-
           <div className="space-y-2">
             <Label htmlFor="nexus_base_url">
               {t('edit.integrations.knowledgeNexus.baseUrl') || 'URL base do Nexus'}
@@ -158,20 +233,100 @@ const KnowledgeNexusConfigDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="space_id">
-              {t('edit.integrations.knowledgeNexus.spaceId') || 'Space ID'}
-            </Label>
-            <Input
-              id="space_id"
-              type="text"
-              placeholder="00000000-0000-0000-0000-000000000000"
-              value={config.space_id}
-              onChange={e => setConfig({ ...config, space_id: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              {t('edit.integrations.knowledgeNexus.spaceIdHint') ||
-                'UUID da knowledge space que será consultada por este agente.'}
-            </p>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="space_id">
+                {t('edit.integrations.knowledgeNexus.space') || 'Knowledge space'}
+              </Label>
+              {!manualSpaceMode && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 gap-1 text-xs"
+                  onClick={fetchSpaces}
+                  disabled={
+                    loadingSpaces ||
+                    !config.nexus_base_url.trim() ||
+                    !config.nexus_api_key.trim()
+                  }
+                >
+                  {loadingSpaces ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                  {t('edit.integrations.knowledgeNexus.reloadSpaces') || 'Reload'}
+                </Button>
+              )}
+            </div>
+
+            {!manualSpaceMode && spaces && spaces.length > 0 ? (
+              <Select
+                value={config.space_id}
+                onValueChange={value => setConfig({ ...config, space_id: value })}
+              >
+                <SelectTrigger id="space_id">
+                  <SelectValue
+                    placeholder={
+                      t('edit.integrations.knowledgeNexus.spaceSelect') ||
+                      'Select a knowledge space'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {spaces.map(space => (
+                    <SelectItem key={space.id} value={space.id}>
+                      {space.name || space.slug || space.id}
+                      {space.slug && space.name ? ` (${space.slug})` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="space_id"
+                type="text"
+                placeholder="00000000-0000-0000-0000-000000000000"
+                value={config.space_id}
+                onChange={e => setConfig({ ...config, space_id: e.target.value })}
+              />
+            )}
+
+            {loadingSpaces && !spaces && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {t('edit.integrations.knowledgeNexus.loadingSpaces') ||
+                  'Loading spaces from Nexus...'}
+              </p>
+            )}
+            {spacesError && (
+              <p className="text-xs text-destructive">{spacesError}</p>
+            )}
+            {!loadingSpaces && (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+                onClick={() => {
+                  setManualSpaceMode(!manualSpaceMode);
+                  setSpacesError(null);
+                }}
+              >
+                {manualSpaceMode
+                  ? t('edit.integrations.knowledgeNexus.useDropdown') ||
+                    'Pick from the list'
+                  : t('edit.integrations.knowledgeNexus.useManual') ||
+                    'Paste Space ID manually'}
+              </button>
+            )}
+            {!spacesError && !loadingSpaces && (
+              <p className="text-xs text-muted-foreground">
+                {manualSpaceMode
+                  ? t('edit.integrations.knowledgeNexus.spaceIdHint') ||
+                    'UUID of the knowledge space this agent will query.'
+                  : t('edit.integrations.knowledgeNexus.spaceHint') ||
+                    'Spaces are fetched from your Nexus instance once URL + API key are filled.'}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

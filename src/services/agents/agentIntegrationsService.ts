@@ -15,6 +15,13 @@ export interface AgentIntegrationItem {
   updated_at?: string;
 }
 
+export interface NexusSpace {
+  id: string;
+  slug?: string;
+  name?: string;
+  description?: string;
+}
+
 class AgentIntegrationsService {
   /**
    * Get all integrations for an agent
@@ -51,6 +58,23 @@ class AgentIntegrationsService {
   async deleteIntegration(agentId: string, provider: string): Promise<void> {
     const normalizedProvider = provider.replace(/-/g, '_');
     await evoaiApi.delete(`/agents/${agentId}/integrations/${normalizedProvider}`);
+  }
+
+  /**
+   * List knowledge spaces from a user-provided EvoNexus instance.
+   * Proxied through the backend so the browser doesn't hit CORS — the Nexus
+   * dashboard doesn't emit CORS headers for cross-origin clients.
+   */
+  async listKnowledgeNexusSpaces(
+    nexus_base_url: string,
+    nexus_api_key: string
+  ): Promise<NexusSpace[]> {
+    const response = await evoaiApi.post('/integrations/knowledge-nexus/list-spaces', {
+      nexus_base_url,
+      nexus_api_key,
+    });
+    const data = extractData<{ spaces?: NexusSpace[] } | null>(response);
+    return Array.isArray(data?.spaces) ? data!.spaces! : [];
   }
 }
 
