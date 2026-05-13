@@ -689,6 +689,7 @@ export interface NotificameVerifyResponse {
   success: boolean;
   message?: string;
   error?: string;
+  channels: NotificameChannel[];
 }
 
 // ============================================

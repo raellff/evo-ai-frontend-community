@@ -24,11 +24,16 @@ class NotificameService {
       phone_number: payload.phone_number,
     });
 
+    // Backend envelope is `{ success, data: { channels: [...] }, message }`.
+    // The previous version read `response.data?.channels` (wrong nesting) and
+    // also spread `...response.data` at the end, which clobbered the literal
+    // `success` and `message` with values from a higher level of the response.
+    const body = response.data ?? {};
+    const inner = body.data ?? {};
     return {
-      success: true,
-      message: response.data?.message || 'Conexão verificada com sucesso',
-      channels: response.data?.channels || [],
-      ...response.data,
+      success: body.success ?? true,
+      message: body.message || 'Conexão verificada com sucesso',
+      channels: inner.channels ?? [],
     };
   }
 
