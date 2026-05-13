@@ -99,6 +99,7 @@ interface ChatSidebarProps {
   onClearSelection: () => void;
   onBulkResolve: () => Promise<void>;
   isBulkResolving?: boolean;
+  canBulkResolve?: boolean;
 }
 
 const ChatSidebar = ({
@@ -128,6 +129,7 @@ const ChatSidebar = ({
   onClearSelection,
   onBulkResolve,
   isBulkResolving = false,
+  canBulkResolve = true,
 }: ChatSidebarProps) => {
   const { t } = useLanguage('chat');
   const chatContext = useChatContext();
@@ -993,11 +995,7 @@ const ChatSidebar = ({
         <div className="px-3 py-2 border-b bg-primary/5 flex flex-col gap-1.5 flex-shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">
-              {selectedConversationIds.size}{' '}
-              {selectedConversationIds.size === 1
-                ? t('chatSidebar.conversation')
-                : t('chatSidebar.conversations')}{' '}
-              {t('chatSidebar.selected')}
+              {t('chatSidebar.selectedCount', { count: selectedConversationIds.size })}
             </span>
             <Button
               variant="ghost"
@@ -1012,7 +1010,7 @@ const ChatSidebar = ({
             size="sm"
             className="h-7 w-full cursor-pointer"
             onClick={onBulkResolve}
-            disabled={isBulkResolving}
+            disabled={isBulkResolving || !canBulkResolve}
           >
             <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
             {t('chatHeader.actions.markAsResolved')}

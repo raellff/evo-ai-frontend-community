@@ -293,7 +293,8 @@
       "deleteConversation": "Delete conversation",
       "bulkResolveSuccess": "{{count}} conversation(s) resolved",
       "bulkResolvePartialSuccess": "{{success}} resolved, {{failed}} failed",
-      "bulkResolveError": "Error resolving conversations"
+      "bulkResolveError": "Error resolving conversations",
+      "bulkResolveNoPermission": "You do not have permission to resolve conversations"
     },
     "contactNoName": "Contact without name",
     "status": "Status:",
@@ -305,7 +306,8 @@
     "searchPlaceholder": "Search conversations...",
     "conversation": "conversation",
     "conversations": "conversations",
-    "selected": "selected",
+    "selectedCount_one": "{{count}} conversation selected",
+    "selectedCount_other": "{{count}} conversations selected",
     "selectConversation": "Select conversation",
     "filter": "filter",
     "filters": "filters",

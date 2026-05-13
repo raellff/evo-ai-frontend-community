@@ -293,7 +293,8 @@
       "deleteConversation": "Deletar conversa",
       "bulkResolveSuccess": "{{count}} conversa(s) resolvida(s)",
       "bulkResolvePartialSuccess": "{{success}} resolvida(s), {{failed}} falhada(s)",
-      "bulkResolveError": "Erro ao resolver conversas em lote"
+      "bulkResolveError": "Erro ao resolver conversas em lote",
+      "bulkResolveNoPermission": "Você não tem permissão para resolver conversas"
     },
     "contactNoName": "Contato sem nome",
     "status": "Status:",
@@ -305,7 +306,8 @@
     "searchPlaceholder": "Buscar conversas...",
     "conversation": "conversa",
     "conversations": "conversas",
-    "selected": "selecionada(s)",
+    "selectedCount_one": "{{count}} conversa selecionada",
+    "selectedCount_other": "{{count}} conversas selecionadas",
     "selectConversation": "Selecionar conversa",
     "filter": "filtro",
     "filters": "filtros",

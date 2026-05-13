@@ -215,7 +215,7 @@ const Chat = () => {
   const handleBulkResolve = useCallback(async () => {
     if (selectedConversationIds.size === 0) return;
     if (!can('conversations', 'update')) {
-      toast.error(t('messages.noPermissionSend'));
+      toast.error(t('chatHeader.actions.bulkResolveNoPermission'));
       return;
     }
     const displayIds = Array.from(selectedConversationIds);
@@ -776,6 +776,7 @@ const Chat = () => {
           onClearSelection={handleClearSelection}
           onBulkResolve={handleBulkResolve}
           isBulkResolving={isBulkResolving}
+          canBulkResolve={can('conversations', 'update')}
         />
 
         {/* Chat Area */}

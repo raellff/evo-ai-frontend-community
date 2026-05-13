@@ -181,15 +181,6 @@ export const conversationAPI = {
     return extractData<any>(response);
   },
 
-  // Bulk resolve conversations by display_id
-  async bulkResolve(displayIds: string[]): Promise<void> {
-    await api.post('/bulk_actions', {
-      type: 'Conversation',
-      ids: displayIds,
-      fields: { status: 'resolved' },
-    });
-  },
-
   // Get conversation counts
   async getConversationCounts(): Promise<{
     open_count: number;
