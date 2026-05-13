@@ -64,6 +64,7 @@ import ptUnauthorized from './locales/pt/unauthorized.json';
 import ptOAuth from './locales/pt/oauth.json';
 import ptProfile from './locales/pt/profile.json';
 import ptOnboarding from './locales/pt/onboarding.json';
+import ptSetup from './locales/pt/setup.json';
 import ptWidget from './locales/pt/widget.json';
 import ptPipelines from './locales/pt/pipelines.json';
 import ptContacts from './locales/pt/contacts.json';
@@ -160,6 +161,7 @@ import esUnauthorized from './locales/es/unauthorized.json';
 import esOAuth from './locales/es/oauth.json';
 import esProfile from './locales/es/profile.json';
 import esOnboarding from './locales/es/onboarding.json';
+import esSetup from './locales/es/setup.json';
 import esWidget from './locales/es/widget.json';
 import esPipelines from './locales/es/pipelines.json';
 import esContacts from './locales/es/contacts.json';
@@ -207,6 +209,7 @@ import frUnauthorized from './locales/fr/unauthorized.json';
 import frOAuth from './locales/fr/oauth.json';
 import frProfile from './locales/fr/profile.json';
 import frOnboarding from './locales/fr/onboarding.json';
+import frSetup from './locales/fr/setup.json';
 import frWidget from './locales/fr/widget.json';
 import frPipelines from './locales/fr/pipelines.json';
 import frContacts from './locales/fr/contacts.json';
@@ -254,6 +257,7 @@ import itUnauthorized from './locales/it/unauthorized.json';
 import itOAuth from './locales/it/oauth.json';
 import itProfile from './locales/it/profile.json';
 import itOnboarding from './locales/it/onboarding.json';
+import itSetup from './locales/it/setup.json';
 import itWidget from './locales/it/widget.json';
 import itPipelines from './locales/it/pipelines.json';
 import itContacts from './locales/it/contacts.json';
@@ -395,6 +399,7 @@ const resources = {
     oauth: ptOAuth,
     profile: ptProfile,
     onboarding: ptOnboarding,
+    setup: ptSetup,
     widget: ptWidget,
     pipelines: ptPipelines,
     contacts: ptContacts,
@@ -497,6 +502,7 @@ const resources = {
     oauth: esOAuth,
     profile: esProfile,
     onboarding: esOnboarding,
+    setup: esSetup,
     widget: esWidget,
     pipelines: esPipelines,
     contacts: esContacts,
@@ -547,6 +553,7 @@ const resources = {
     oauth: frOAuth,
     profile: frProfile,
     onboarding: frOnboarding,
+    setup: frSetup,
     widget: frWidget,
     pipelines: frPipelines,
     contacts: frContacts,
@@ -597,6 +604,7 @@ const resources = {
     oauth: itOAuth,
     profile: itProfile,
     onboarding: itOnboarding,
+    setup: itSetup,
     widget: itWidget,
     pipelines: itPipelines,
     contacts: itContacts,

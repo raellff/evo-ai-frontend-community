@@ -57,6 +57,7 @@ interface SendMessageOptions {
   isPrivate?: boolean;
   templateParams?: any;
   cannedResponseId?: string | null;
+  isRecordedAudio?: boolean | string[];
 }
 
 const UUID_V4_REGEX =
@@ -312,6 +313,7 @@ const Chat = () => {
     isPrivate,
     cannedResponseId,
     templateParams,
+    isRecordedAudio,
   }: SendMessageOptions) => {
     if (!can('conversations', 'update')) {
       toast.error(t('messages.noPermissionSend'));
@@ -339,6 +341,8 @@ const Chat = () => {
           files,
           isPrivate,
           cannedResponseId,
+          undefined,
+          isRecordedAudio,
         );
       } else {
         await messages.sendMessage(

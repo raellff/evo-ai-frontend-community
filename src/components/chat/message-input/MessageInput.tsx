@@ -27,7 +27,6 @@ import { useCannedResponses } from '@/hooks/chat/useCannedResponses';
 import { useMessageSignature } from '@/hooks/useMessageSignature';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
-import { stripHtml } from '@/utils/stripHtml';
 
 import FileUpload from './FileUpload';
 import FilePreview from './FilePreview';
@@ -40,11 +39,6 @@ import { CannedResponsesList } from '../canned-responses';
 import { RichTextEditor, RichTextEditorRef } from '../rich-text-editor';
 
 import { ReplyMode, Message } from '@/types/chat/api';
-import {
-  attachmentI18nKey,
-  mediaTypeFromAttributes,
-  senderNameFromAttributes,
-} from '@/utils/chat/mediaLabels';
 import type { CannedResponse } from '@/types/knowledge';
 
 import { MessageTemplateModal } from '../message-template';
@@ -57,6 +51,13 @@ interface SendMessageOptions {
   isPrivate?: boolean;
   templateParams?: any;
   cannedResponseId?: string | null;
+  /**
+   * Marks attachments as recorded audio (PTT) for the backend.
+   * - `true`: every attachment in this message is recorded audio (e.g. recorder UI).
+   * - `string[]`: list of filenames within the attachments that are recorded audio
+   *   (used when audio + non-audio files are sent in the same message).
+   */
+  isRecordedAudio?: boolean | string[];
 }
 
 interface MessageInputProps {
@@ -91,16 +92,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const { user } = useAuth();
 
   // Detectar se é WhatsApp Cloud (apenas Cloud, não baileys/evolution/evolution_go)
+  // Usado para features específicas da Cloud API (templates, etc.)
   const isWhatsAppCloud = React.useMemo(() => {
     if (channelType !== 'Channel::Whatsapp') return false;
     const provider = channelProvider?.toLowerCase();
-    const result =
-      provider === 'whatsapp_cloud' || provider === 'default' || !provider || provider === '';
-
-    return result;
+    return provider === 'whatsapp_cloud' || provider === 'default' || !provider || provider === '';
   }, [channelType, channelProvider]);
 
-  // Detectar se é Instagram (também precisa de conversão de áudio WebM para MP3)
+  // Qualquer canal WhatsApp (Cloud, Baileys, Evolution, EvoGo) — usado para conversão de áudio PTT
+  const isWhatsApp = React.useMemo(() => {
+    return channelType === 'Channel::Whatsapp';
+  }, [channelType]);
+
+  // Detectar se é Instagram (também precisa de conversão de áudio WebM para WAV)
   const isInstagram = React.useMemo(() => {
     return channelType === 'Channel::Instagram';
   }, [channelType]);
@@ -267,11 +271,32 @@ const MessageInput: React.FC<MessageInputProps> = ({
         setIsSending(true);
         const isPrivate = replyMode === ReplyMode.NOTE;
 
-        // WhatsApp Cloud e Evolution API: conversão ogg/opus feita no hook (useAudioRecorder).
-        // Instagram ainda precisa de WAV — feito aqui como antes.
+        // Converter áudio para o formato correto por canal:
+        // - WhatsApp (todos os provedores): OGG/Opus para PTT nativo
+        // - Instagram: WAV
         let audioFile = data.file;
-        if (isInstagram && data.file.type === 'audio/webm') {
+        if (isWhatsApp) {
           try {
+            const convertingToastId = toast.loading(t('messageInput.audio.converting'));
+            const { convertToOggOpus } = await import('@/utils/audio/audioConversionUtils');
+            const oggBlob = await convertToOggOpus(data.blob, percent => {
+              toast.loading(`${t('messageInput.audio.converting')} ${percent}%`, {
+                id: convertingToastId,
+              });
+            });
+            toast.dismiss(convertingToastId);
+            const fileName = data.file.name.replace(/\.\w+$/i, '.ogg');
+            audioFile = new File([oggBlob], fileName, { type: 'audio/ogg; codecs=opus' });
+          } catch (conversionError) {
+            console.error('Erro ao converter áudio para OGG/Opus:', conversionError);
+            toast.warning(t('messageInput.audio.conversionWarning'), {
+              description: t('messageInput.audio.conversionWarningDescription'),
+            });
+            // Continuar com o arquivo original em caso de falha na conversão
+          }
+        } else if (isInstagram && data.file.type === 'audio/webm') {
+          try {
+            toast.info(t('messageInput.audio.converting'), { duration: 2000 });
             const { convertToWav } = await import('@/utils/audio/audioConversionUtils');
             const wavBlob = await convertToWav(data.blob);
             const fileName = data.file.name.replace(/\.webm$/i, '.wav');
@@ -284,13 +309,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
           }
         }
 
-        // Enviar arquivo de áudio
+        // Enviar arquivo de áudio (isRecordedAudio sinaliza ao backend para setar PTT/voice)
         await onSendMessage({
           content: '',
           files: [audioFile],
           isPrivate,
           templateParams: undefined,
           cannedResponseId: null,
+          isRecordedAudio: true,
         });
 
         setIsRecordingAudio(false);
@@ -302,7 +328,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         setIsSending(false);
       }
     },
-    [onSendMessage, replyMode, t, isWhatsAppCloud, isInstagram],
+    [onSendMessage, replyMode, t, isWhatsApp, isInstagram],
   );
 
   const handleAudioRecordingCancel = useCallback(() => {
@@ -388,12 +414,50 @@ const MessageInput: React.FC<MessageInputProps> = ({
     setIsSending(true);
 
     try {
+      // Convert uploaded audio files to OGG/Opus for WhatsApp PTT (acceptance criteria:
+      // "Works for in-browser recordings AND uploaded audio files"). Track which
+      // resulting filenames are PTT so the backend marks only those attachments —
+      // important when audio + non-audio files are mixed in the same message.
+      let filesToSend = selectedFiles;
+      const recordedAudioFilenames: string[] = [];
+      if (isWhatsApp && selectedFiles.some(f => f.type.startsWith('audio/'))) {
+        const { convertToOggOpus } = await import('@/utils/audio/audioConversionUtils');
+        filesToSend = await Promise.all(
+          selectedFiles.map(async file => {
+            if (!file.type.startsWith('audio/')) return file;
+            try {
+              const convertingToastId = toast.loading(t('messageInput.audio.converting'));
+              const oggBlob = await convertToOggOpus(file, percent => {
+                toast.loading(`${t('messageInput.audio.converting')} ${percent}%`, {
+                  id: convertingToastId,
+                });
+              });
+              toast.dismiss(convertingToastId);
+              const oggName = file.name.replace(/\.\w+$/i, '.ogg');
+              recordedAudioFilenames.push(oggName);
+              return new File([oggBlob], oggName, {
+                type: 'audio/ogg; codecs=opus',
+              });
+            } catch {
+              toast.warning(t('messageInput.audio.conversionWarning'), {
+                description: t('messageInput.audio.conversionWarningDescription'),
+              });
+              // Fallback: still mark as PTT so Baileys/EvoGo set ptt:true on the
+              // original (non-OGG) audio — Cloud already hardcodes voice:true.
+              recordedAudioFilenames.push(file.name);
+              return file;
+            }
+          }),
+        );
+      }
+
       await onSendMessage({
         content: currentMessage,
-        files: selectedFiles.length > 0 ? selectedFiles : undefined,
+        files: filesToSend.length > 0 ? filesToSend : undefined,
         isPrivate,
         templateParams: undefined,
         cannedResponseId: selectedCannedResponseId,
+        isRecordedAudio: recordedAudioFilenames.length > 0 ? recordedAudioFilenames : undefined,
       });
 
       richEditorRef.current?.clear();
@@ -463,9 +527,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
     [showCannedResponses, filteredCannedResponses, selectedCannedIndex, handleSelectCannedResponse],
   );
 
-  const handleFilesSelected = (files: File[]) => {
+  const handleFilesSelected = useCallback((files: File[]) => {
     setSelectedFiles(prev => [...prev, ...files]);
-    // Toast mais sutil
     const count = files.length;
     toast.success(
       count === 1
@@ -475,7 +538,34 @@ const MessageInput: React.FC<MessageInputProps> = ({
         duration: 2000,
       },
     );
-  };
+  }, [t]);
+
+  // Handle media paste from clipboard (Ctrl+V / Cmd+V)
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      if (isDisabled || isSending) return;
+
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+
+      if (files.length > 0) {
+        event.preventDefault();
+        handleFilesSelected(files);
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [isDisabled, isSending, handleFilesSelected]);
 
   const handleRemoveFile = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
@@ -519,57 +609,49 @@ const MessageInput: React.FC<MessageInputProps> = ({
   `;
 
   // Componente de preview da resposta
-  const ReplyPreview = ({ message, onCancel }: { message: Message; onCancel: () => void }) => {
-    const plainContent = message.content ? stripHtml(message.content) : '';
-    const mediaType = mediaTypeFromAttributes(message.content_attributes);
-    return (
-      <div className="w-full border-t-0 border-x-0 border-b border-border bg-muted/50 px-4 py-3">
-        <div className="flex items-start gap-3">
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Reply className="h-4 w-4" />
-            <span className="font-medium">
-              {t('messageInput.replyPreview.replyingTo', {
-                name:
-                  senderNameFromAttributes(message.content_attributes) ||
-                  message.sender?.name ||
-                  t('messageInput.replyPreview.userFallback'),
-              })}
-              {replyMode === ReplyMode.NOTE && (
-                <span className="ml-1 text-xs text-orange-600 font-normal">
-                  {t('messageInput.replyPreview.asPrivateNote')}
-                </span>
-              )}
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 ml-auto hover:bg-destructive/20 hover:text-destructive"
-            onClick={onCancel}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-        <div className="mt-2 pl-6">
-          <div className="text-sm text-muted-foreground bg-background border-l-2 border-primary/30 pl-3 py-1 rounded-r max-w-md">
-            {plainContent ? (
-              <span className="line-clamp-2">{plainContent}</span>
-            ) : message.attachments && message.attachments.length > 0 ? (
-              <span className="italic">
-                {t(`messageInput.replyPreview.${attachmentI18nKey(message.attachments[0].file_type)}`)}
+  const ReplyPreview = ({ message, onCancel }: { message: Message; onCancel: () => void }) => (
+    <div className="w-full border-t-0 border-x-0 border-b border-border bg-muted/50 px-4 py-3">
+      <div className="flex items-start gap-3">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <Reply className="h-4 w-4" />
+          <span className="font-medium">
+            {t('messageInput.replyPreview.replyingTo', {
+              name: message.sender?.name || t('messageInput.replyPreview.userFallback'),
+            })}
+            {replyMode === ReplyMode.NOTE && (
+              <span className="ml-1 text-xs text-orange-600 font-normal">
+                {t('messageInput.replyPreview.asPrivateNote')}
               </span>
-            ) : mediaType ? (
-              <span className="italic">
-                {t(`messageInput.replyPreview.${attachmentI18nKey(mediaType)}`)}
-              </span>
-            ) : (
-              <span className="italic">{t('messageInput.replyPreview.noContent')}</span>
             )}
-          </div>
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 ml-auto hover:bg-destructive/20 hover:text-destructive"
+          onClick={onCancel}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+      <div className="mt-2 pl-6">
+        <div className="text-sm text-muted-foreground bg-background border-l-2 border-primary/30 pl-3 py-1 rounded-r max-w-md">
+          {message.content ? (
+            <span className="line-clamp-2">{message.content}</span>
+          ) : message.attachments && message.attachments.length > 0 ? (
+            <span className="italic">
+              {t('messageInput.replyPreview.fileAttachment', {
+                fileType:
+                  message.attachments[0].file_type || t('messageInput.replyPreview.fileFallback'),
+              })}
+            </span>
+          ) : (
+            <span className="italic">{t('messageInput.replyPreview.noContent')}</span>
+          )}
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <>
@@ -853,7 +935,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
             onRecordingCancel={handleAudioRecordingCancel}
             disabled={isDisabled || isSending}
             autoStart={true}
-            preferWhatsAppCloudFormat={isWhatsAppCloud}
+            preferWhatsAppCloudFormat={isWhatsApp}
+            shouldPreloadConverter={isWhatsApp}
           />
         </div>
       )}

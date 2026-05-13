@@ -23,6 +23,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { adminConfigService } from '@/services/admin/adminConfigService';
 import { extractError } from '@/utils/apiHelpers';
 import type { MailerType, AdminConfigData } from '@/types/admin/adminConfig';
+import { ClearConfigButton } from '@/components/admin/ClearConfigButton';
 
 // --- Schema factory with i18n ---
 
@@ -487,6 +488,7 @@ export default function SmtpConfig() {
                 {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {testing ? t('email.testing') : t('email.testConnection')}
               </Button>
+              <ClearConfigButton configType="smtp" configLabel="Email / SMTP" onCleared={() => { reset(); loadConfig(); }} />
             </div>
           </form>
         </CardContent>
