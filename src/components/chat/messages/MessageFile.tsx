@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@evoapi/design-system/button';
 import { Download, FileText, File, Image, Music, Video } from 'lucide-react';
+import { toast } from 'sonner';
 import { Attachment } from '@/types/chat/api';
 import { useLanguage } from '@/hooks/useLanguage';
 import { openAttachmentInNewTab } from '@/components/chat/messages/utils/openAttachmentInNewTab';
@@ -22,6 +23,9 @@ const MessageFile: React.FC<MessageFileProps> = ({ attachments }) => {
       const response = await fetch(url, { mode: 'cors' });
       if (!response.ok) {
         console.warn('[MessageFile] non-ok response:', response.status, url);
+        toast.warning(t('messages.messageFile.downloadFallbackOpenedInNewTab'), {
+          description: t('messages.messageFile.downloadFallbackReason.serverError', { status: response.status }),
+        });
         openAttachmentInNewTab({ url, filename });
         return;
       }
@@ -34,6 +38,9 @@ const MessageFile: React.FC<MessageFileProps> = ({ attachments }) => {
       setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
     } catch (err) {
       console.warn('[MessageFile] download fallback after fetch error:', err);
+      toast.warning(t('messages.messageFile.downloadFallbackOpenedInNewTab'), {
+        description: t('messages.messageFile.downloadFallbackReason.network'),
+      });
       openAttachmentInNewTab({ url, filename });
     }
   };

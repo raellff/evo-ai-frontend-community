@@ -60,7 +60,12 @@
     "messageFile": {
       "fileFallback": "file",
       "unknownSize": "Dimensione sconosciuta",
-      "fileFallbackTitle": "File"
+      "fileFallbackTitle": "File",
+      "downloadFallbackOpenedInNewTab": "File aperto in una nuova scheda",
+      "downloadFallbackReason": {
+        "serverError": "Il server ha restituito {{status}} — impossibile scaricare direttamente.",
+        "network": "Errore di rete o blocco CORS — impossibile scaricare direttamente."
+      }
     },
     "messageImage": {
       "downloadStarted": "Download avviato",
