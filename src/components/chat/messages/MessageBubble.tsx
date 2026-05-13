@@ -328,7 +328,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <ReplyPreview message={replyToMessage} isOwn={false} />
               )}
 
-              <div className={isDeleted ? 'opacity-60' : ''}>{renderMessageContent()}</div>
+              {isDeleted ? (
+                <div className="italic text-muted-foreground text-sm opacity-70">
+                  {t('messages.messageBubble.deletedPlaceholder', 'This message was deleted')}
+                </div>
+              ) : (
+                <div>{renderMessageContent()}</div>
+              )}
             </div>,
           )}
 
@@ -489,7 +495,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <ReplyPreview message={replyToMessage} isOwn={isOwn} />
             )}
 
-            <div className={isDeleted ? 'opacity-60' : ''}>{renderMessageContent()}</div>
+            {isDeleted ? (
+                <div className="italic text-muted-foreground text-sm opacity-70">
+                  {t('messages.messageBubble.deletedPlaceholder', 'This message was deleted')}
+                </div>
+              ) : (
+                <div>{renderMessageContent()}</div>
+              )}
           </div>,
         )}
 

@@ -507,6 +507,14 @@ function useChatIntegration() {
           return;
         }
 
+        // Conversation now matches filters but wasn't in the list (e.g. just
+        // assigned to me while viewing "Mine" tab) — add it so the list updates
+        // without requiring a manual refresh.
+        if (matchesFilters && !existsInList) {
+          conversations.addConversation(mergedConversation);
+          return;
+        }
+
         // 🔒 PROTEÇÃO: Se esta conversa está selecionada (foi marcada como lida),
         // preservar o unread_count do estado local em vez de usar o valor do WebSocket
         const isSelected = String(conversations.state.selectedConversationId) === conversationId;
