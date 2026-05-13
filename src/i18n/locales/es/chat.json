@@ -285,7 +285,11 @@
       "assignAgent": "Asignar Agente",
       "assignTeam": "Asignar Equipo",
       "assignTag": "Asignar Etiqueta",
-      "deleteConversation": "Eliminar conversación"
+      "deleteConversation": "Eliminar conversación",
+      "bulkResolveSuccess": "{{count}} conversación(es) resuelta(s)",
+      "bulkResolvePartialSuccess": "{{success}} resuelta(s), {{failed}} fallida(s)",
+      "bulkResolveError": "Error al resolver conversaciones",
+      "bulkResolveNoPermission": "No tienes permiso para resolver conversaciones"
     },
     "contactNoName": "Contacto sin nombre",
     "status": "Estado:",
@@ -297,6 +301,9 @@
     "searchPlaceholder": "Buscar conversaciones...",
     "conversation": "conversación",
     "conversations": "conversaciones",
+    "selectedCount_one": "{{count}} conversación seleccionada",
+    "selectedCount_other": "{{count}} conversaciones seleccionadas",
+    "selectConversation": "Seleccionar conversación",
     "filter": "filtro",
     "filters": "filtros",
     "filtersButton": "Filtros",
