@@ -14,7 +14,7 @@ import {
 } from '@evoapi/design-system';
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from 'sonner';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Check } from 'lucide-react';
 import { templatesService } from '@/services/templates/templatesService';
 import type {
   ExportableInventory,
@@ -112,15 +112,67 @@ export default function ExportWizard({ open, onClose }: Props) {
     }
   };
 
+  const STEP_LABELS: Record<Step, string> = {
+    1: t('export.step1.shortTitle'),
+    2: t('export.step2.shortTitle'),
+    3: t('export.step3.shortTitle'),
+  };
+
+  const renderStepper = () => (
+    <div className="flex items-center justify-center gap-2 py-3">
+      {([1, 2, 3] as Step[]).map((s, idx) => {
+        const isActive = s === step;
+        const isDone = s < step;
+        return (
+          <div key={s} className="flex items-center gap-2">
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                isActive
+                  ? 'bg-primary text-primary-foreground font-medium'
+                  : isDone
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              <span
+                className={`flex items-center justify-center w-5 h-5 rounded-full text-xs ${
+                  isActive
+                    ? 'bg-primary-foreground/20'
+                    : isDone
+                      ? 'bg-emerald-500/30'
+                      : 'bg-background'
+                }`}
+              >
+                {isDone ? <Check className="w-3 h-3" /> : s}
+              </span>
+              <span className="hidden sm:inline">{STEP_LABELS[s]}</span>
+            </div>
+            {idx < 2 && (
+              <div
+                className={`w-6 h-px ${
+                  s < step ? 'bg-emerald-500/50' : 'bg-border'
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('export.title')}</DialogTitle>
-          <DialogDescription>
-            {t(`export.step${step}.title`)} ({step}/3)
-          </DialogDescription>
         </DialogHeader>
+        {renderStepper()}
+        <div className="text-center -mt-2 mb-2">
+          <p className="text-sm font-medium">{t(`export.step${step}.title`)}</p>
+          <p className="text-xs text-muted-foreground">
+            {t('export.stepProgress', { current: step, total: 3 })}
+          </p>
+        </div>
 
         {step === 1 && (
           <div className="space-y-4 py-2">
@@ -208,7 +260,15 @@ export default function ExportWizard({ open, onClose }: Props) {
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row sm:items-center gap-2">
+          {step < 3 && (
+            <p className="text-xs text-muted-foreground sm:mr-auto">
+              {t('export.stepHint', {
+                nextStep: STEP_LABELS[(step + 1) as Step],
+                remaining: 3 - step,
+              })}
+            </p>
+          )}
           {step > 1 && (
             <Button variant="outline" onClick={() => setStep((step - 1) as Step)}>
               {t('export.step2.back')}
@@ -220,6 +280,7 @@ export default function ExportWizard({ open, onClose }: Props) {
               disabled={step === 1 && !name.trim()}
             >
               {t('export.step1.next')}
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
           {step === 3 && (

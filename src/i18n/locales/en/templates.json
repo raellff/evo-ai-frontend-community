@@ -10,8 +10,11 @@
   },
   "export": {
     "title": "Export configuration as template",
+    "stepHint": "Next: {{nextStep}} · {{remaining}} step(s) left",
+    "stepProgress": "Step {{current}} of {{total}}",
     "step1": {
       "title": "Template details",
+      "shortTitle": "Details",
       "name": "Template name",
       "namePlaceholder": "e.g. Clinic — full setup",
       "description": "Description",
@@ -21,6 +24,7 @@
     },
     "step2": {
       "title": "Select what to include",
+      "shortTitle": "Select items",
       "subtitle": "Pick the items you want to bundle. You can mix-and-match across categories.",
       "selectAll": "Select all in this category",
       "noItems": "Nothing to export in this category yet.",
@@ -29,6 +33,7 @@
     },
     "step3": {
       "title": "Review and download",
+      "shortTitle": "Review",
       "summary": "Your bundle will include {{count}} items across {{categoryCount}} categories.",
       "credentialsWarning": "Credentials (API keys, tokens, passwords) will NOT be included. Importers will need to reconfigure channels and AI agents.",
       "back": "Back",
