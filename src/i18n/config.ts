@@ -72,6 +72,8 @@ import ptLayout from './locales/pt/layout.json';
 import ptCommon from './locales/pt/common.json';
 import ptAccountSettings from './locales/pt/accountSettings.json';
 import ptCannedResponses from './locales/pt/cannedResponses.json';
+import ptProducts from './locales/pt/products.json';
+import ptTemplates from './locales/pt/templates.json';
 import ptCustomAttributes from './locales/pt/customAttributes.json';
 import ptLabels from './locales/pt/labels.json';
 import ptMacros from './locales/pt/macros.json';
@@ -166,6 +168,8 @@ import esLayout from './locales/es/layout.json';
 import esCommon from './locales/es/common.json';
 import esAccountSettings from './locales/es/accountSettings.json';
 import esCannedResponses from './locales/es/cannedResponses.json';
+import esProducts from './locales/es/products.json';
+import esTemplates from './locales/es/templates.json';
 import esCustomAttributes from './locales/es/customAttributes.json';
 import esLabels from './locales/es/labels.json';
 import esMacros from './locales/es/macros.json';
@@ -211,6 +215,8 @@ import frLayout from './locales/fr/layout.json';
 import frCommon from './locales/fr/common.json';
 import frAccountSettings from './locales/fr/accountSettings.json';
 import frCannedResponses from './locales/fr/cannedResponses.json';
+import frProducts from './locales/fr/products.json';
+import frTemplates from './locales/fr/templates.json';
 import frCustomAttributes from './locales/fr/customAttributes.json';
 import frLabels from './locales/fr/labels.json';
 import frMacros from './locales/fr/macros.json';
@@ -256,6 +262,8 @@ import itLayout from './locales/it/layout.json';
 import itCommon from './locales/it/common.json';
 import itAccountSettings from './locales/it/accountSettings.json';
 import itCannedResponses from './locales/it/cannedResponses.json';
+import itProducts from './locales/it/products.json';
+import itTemplates from './locales/it/templates.json';
 import itCustomAttributes from './locales/it/customAttributes.json';
 import itLabels from './locales/it/labels.json';
 import itMacros from './locales/it/macros.json';
@@ -395,6 +403,8 @@ const resources = {
     common: ptCommon,
     accountSettings: ptAccountSettings,
     cannedResponses: ptCannedResponses,
+    products: ptProducts,
+    templates: ptTemplates,
     customAttributes: ptCustomAttributes,
     labels: ptLabels,
     macros: ptMacros,
@@ -495,6 +505,8 @@ const resources = {
     common: esCommon,
     accountSettings: esAccountSettings,
     cannedResponses: esCannedResponses,
+    products: esProducts,
+    templates: esTemplates,
     customAttributes: esCustomAttributes,
     labels: esLabels,
     macros: esMacros,
@@ -543,6 +555,8 @@ const resources = {
     common: frCommon,
     accountSettings: frAccountSettings,
     cannedResponses: frCannedResponses,
+    products: frProducts,
+    templates: frTemplates,
     customAttributes: frCustomAttributes,
     labels: frLabels,
     macros: frMacros,
@@ -591,6 +605,7 @@ const resources = {
     common: itCommon,
     accountSettings: itAccountSettings,
     cannedResponses: itCannedResponses,
+    products: itProducts,
     customAttributes: itCustomAttributes,
     labels: itLabels,
     macros: itMacros,

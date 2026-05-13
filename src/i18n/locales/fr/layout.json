@@ -84,6 +84,7 @@
       "conversations": "Conversations",
       "contacts": "Contacts",
       "pipelines": "Pipelines",
+      "products": "Produits",
       "agents": "Agents",
       "channels": "Canaux",
       "automation": "Automatisations",
@@ -107,6 +108,7 @@
       "customAttributes": "Attributs Personnalisés",
       "cannedResponses": "Réponses Rapides",
       "macros": "Macros",
+      "templates": "Modèles",
       "integrations": "Intégrations",
       "accessTokens": "Jetons D'accès",
       "admin": "Paramètres Admin"
