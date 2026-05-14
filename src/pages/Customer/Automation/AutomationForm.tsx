@@ -98,10 +98,7 @@ export default function AutomationForm({ mode }: Props) {
     if (submitting) return;
     setSubmitting(true);
     try {
-      // Cast: AutomationCondition.values is typed as string[] | number[] (homogeneous)
-      // but the Zod schema produces (string | number)[]. Backend accepts mixed; the
-      // type cleanup is deferred per Story 1 audit findings.
-      const payload = data as unknown as Parameters<typeof automationService.createAutomation>[0];
+      const payload = data as Parameters<typeof automationService.createAutomation>[0];
       if (mode === 'create') {
         await automationService.createAutomation(payload);
         toast.success(t('messages.createSuccess'));
