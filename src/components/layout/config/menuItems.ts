@@ -23,6 +23,9 @@ import {
   GraduationCap,
   Shield,
   Package,
+  Filter,
+  Megaphone,
+  Route,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -117,6 +120,20 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     action: 'read',
   },
   {
+    name: t('menu.customer.journeys'),
+    href: '/journeys',
+    icon: Route,
+    resource: 'journeys',
+    action: 'read',
+  },
+  {
+    name: t('menu.customer.campaigns'),
+    href: '/campaigns',
+    icon: Megaphone,
+    resource: 'campaigns',
+    action: 'read',
+  },
+  {
     id: 'customer-agents',
     name: t('menu.customer.agents'),
     href: '/agents/list',
@@ -197,6 +214,13 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         href: '/settings/attributes',
         icon: Code,
         resource: 'custom_attribute_definitions',
+        action: 'read',
+      },
+      {
+        name: t('menu.settings.segments'),
+        href: '/settings/segments',
+        icon: Filter,
+        resource: 'segments',
         action: 'read',
       },
       {

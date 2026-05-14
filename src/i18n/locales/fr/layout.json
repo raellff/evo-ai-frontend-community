@@ -89,7 +89,9 @@
       "channels": "Canaux",
       "automation": "Automatisations",
       "tutorials": "Tutoriels",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "campaigns": "Campagnes",
+      "journeys": "Parcours"
     },
     "contacts": {
       "list": "Contacts",
@@ -111,7 +113,8 @@
       "templates": "Modèles",
       "integrations": "Intégrations",
       "accessTokens": "Jetons D'accès",
-      "admin": "Paramètres Admin"
+      "admin": "Paramètres Admin",
+      "segments": "Segments"
     }
   }
 }
