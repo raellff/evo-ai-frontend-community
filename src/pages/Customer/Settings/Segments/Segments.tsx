@@ -162,7 +162,7 @@ export default function Segments() {
       toast.error(t('messages.permissionDenied.create'));
       return;
     }
-    navigate('/customer/settings/segments/new');
+    navigate('/settings/segments/new');
   };
 
   const handleEditSegment = (segment: Segment) => {
@@ -170,7 +170,7 @@ export default function Segments() {
       toast.error(t('messages.permissionDenied.update'));
       return;
     }
-    navigate(`/customer/settings/segments/${segment.id}/edit`);
+    navigate(`/settings/segments/${segment.id}/edit`);
   };
 
   const handleDeleteSegment = (segment: Segment) => {

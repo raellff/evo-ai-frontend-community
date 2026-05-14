@@ -113,6 +113,7 @@
       "templates": "Modèles",
       "integrations": "Intégrations",
       "accessTokens": "Jetons D'accès",
+      "roles": "Profils et Permissions",
       "admin": "Paramètres Admin",
       "segments": "Segments"
     }

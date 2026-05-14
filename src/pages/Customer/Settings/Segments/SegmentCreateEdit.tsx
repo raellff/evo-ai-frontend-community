@@ -87,7 +87,7 @@ export default function SegmentCreateEdit() {
     } catch (error) {
       console.error('Error loading segment:', error);
       toast.error(t('messages.loadSegmentError'));
-      navigate('/customer/settings/segments');
+      navigate('/settings/segments');
     } finally {
       setLoading(false);
     }
@@ -165,7 +165,7 @@ export default function SegmentCreateEdit() {
         toast.success(t('messages.createSuccess'));
       }
 
-      navigate('/customer/settings/segments');
+      navigate('/settings/segments');
     } catch (error) {
       console.error('Error saving segment:', error);
       toast.error(isEditing ? t('messages.updateError') : t('messages.createError'));
@@ -216,7 +216,7 @@ export default function SegmentCreateEdit() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/customer/settings/segments')}
+              onClick={() => navigate('/settings/segments')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
