@@ -85,6 +85,11 @@ const Chat = () => {
   const urlSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastUrlSyncRef = useRef<string | null>(null);
 
+  const selectedConvIdRef = useRef<string | null>(conversations.state.selectedConversationId ?? null);
+  useEffect(() => {
+    selectedConvIdRef.current = conversations.state.selectedConversationId ?? null;
+  }, [conversations.state.selectedConversationId]);
+
   // 🔄 CARREGAR MAIS MENSAGENS: Função simples via Context
   const handleLoadMore = useCallback(() => {
     if (!conversations.state.selectedConversationId) return;
@@ -436,6 +441,8 @@ const Chat = () => {
     [conversationHandlers],
   );
 
+  // UX decision: after resolve/delete, drop to the unselected list rather than
+  // auto-advancing to the next conversation. Intentional — mirrors the delete flow.
   const clearSelectionAndGoToList = useCallback(async () => {
     isManualNavigationRef.current = true;
     await conversations.selectConversation(null);
@@ -452,15 +459,15 @@ const Chat = () => {
       const resolvedId = String(conversation.uuid || conversation.id);
       try {
         await conversationHandlers.handleMarkAsResolved(conversation, reloadCurrentFilters);
-        const liveSelected = conversations.state.selectedConversationId;
+        const liveSelected = selectedConvIdRef.current;
         if (liveSelected != null && String(liveSelected) === resolvedId) {
           await clearSelectionAndGoToList();
         }
-      } catch {
-        // error already toasted by updateConversationStatus
+      } catch (err) {
+        console.error('[handleMarkAsResolved] failed:', err);
       }
     },
-    [conversationHandlers, reloadCurrentFilters, conversations, clearSelectionAndGoToList],
+    [conversationHandlers, reloadCurrentFilters, clearSelectionAndGoToList],
   );
 
   const handlePostpone = useCallback(

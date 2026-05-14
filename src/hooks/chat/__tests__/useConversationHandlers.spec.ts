@@ -72,33 +72,9 @@ describe('useConversationHandlers', () => {
       );
     });
 
-    it('does not swallow error — caller can gate navigation on success', async () => {
-      mockConversations.updateConversationStatus.mockRejectedValueOnce(new Error('fail'));
-
-      const { result } = renderHook(() => useConversationHandlers());
-
-      let threw = false;
-      try {
-        await result.current.handleMarkAsResolved(baseConversation);
-      } catch {
-        threw = true;
-      }
-
-      expect(threw).toBe(true);
-    });
   });
 
-  describe('handleMarkAsResolved — selected vs non-selected (navigation gating)', () => {
-    it('resolves without throwing when conversation is NOT selected (non-selected path)', async () => {
-      mockConversations.updateConversationStatus.mockResolvedValueOnce({});
-
-      const { result } = renderHook(() => useConversationHandlers());
-
-      await expect(
-        result.current.handleMarkAsResolved(baseConversation),
-      ).resolves.not.toThrow();
-    });
-
+  describe('handleMarkAsResolved — error propagation', () => {
     it('propagates error so Chat.tsx can skip URL navigation on failure', async () => {
       mockConversations.updateConversationStatus.mockRejectedValueOnce(new Error('backend fail'));
 

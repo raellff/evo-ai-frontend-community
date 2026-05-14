@@ -18,8 +18,17 @@ const capturedProps = vi.hoisted(() => ({
   onMarkAsResolved: null as ((conv: Conversation) => Promise<void>) | null,
 }));
 
+const capturedHeaderProps = vi.hoisted(() => ({
+  onMarkAsResolved: null as ((conv: Conversation) => Promise<void>) | null,
+  conversation: null as Conversation | null,
+}));
+
+const mockSelectedConversation = vi.hoisted(() => ({
+  value: null as Conversation | null,
+}));
+
 // ─── react-router-dom ─────────────────────────────────────────────────────────
-const mockNavigate = vi.fn();
+const mockNavigate = vi.hoisted(() => vi.fn());
 
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ conversationId: undefined }),
@@ -58,7 +67,7 @@ vi.mock('@/contexts/chat/ChatContext', () => ({
       loadMoreMessages: vi.fn(),
       state: { messages: [], messagesLoading: false },
     },
-    selectedConversation: null,
+    selectedConversation: mockSelectedConversation.value,
     selectedMessages: [],
   }),
 }));
@@ -125,7 +134,11 @@ vi.mock('@/components/chat/chat-sidebar/ChatSidebar', () => ({
 }));
 
 vi.mock('@/components/chat/chat-header/ChatHeader', () => ({
-  default: () => <div data-testid="chat-header" />,
+  default: (props: any) => {
+    capturedHeaderProps.onMarkAsResolved = props.onMarkAsResolved;
+    capturedHeaderProps.conversation = props.conversation;
+    return <div data-testid="chat-header" />;
+  },
 }));
 
 vi.mock('@/components/chat/chat-area/ChatArea', () => ({
@@ -181,7 +194,10 @@ describe('Chat — handleMarkAsResolved navigation behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedProps.onMarkAsResolved = null;
+    capturedHeaderProps.onMarkAsResolved = null;
+    capturedHeaderProps.conversation = null;
     mockState.selectedConversationId = null;
+    mockSelectedConversation.value = null;
     mockHookResolve.fn.mockResolvedValue(undefined);
     mockSelectConversation.mockResolvedValue(undefined);
   });
@@ -226,6 +242,24 @@ describe('Chat — handleMarkAsResolved navigation behavior', () => {
     });
 
     expect(mockNavigate).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it('clears URL and selection when resolving via ChatHeader (primary resolve path)', async () => {
+    mockState.selectedConversationId = 'uuid-selected';
+    mockSelectedConversation.value = selectedConv;
+
+    const { unmount } = render(<Chat />);
+
+    expect(capturedHeaderProps.conversation).toEqual(selectedConv);
+
+    await act(async () => {
+      await capturedHeaderProps.onMarkAsResolved!(selectedConv);
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/conversations', { replace: true });
+    expect(mockSelectConversation).toHaveBeenCalledWith(null);
 
     unmount();
   });
