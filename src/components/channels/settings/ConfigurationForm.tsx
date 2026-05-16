@@ -501,13 +501,10 @@ const EvolutionWhatsAppConfig: React.FC<{
   const hasGlobalConfig = isEvolutionGo
     ? globalConfig.hasEvolutionGoConfig === true
     : globalConfig.hasEvolutionConfig === true;
-  // Per-field fallback detection — mirrors backend EvolutionConcern which
-  // resolves api_url and admin_token independently (each falls back to
-  // GlobalConfig separately). The banner shows when ANY field uses fallback;
-  // placeholders are conditional per field.
-  const apiUrlUsesGlobal = hasGlobalConfig && !inbox?.provider_config?.api_url;
-  const adminTokenUsesGlobal = hasGlobalConfig && !inbox?.provider_config?.admin_token;
-  const usingGlobalFallback = apiUrlUsesGlobal || adminTokenUsesGlobal;
+  const usingGlobalFallback =
+    hasGlobalConfig &&
+    !inbox?.provider_config?.api_url &&
+    !inbox?.provider_config?.admin_token;
 
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -711,16 +708,31 @@ const EvolutionWhatsAppConfig: React.FC<{
 
     loadInstanceStatus();
 
-    // Poll faster while QR modal is open, slower otherwise
+    // Poll faster while QR modal is open, slower otherwise.
+    // Skip polling when tab is hidden (Page Visibility API) to avoid
+    // wasted requests — pattern from reconnectService.ts:42-47.
     const pollInterval = showQrModal ? 3000 : 15000;
-    const interval = setInterval(loadInstanceStatus, pollInterval);
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        loadInstanceStatus();
+      }
+    }, pollInterval);
+
+    // Resume polling immediately when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadInstanceStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inbox.provider, inbox.provider_config, inbox.name, showQrModal]);
+  }, [inbox.provider, inbox.name, showQrModal]);
 
   const handleGenerateQR = async () => {
     setIsLoading(true);
@@ -1383,7 +1395,7 @@ const EvolutionWhatsAppConfig: React.FC<{
                   onChange={e =>
                     setConnectionSettings(prev => ({ ...prev, apiUrl: e.target.value }))
                   }
-                  placeholder={apiUrlUsesGlobal
+                  placeholder={usingGlobalFallback
                     ? t('settings.configuration.whatsapp.instance.connection.apiUrlGlobalPlaceholder', 'Using global config — fill to override')
                     : t('settings.configuration.whatsapp.instance.connection.apiUrlPlaceholder')}
                 />
@@ -1399,7 +1411,7 @@ const EvolutionWhatsAppConfig: React.FC<{
                   onChange={e =>
                     setConnectionSettings(prev => ({ ...prev, adminToken: e.target.value }))
                   }
-                  placeholder={adminTokenUsesGlobal
+                  placeholder={usingGlobalFallback
                     ? t('settings.configuration.whatsapp.instance.connection.adminTokenGlobalPlaceholder', 'Using global config — fill to override')
                     : t('settings.configuration.whatsapp.instance.connection.adminTokenPlaceholder')}
                 />
