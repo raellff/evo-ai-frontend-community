@@ -1,6 +1,6 @@
 # Extension Points
 
-**Contract version:** `1.0.0` (SemVer)
+**Contract version:** `2.0.0` (SemVer)
 
 This document is the public contract between `evo-ai-frontend-community`
 and any external consumer that wants to plug into it without forking or
@@ -24,8 +24,8 @@ Each extension point is versioned independently and treated as a public
 API, with the same backward-compatibility rules as the REST `/v1/*`
 endpoints exposed by the backend:
 
-- **Backward compatibility is forever.** Once shipped at `v1.0.0`, the
-  name, signature, default and observable behavior of an extension
+- **Backward compatibility is forever.** Once shipped at a given major,
+  the name, signature, default and observable behavior of an extension
   point do not change silently.
 - **Breaking changes require a major bump** of the affected extension
   point and of the community release that ships them. **Renaming or
@@ -64,12 +64,12 @@ notice.
 
 | Token                              | Version | Default                                |
 |------------------------------------|---------|----------------------------------------|
-| `--evo-color-primary-500`          | `1.0.0` | `#00ffa7`                              |
-| `--evo-color-primary-foreground`   | `1.0.0` | `#0b0f14`                              |
-| `--evo-color-accent-500`           | `1.0.0` | `#00ffa7`                              |
-| `--evo-color-background`           | `1.0.0` | `#0b0f14`                              |
-| `--evo-color-foreground`           | `1.0.0` | `#e6f1ec`                              |
-| `--evo-font-sans`                  | `1.0.0` | `Inter, system-ui, sans-serif`         |
+| `--evo-color-primary-500`          | `2.0.0` | `#00ffa7`                              |
+| `--evo-color-primary-foreground`   | `2.0.0` | `#0b0f14`                              |
+| `--evo-color-accent-500`           | `2.0.0` | `#00ffa7`                              |
+| `--evo-color-background`           | `2.0.0` | `#0b0f14`                              |
+| `--evo-color-foreground`           | `2.0.0` | `#e6f1ec`                              |
+| `--evo-font-sans`                  | `2.0.0` | `Inter, system-ui, sans-serif`         |
 
 Override (consumer applies tokens at runtime):
 
@@ -110,6 +110,11 @@ in-memory list and invokes `onBoot` callbacks at the end of app boot.
 `getPlugins()` returns the registered `id`s. The community itself
 registers nothing.
 
+A future evolution that introduces remote / runtime plugin loading
+MUST require a signature or allowlist check at the registry level; the
+in-memory default is not a vehicle for arbitrary remote code execution
+into the user's browser.
+
 Override (consumer registers itself from its entry module):
 
 ```ts
@@ -128,38 +133,39 @@ registerPlugin({
 optional fields to `Plugin` (e.g. additional lifecycle hooks) is a minor
 bump.
 
-### 3. `useFeatureFallback` hook
+### 3. `useCapabilityFallback` hook
 
-Hook that lets the community decide whether to render a feature when no
-external gating implementation is installed. It is **not** a licensing
+Hook that lets the community decide whether to render a capability when
+no external implementation is installed. It is **not** a licensing
 mechanism; it is a fallback used by community components so they can
 render sensible defaults regardless of whether a consumer is attached.
 
 ```ts
-import { useFeatureFallback } from '@evoai/extension-points';
+import { useCapabilityFallback } from '@evoai/extension-points';
 
-function useFeatureFallback(flag: string): boolean;
+function useCapabilityFallback(name: string): boolean;
 ```
 
 **Default behavior.** Always returns `true`. The community ships with no
-feature gating; every flag is considered enabled. The hook exists so
-community components can be written once and behave correctly whether or
-not a consumer replaces the implementation.
+capability gating; every capability is considered enabled. The hook
+exists so community components can be written once and behave correctly
+whether or not a consumer replaces the implementation.
 
 Override (consumer replaces the implementation at module init time):
 
 ```ts
-import { replaceUseFeatureFallback } from '@evoai/extension-points';
+import { replaceUseCapabilityFallback } from '@evoai/extension-points';
 
-replaceUseFeatureFallback((flag) => {
+replaceUseCapabilityFallback((name) => {
   // consumer's own resolution logic
   return true;
 });
 ```
 
-**Breaking-change policy.** Renaming `useFeatureFallback`,
-`replaceUseFeatureFallback` or changing the return type from `boolean`
-is a major bump. Adding optional arguments to the hook is a minor bump.
+**Breaking-change policy.** Renaming `useCapabilityFallback`,
+`replaceUseCapabilityFallback` or changing the return type from
+`boolean` is a major bump. Adding optional arguments to the hook is a
+minor bump.
 
 ### 4. i18n namespace conventions
 
@@ -224,12 +230,12 @@ import { registerPlugin } from '@evoai/extension-points';
 registerPlugin({ id: 'my-consumer' });
 ```
 
-Feature fallback override:
+Capability fallback override:
 
 ```ts
-import { replaceUseFeatureFallback } from '@evoai/extension-points';
+import { replaceUseCapabilityFallback } from '@evoai/extension-points';
 
-replaceUseFeatureFallback(() => true);
+replaceUseCapabilityFallback(() => true);
 ```
 
 i18n bundle:
@@ -250,9 +256,23 @@ field), so that incompatible versions can be detected at install time.
 
 - Backend extension points (Ruby on Rails): see
   [`EXTENSION_POINTS.md` in `evo-ai-crm-community`](https://github.com/evolution-foundation/evo-ai-crm-community/blob/develop/EXTENSION_POINTS.md).
+- Backend extension points (Go core service): see
+  [`EXTENSION_POINTS.md` in `evo-ai-core-service-community`](https://github.com/evolution-foundation/evo-ai-core-service-community/blob/develop/EXTENSION_POINTS.md).
 - The architectural decision behind the SemVer-per-extension-point
   strategy is **ADR13 — Extension Points Versioning Strategy**. The ADR
   is maintained in an internal planning workspace and is not checked
   into this repository; the relevant rules from it are restated in the
   [Compatibility Promise](#compatibility-promise) above so this
   document can be read on its own.
+
+---
+
+## Versioning history
+
+- `2.0.0` — Renamed `useFeatureFallback` /
+  `replaceUseFeatureFallback` to `useCapabilityFallback` /
+  `replaceUseCapabilityFallback`. CSS tokens, plugin registry shape
+  and i18n conventions are unchanged in shape; their per-token
+  versions are bumped to `2.0.0` so the document advertises a single
+  aggregate major.
+- `1.0.0` — Initial contract.
