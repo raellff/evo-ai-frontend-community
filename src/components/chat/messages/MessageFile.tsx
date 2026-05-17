@@ -13,16 +13,47 @@ interface MessageFileProps {
 const MessageFile: React.FC<MessageFileProps> = ({ attachments }) => {
   const { t } = useLanguage('chat');
 
-  const downloadFile = (attachment: Attachment) => {
-    const result = openAttachmentInNewTab({
-      url: attachment.data_url,
-      filename: attachment.fallback_title || t('messages.messageFile.fileFallback'),
-    });
+  // Files above this threshold skip fetch+blob (which loads the entire file
+  // into memory) and use direct browser download instead. 25 MB chosen because
+  // WhatsApp videos regularly exceed 50 MB and would cause OOM on mobile/low-memory.
+  const MAX_BLOB_DOWNLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
 
-    if (result === 'download-fallback') {
-      toast.info(t('messages.messageImage.downloadStarted'), {
-        description: attachment.fallback_title || t('messages.messageFile.fileFallbackTitle'),
+  const downloadFile = async (attachment: Attachment) => {
+    const url = attachment.data_url?.trim();
+    if (!url) return;
+
+    const filename = attachment.fallback_title || t('messages.messageFile.fileFallback');
+
+    // Large files: skip fetch+blob to avoid loading entire file into memory.
+    // Use direct <a download> which streams natively through the browser.
+    if ((attachment.file_size ?? 0) > MAX_BLOB_DOWNLOAD_BYTES) {
+      openAttachmentInNewTab({ url, filename });
+      return;
+    }
+
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) {
+        console.warn('[MessageFile] non-ok response:', response.status, url);
+        toast.warning(t('messages.messageFile.downloadFallbackOpenedInNewTab'), {
+          description: t('messages.messageFile.downloadFallbackReason.serverError', { status: response.status }),
+        });
+        openAttachmentInNewTab({ url, filename });
+        return;
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
+    } catch (err) {
+      console.warn('[MessageFile] download fallback after fetch error:', err);
+      toast.warning(t('messages.messageFile.downloadFallbackOpenedInNewTab'), {
+        description: t('messages.messageFile.downloadFallbackReason.network'),
       });
+      openAttachmentInNewTab({ url, filename });
     }
   };
 

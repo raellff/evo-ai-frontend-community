@@ -6,6 +6,7 @@ import CustomerRoute from './CustomerRoute';
 import SmartRedirect from './SmartRedirect';
 import RouterGuard from '@/guards/RouterGuard';
 import PermissionRoute from './PermissionRoute';
+import { PluginRoutes, type PluginRoute as PluginRouteType } from '@/plugin-host';
 
 import MainLayout from '@/components/layout/MainLayout';
 
@@ -39,7 +40,8 @@ import ScheduledActions from '@/pages/Customer/Contacts/ScheduledActions';
 import { Channels, ChannelSettings, NewChannel } from '@/pages/Customer/Channels';
 const ChatPage = React.lazy(() => import('@/pages/Customer/Chat/ChatPage'));
 
-// import Automation from '../pages/Customer/Automation';
+import Automation from '../pages/Customer/Automation';
+import AutomationForm from '../pages/Customer/Automation/AutomationForm';
 // import AutomationFlowEditor from '../pages/Customer/Automation/AutomationFlowEditor';
 import Pipelines from '@/pages/Customer/Pipelines/Pipelines';
 import PipelineKanban from '@/pages/Customer/Pipelines/PipelineKanban';
@@ -51,6 +53,8 @@ import Labels from '@/pages/Customer/Settings/Labels';
 import CustomAttributes from '@/pages/Customer/Settings/CustomAttributes';
 import CannedResponses from '@/pages/Customer/Settings/CannedResponses';
 import { Macros } from '@/pages/Customer/Settings/Macros';
+import Products from '@/pages/Customer/Settings/Products';
+import Templates from '@/pages/Customer/Settings/Templates/Templates';
 import { Integrations } from '@/pages/Customer/Settings/Integrations';
 import EmailTemplateEditor from '@/pages/Customer/Settings/EmailTemplateEditor';
 import WebhooksPage from '../pages/Customer/Settings/Integrations/WebhooksPage';
@@ -70,6 +74,8 @@ import DashboardAppPage from '../pages/Customer/DashboardApp';
 
 // Páginas admin
 import AdminSettingsLayout from '@/pages/Admin/Settings';
+const RolesList = React.lazy(() => import('@/pages/Admin/Roles/RolesList'));
+const RoleDetail = React.lazy(() => import('@/pages/Admin/Roles/RoleDetail'));
 const SmtpConfig = React.lazy(() => import('@/pages/Admin/Settings/SmtpConfig'));
 const StorageConfig = React.lazy(() => import('@/pages/Admin/Settings/StorageConfig'));
 const SocialLoginConfig = React.lazy(() => import('@/pages/Admin/Settings/SocialLoginConfig'));
@@ -440,13 +446,13 @@ const AppRouter = () => {
             }
           />
 
-          {/* <Route
+          <Route
             path="/automation"
             element={
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="automations" action="read">
+                    <PermissionRoute resource="automation_rules" action="read">
                       <Automation />
                     </PermissionRoute>
                   </MainLayout>
@@ -456,11 +462,41 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/automation/new"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="automation_rules" action="create">
+                      <AutomationForm mode="create" />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/automation/:id/edit"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="automation_rules" action="update">
+                      <AutomationForm mode="edit" />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          {/* <Route
             path="/automation/:id/flow"
             element={
               <PrivateRoute>
                 <CustomerRoute>
-                  <PermissionRoute resource="automations" action="update">
+                  <PermissionRoute resource="automation_rules" action="update">
                     <AutomationFlowEditor />
                   </PermissionRoute>
                 </CustomerRoute>
@@ -574,6 +610,21 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/products"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="products" action="read">
+                      <Products />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/settings/macros"
             element={
               <PrivateRoute>
@@ -581,6 +632,21 @@ const AppRouter = () => {
                   <MainLayout>
                     <PermissionRoute resource="macros" action="read">
                       <Macros />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/templates"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="templates" action="read">
+                      <Templates />
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1130,6 +1196,40 @@ const AppRouter = () => {
           {/* Rotas específicas de canais foram integradas no fluxo unificado do NewChannel */}
           {/* Meta e WhatsApp Cloud agora são parte do componente NewChannel */}
 
+          {/* Roles & Permissions Routes */}
+          <Route
+            path="/settings/roles"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="roles" action="read">
+                      <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                        <RolesList />
+                      </Suspense>
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings/roles/:id"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="roles" action="read">
+                      <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                        <RoleDetail />
+                      </Suspense>
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
           {/* Admin Settings Routes */}
           <Route
             path="/settings/admin"
@@ -1254,6 +1354,28 @@ const AppRouter = () => {
               </PrivateRoute>
             }
           />
+
+          {PluginRoutes({
+            namespace: 'admin',
+            wrap: (element, route: PluginRouteType) => (
+              <PrivateRoute>
+                {route.layout === 'none' ? element : <MainLayout>{element}</MainLayout>}
+              </PrivateRoute>
+            ),
+          })}
+
+          {PluginRoutes({
+            namespace: 'customer',
+            wrap: (element, route: PluginRouteType) => (
+              <PrivateRoute>
+                <CustomerRoute>
+                  {route.layout === 'none' ? element : <MainLayout>{element}</MainLayout>}
+                </CustomerRoute>
+              </PrivateRoute>
+            ),
+          })}
+
+          {PluginRoutes({ namespace: 'public' })}
 
           {/* Rota 404 - Página não encontrada */}
           <Route path="*" element={<NotFound />} />

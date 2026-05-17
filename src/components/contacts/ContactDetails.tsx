@@ -37,10 +37,12 @@ import {
   // CalendarClock,
   GitBranch,
   Merge,
+  Trash,
 } from 'lucide-react';
 // import { ScheduledActionsList } from '@/components/scheduledActions';
 import { Contact } from '@/types/contacts';
 import ContactAvatar from '@/components/chat/contact/ContactAvatar';
+import { formatContactPhone } from '@/utils/contact/formatContactPhone';
 import ContactPipelineItem from '@/components/pipelines/ContactPipelineItem';
 import { toast } from 'sonner';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
@@ -51,6 +53,7 @@ interface ContactDetailsProps {
   contact: Contact | null;
   onEdit: (contact: Contact) => void;
   onStartConversation: (contact: Contact) => void;
+  onDelete?: (contact: Contact) => void;
   onNavigateToContact?: (contactId: string) => void;
   onContactUpdated?: () => void;
 }
@@ -61,6 +64,7 @@ export default function ContactDetails({
   contact,
   onEdit,
   onStartConversation,
+  onDelete,
   onNavigateToContact,
   onContactUpdated,
 }: ContactDetailsProps) {
@@ -228,6 +232,17 @@ export default function ContactDetails({
                   {t('header.mergeContacts')}
                 </Button>
               )}
+              {onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  onClick={() => onDelete(contact)}
+                >
+                  <Trash className="h-4 w-4 mr-2" />
+                  {t('actions.delete')}
+                </Button>
+              )}
             </div>
             <div className="flex items-start gap-3 mb-2">
               <ContactTypeBadge type={contact.type || 'person'} />
@@ -248,7 +263,7 @@ export default function ContactDetails({
               {contact.phone_number && (
                 <div className="flex items-center flex-wrap gap-2 mb-2">
                   <Phone className="h-4 w-4" />
-                  <span>{contact.phone_number}</span>
+                  <span>{formatContactPhone(contact.phone_number)}</span>
                 </div>
               )}
             </div>
@@ -348,7 +363,7 @@ export default function ContactDetails({
                                 </div>
                                 <div className="text-sm text-muted-foreground space-y-1">
                                   {company.email && <div className="truncate">{company.email}</div>}
-                                  {company.phone_number && <div>{company.phone_number}</div>}
+                                  {company.phone_number && <div>{formatContactPhone(company.phone_number)}</div>}
                                 </div>
                               </div>
                               <ContactTypeBadge type="company" />
@@ -407,7 +422,7 @@ export default function ContactDetails({
                                 </div>
                                 <div className="text-sm text-muted-foreground space-y-1">
                                   {person.email && <div className="truncate">{person.email}</div>}
-                                  {person.phone_number && <div>{person.phone_number}</div>}
+                                  {person.phone_number && <div>{formatContactPhone(person.phone_number)}</div>}
                                 </div>
                               </div>
                               <ContactTypeBadge type="person" />
