@@ -37,7 +37,14 @@ endpoints exposed by the backend:
   registry capability or a new namespace.
 - **Bug fixes that preserve the contract are patch bumps.**
 
-Bumping one extension point does not bump the others.
+Bumping one extension point does not bump the others. The single
+exception is an **aggregate major bump**: when the contract as a whole
+crosses a major boundary (for example, the `1.x` → `2.x` rename of the
+extension point vocabulary), every individual point may be republished
+at the new major so the document advertises a single, coherent
+contract version. Aggregate bumps are explicitly called out in the
+[Versioning history](#versioning-history); a per-point minor or patch
+bump never triggers an aggregate bump.
 
 ---
 
