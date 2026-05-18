@@ -150,7 +150,8 @@ export default function OnboardingPage() {
     form.mainChannel !== '' &&
     (form.mainChannel !== t('survey.channel.other') || form.mainChannelOther.trim().length > 0);
 
-  const filledCount = [
+  // Define os campos que compõem as etapas do onboarding
+  const onboardingSteps = [
     form.teamSize,
     form.dailyVolume,
     isChannelValid ? 'ok' : '',
@@ -158,9 +159,11 @@ export default function OnboardingPage() {
     form.biggestPain,
     form.crmExperience,
     form.mainGoal,
-  ].filter(Boolean).length;
+  ] as const;
 
-  const progressPct = Math.round((filledCount / 7) * 100);
+  const filledCount = onboardingSteps.filter(Boolean).length;
+  const totalSteps = onboardingSteps.length;
+  const progressPct = Math.round((filledCount / totalSteps) * 100);
 
   const handleSubmit = async () => {
     if (loading) return;
@@ -303,6 +306,11 @@ export default function OnboardingPage() {
               }}
             >
               <div
+                role="progressbar"
+                aria-valuenow={filledCount}
+                aria-valuemin={0}
+                aria-valuemax={totalSteps}
+                data-testid="progress-bar-fill"
                 style={{
                   height: '3px',
                   background: '#00ffa7',
@@ -312,8 +320,13 @@ export default function OnboardingPage() {
                 }}
               />
             </div>
-            <span style={{ fontSize: '11px', color: '#52525b', whiteSpace: 'nowrap' }}>
-              {filledCount} {t('survey.progress.of')} 6
+            <span
+              style={{ fontSize: '11px', color: '#52525b', whiteSpace: 'nowrap' }}
+              data-testid="progress-text"
+              data-filled={filledCount}
+              data-total={totalSteps}
+            >
+              {filledCount} {t('survey.progress.of')} {totalSteps}
             </span>
           </div>
 
