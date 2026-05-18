@@ -334,6 +334,11 @@ export default function StorageConfig() {
             {/* Cloud storage fields */}
             {isCloud && (
               <>
+                <div role="alert" className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                  <strong className="font-semibold">{t('storage.cloudWarning.title')}</strong>{' '}
+                  {t('storage.cloudWarning.body')}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="STORAGE_BUCKET_NAME">{t('storage.fields.bucketName')}</Label>
                   <Input
