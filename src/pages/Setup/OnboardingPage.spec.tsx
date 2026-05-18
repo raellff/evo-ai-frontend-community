@@ -6,6 +6,8 @@ import OnboardingPage from './OnboardingPage';
 // Mock useLanguage
 vi.mock('@/hooks/useLanguage', () => ({
   useLanguage: () => ({
+    currentLanguage: 'pt-BR',
+    changeLanguage: vi.fn(),
     t: (key: string) => {
       const map: Record<string, string> = {
         'survey.title': 'Configure seu workspace',
@@ -31,6 +33,11 @@ vi.mock('@/hooks/useLanguage', () => ({
         'survey.crm.options': ['Nenhuma', 'Básica', 'Intermediária', 'Avançada'],
         'survey.goal.label': 'Objetivo principal',
         'survey.goal.options': ['Vendas', 'Suporte', 'Marketing', 'Todos'],
+        'language.portuguese': 'Português',
+        'language.english': 'English',
+        'language.spanish': 'Español',
+        'language.french': 'Français',
+        'language.italian': 'Italiano',
       };
       return map[key] || key;
     },
