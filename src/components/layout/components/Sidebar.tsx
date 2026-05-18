@@ -215,6 +215,11 @@ export default function Sidebar({
                 <div className="text-xs text-muted-foreground mt-1">
                   {t('sidebar.footer.copyright', { year: currentYear })}
                 </div>
+                {__APP_VERSION__ !== 'dev' && (
+                  <div className="text-xs text-muted-foreground/70 mt-1">
+                    {__APP_VERSION__}
+                  </div>
+                )}
                 <div className="mt-2 flex flex-col gap-1 text-xs">
                   <a
                     href="https://docs.evolutionfoundation.com.br/"
