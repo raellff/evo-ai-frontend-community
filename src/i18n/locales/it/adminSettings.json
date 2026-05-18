@@ -105,7 +105,11 @@
     "testConnection": "Testa Connessione",
     "testing": "Test in corso...",
     "testFailed": "Test di connessione fallito",
-    "testError": "Impossibile eseguire il test di connessione"
+    "testError": "Impossibile eseguire il test di connessione",
+    "cloudWarning": {
+      "title": "Importante:",
+      "body": "Le credenziali S3 (chiave di accesso, segreto, regione ed endpoint) sono incorporate nella configurazione del servizio all'avvio — modificarle qui richiede il riavvio dei servizi auth e CRM e dei loro worker Sidekiq affinche i nuovi valori abbiano effetto. I file esistenti rimangono nel provider di archiviazione precedente; solo i nuovi caricamenti utilizzeranno la configurazione aggiornata."
+    }
   },
   "socialLogin": {
     "title": "Provider di autenticazione",
