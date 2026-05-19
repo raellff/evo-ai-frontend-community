@@ -213,6 +213,22 @@ const AuthorizationSuccessBanner: React.FC<{
   const { t } = useLanguage('channels');
   const config = useGlobalConfig();
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [isSyncingSubscription, setIsSyncingSubscription] = useState(false);
+
+  const handleSyncWhatsappSubscription = async () => {
+    setIsSyncingSubscription(true);
+    try {
+      await InboxesService.syncWhatsappSubscription(inbox.id);
+      toast.success(t('settings.authorizationBanners.success.subscriptionSynced'));
+    } catch (error: any) {
+      console.error('Error syncing WhatsApp subscription:', error);
+      toast.error(
+        error?.message || t('settings.authorizationBanners.success.subscriptionSyncError'),
+      );
+    } finally {
+      setIsSyncingSubscription(false);
+    }
+  };
 
   const getProviderIcon = () => {
     switch (provider.toLowerCase()) {
@@ -595,22 +611,40 @@ const AuthorizationSuccessBanner: React.FC<{
                   {t('settings.authorizationBanners.success.active')}
                 </Badge>
               </div>
-              {showReconnectButton && (
-                <Button
-                  onClick={() => {
-                    handleReconnect().catch(error => {
-                      console.error('Error in handleReconnect:', error);
-                    });
-                  }}
-                  loading={isReconnecting}
-                  size="sm"
-                  variant="outline"
-                  className="border-primary/30 text-primary hover:bg-primary/10"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  {t('settings.authorizationBanners.success.reconnect')}
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {isWhatsAppCloud && (
+                  <Button
+                    onClick={() => {
+                      handleSyncWhatsappSubscription().catch(error => {
+                        console.error('Error in handleSyncWhatsappSubscription:', error);
+                      });
+                    }}
+                    loading={isSyncingSubscription}
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {t('settings.authorizationBanners.success.syncSubscription')}
+                  </Button>
+                )}
+                {showReconnectButton && (
+                  <Button
+                    onClick={() => {
+                      handleReconnect().catch(error => {
+                        console.error('Error in handleReconnect:', error);
+                      });
+                    }}
+                    loading={isReconnecting}
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {t('settings.authorizationBanners.success.reconnect')}
+                  </Button>
+                )}
+              </div>
             </div>
             {lastConnected && (
               <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
