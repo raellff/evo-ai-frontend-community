@@ -108,7 +108,7 @@
     "testError": "Falha ao executar teste de ligacao",
     "cloudWarning": {
       "title": "Importante:",
-      "body": "As credenciais S3 (chave de acesso, segredo, regiao e endpoint) sao incorporadas na configuracao do servico na inicializacao — altera-las aqui exige reiniciar os servicos auth e CRM e os seus workers Sidekiq para que os novos valores entrem em vigor. Os ficheiros existentes permanecem no fornecedor de armazenamento anterior; apenas novos uploads utilizarao a configuracao atualizada."
+      "body": "As credenciais S3 (chave de acesso, segredo, regiao e endpoint) sao incorporadas na configuracao do servico na inicializacao — altera-las aqui exige reiniciar os servicos auth e CRM e os seus workers Sidekiq para que os novos valores entrem em vigor. Alteracoes no fornecedor podem demorar ate 60 segundos a propagar entre todos os servicos. Os ficheiros existentes permanecem no fornecedor de armazenamento anterior; apenas novos uploads utilizarao a configuracao atualizada."
     }
   },
   "socialLogin": {

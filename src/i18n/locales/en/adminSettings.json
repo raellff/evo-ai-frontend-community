@@ -108,7 +108,7 @@
     "testError": "Failed to run connection test",
     "cloudWarning": {
       "title": "Important:",
-      "body": "S3 credentials (access key, secret, region, endpoint) are embedded in the service configuration at startup — changing them here requires restarting the auth and CRM services and their Sidekiq workers to take effect. Existing files remain on the previous storage provider; only new uploads will use the updated configuration."
+      "body": "S3 credentials (access key, secret, region, endpoint) are embedded in the service configuration at startup — changing them here requires restarting the auth and CRM services and their Sidekiq workers to take effect. Provider changes may take up to 60 seconds to propagate across all services. Existing files remain on the previous storage provider; only new uploads will use the updated configuration."
     }
   },
   "socialLogin": {
