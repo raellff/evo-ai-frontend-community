@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { SessionsViewer } from './SessionsViewer';
 
 vi.mock('@/services', () => ({
@@ -29,6 +29,11 @@ const baseProps = {
   onClose: () => undefined,
 };
 
+function statCount(testId: string) {
+  const card = screen.getByTestId(testId);
+  return within(card).getByText(/^\d+$/).textContent;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -52,11 +57,14 @@ describe('SessionsViewer — defensive stats handling', () => {
     render(<SessionsViewer {...baseProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('12')).toBeTruthy();
+      expect(screen.getByTestId('sessions-stats-grid')).toBeTruthy();
     });
-    expect(screen.getByText('3')).toBeTruthy();
-    expect(screen.getByText('2')).toBeTruthy();
-    expect(screen.getByText('4')).toBeTruthy();
+    expect(statCount('sessions-stat-total')).toBe('12');
+    expect(statCount('sessions-stat-active')).toBe('3');
+    expect(statCount('sessions-stat-waiting')).toBe('2');
+    expect(statCount('sessions-stat-completed')).toBe('4');
+    expect(statCount('sessions-stat-failed')).toBe('1');
+    expect(statCount('sessions-stat-cancelled')).toBe('1');
   });
 
   it('does NOT crash when stats has no byStatus field and renders zeros instead', async () => {
@@ -70,11 +78,11 @@ describe('SessionsViewer — defensive stats handling', () => {
     expect(() => render(<SessionsViewer {...baseProps} />)).not.toThrow();
 
     await waitFor(() => {
-      const zeros = screen.getAllByText('0');
-      // total + 6 status cards (active, waiting, paused doesn't render in JSX
-      // but completed, failed, cancelled do — so 5 zero cards on top of `total`)
-      expect(zeros.length).toBeGreaterThanOrEqual(5);
+      expect(screen.getByTestId('sessions-stats-grid')).toBeTruthy();
     });
+    expect(statCount('sessions-stat-total')).toBe('0');
+    expect(statCount('sessions-stat-active')).toBe('0');
+    expect(statCount('sessions-stat-cancelled')).toBe('0');
   });
 
   it('does NOT crash when stats is an empty object and renders zeros', async () => {
@@ -88,8 +96,10 @@ describe('SessionsViewer — defensive stats handling', () => {
     expect(() => render(<SessionsViewer {...baseProps} />)).not.toThrow();
 
     await waitFor(() => {
-      expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(5);
+      expect(screen.getByTestId('sessions-stats-grid')).toBeTruthy();
     });
+    expect(statCount('sessions-stat-total')).toBe('0');
+    expect(statCount('sessions-stat-failed')).toBe('0');
   });
 
   it('does NOT crash when byStatus is partial (missing some statuses) — missing ones render as 0', async () => {
@@ -106,11 +116,38 @@ describe('SessionsViewer — defensive stats handling', () => {
     expect(() => render(<SessionsViewer {...baseProps} />)).not.toThrow();
 
     await waitFor(() => {
-      // Both `total: 5` and `byStatus.active: 5` render "5"
-      expect(screen.getAllByText('5').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByTestId('sessions-stats-grid')).toBeTruthy();
     });
-    // waiting, completed, failed, cancelled should all be 0
-    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(4);
+    expect(statCount('sessions-stat-total')).toBe('5');
+    expect(statCount('sessions-stat-active')).toBe('5');
+    expect(statCount('sessions-stat-waiting')).toBe('0');
+    expect(statCount('sessions-stat-completed')).toBe('0');
+    expect(statCount('sessions-stat-failed')).toBe('0');
+    expect(statCount('sessions-stat-cancelled')).toBe('0');
+  });
+
+  it('does NOT crash when the legacy envelope shape leaks through (regression: EVO-1254 root cause)', async () => {
+    // Simulates the pre-fix bug: journeyService forgot to unwrap the
+    // `{ success: true, data: ... }` envelope from the evo-flow
+    // ResponseTransformInterceptor. Even if a future regression undoes the
+    // service-side fix, the component MUST not crash — the defensive guards
+    // at the JSX level catch the missing `byStatus`.
+    vi.mocked(journeyService.getJourneySessions).mockResolvedValue({
+      data: { sessions: [], total: 0 },
+    } as never);
+    vi.mocked(journeyService.getJourneySessionStats).mockResolvedValue({
+      data: { success: true, data: { total: 9, byStatus: { active: 9 } } } as never,
+    } as never);
+
+    expect(() => render(<SessionsViewer {...baseProps} />)).not.toThrow();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sessions-stats-grid')).toBeTruthy();
+    });
+    // Counts are all 0 because the leaked envelope hides total/byStatus, but
+    // critically: no crash.
+    expect(statCount('sessions-stat-total')).toBe('0');
+    expect(statCount('sessions-stat-active')).toBe('0');
   });
 
   it('does NOT render the stats grid when the stats request fails (stats stays null)', async () => {
@@ -121,13 +158,10 @@ describe('SessionsViewer — defensive stats handling', () => {
       new Error('boom'),
     );
 
-    const { container } = render(<SessionsViewer {...baseProps} />);
+    render(<SessionsViewer {...baseProps} />);
 
     await waitFor(() => {
-      // The stats grid is conditional on `{stats && ...}` — when load fails,
-      // the grid simply doesn't render. We assert by checking that no
-      // `text-2xl font-bold` count card is in the DOM.
-      expect(container.querySelectorAll('.text-2xl.font-bold')).toHaveLength(0);
+      expect(screen.queryByTestId('sessions-stats-grid')).toBeNull();
     });
   });
 });

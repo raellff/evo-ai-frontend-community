@@ -212,7 +212,12 @@ class JourneyService {
     }
   }
 
-  async getJourneySessionStats(journeyId: string): Promise<{ data: any }> {
+  async getJourneySessionStats(journeyId: string): Promise<{
+    data: {
+      total?: number;
+      byStatus?: Partial<Record<'active' | 'waiting' | 'paused' | 'completed' | 'failed' | 'cancelled', number>>;
+    };
+  }> {
     try {
       const response = await apiEvoFlow.get(`${this.getBaseUrl()}/${journeyId}/sessions/stats`);
       return {

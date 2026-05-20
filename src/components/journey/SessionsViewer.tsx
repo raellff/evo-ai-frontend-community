@@ -41,7 +41,7 @@ interface JourneySession {
   journeyId: string;
   contactId: string;
   accountId: string;
-  status: 'active' | 'waiting' | 'paused' | 'completed' | 'failed' | 'cancelled';
+  status: SessionStatus;
   currentNodeId?: string;
   variables: Record<string, any>;
   context?: Record<string, any>;
@@ -207,27 +207,27 @@ export function SessionsViewer({ journeyId, journeyName, onClose }: SessionsView
 
         {/* Stats Cards */}
         {stats && (
-          <div className="p-6 border-b border-sidebar-border">
+          <div className="p-6 border-b border-sidebar-border" data-testid="sessions-stats-grid">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-              <Card className="bg-sidebar-accent">
+              <Card className="bg-sidebar-accent" data-testid="sessions-stat-total">
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-sidebar-foreground">{stats.total ?? 0}</div>
                   <div className="text-xs text-sidebar-foreground/60 mt-1">{t('sessions.viewer.stats.total')}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-green-500/10 border-green-500/20">
+              <Card className="bg-green-500/10 border-green-500/20" data-testid="sessions-stat-active">
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-green-500">{stats.byStatus?.active ?? 0}</div>
                   <div className="text-xs text-sidebar-foreground/60 mt-1">{t('sessions.viewer.stats.active')}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-blue-500/10 border-blue-500/20">
+              <Card className="bg-blue-500/10 border-blue-500/20" data-testid="sessions-stat-waiting">
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-blue-500">{stats.byStatus?.waiting ?? 0}</div>
                   <div className="text-xs text-sidebar-foreground/60 mt-1">{t('sessions.viewer.stats.waiting')}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-emerald-500/10 border-emerald-500/20">
+              <Card className="bg-emerald-500/10 border-emerald-500/20" data-testid="sessions-stat-completed">
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-emerald-500">
                     {stats.byStatus?.completed ?? 0}
@@ -235,13 +235,13 @@ export function SessionsViewer({ journeyId, journeyName, onClose }: SessionsView
                   <div className="text-xs text-sidebar-foreground/60 mt-1">{t('sessions.viewer.stats.completed')}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-red-500/10 border-red-500/20">
+              <Card className="bg-red-500/10 border-red-500/20" data-testid="sessions-stat-failed">
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-red-500">{stats.byStatus?.failed ?? 0}</div>
                   <div className="text-xs text-sidebar-foreground/60 mt-1">{t('sessions.viewer.stats.failed')}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-gray-500/10 border-gray-500/20">
+              <Card className="bg-gray-500/10 border-gray-500/20" data-testid="sessions-stat-cancelled">
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-gray-500">{stats.byStatus?.cancelled ?? 0}</div>
                   <div className="text-xs text-sidebar-foreground/60 mt-1">{t('sessions.viewer.stats.cancelled')}</div>
