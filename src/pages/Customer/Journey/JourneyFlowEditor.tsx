@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -22,6 +22,13 @@ import { SessionsViewer } from '@/components/journey/SessionsViewer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { formatRelativeTime } from '@/lib/relativeTime';
 import { useRelativeTime } from '@/lib/useRelativeTime';
+import {
+  useFlowEditorStore,
+  registerAutosaveTrigger,
+  type FlowSnapshot,
+} from '@/store/flowEditor/useFlowEditorStore';
+import { loadSnapshot } from '@/store/flowEditor/idbSnapshot';
+import { FlowFeedbackBanner } from '@/components/journey/_ui';
 
 // Importar todos os nodes da jornada por categoria
 import { JourneyTriggerNode } from '@/components/journey/nodes/trigger/JourneyTriggerNode';
@@ -105,17 +112,15 @@ function JourneyFlowEditor() {
 
   const [journey, setJourney] = useState<Journey | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const relativeNow = useRelativeTime(lastSaved);
-  const [journeyVariables, setJourneyVariables] = useState<JourneyVariable[]>([]);
-  const [showSessionsViewer, setShowSessionsViewer] = useState(false);
+  const status = useFlowEditorStore((s) => s.status);
+  const lastSavedAt = useFlowEditorStore((s) => s.lastSavedAt);
+  const lastError = useFlowEditorStore((s) => s.lastError);
+  const recoveryCandidate = useFlowEditorStore((s) => s.recoveryCandidate);
 
-  const currentFlowDataRef = useRef<{ nodes: any[]; edges: any[]; variables?: string[] } | null>(
-    null,
-  );
-  const autoSaveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isSaving = status === 'saving';
+  const hasUnsavedChanges = status !== 'idle';
+  const relativeNow = useRelativeTime(lastSavedAt);
+  const [showSessionsViewer, setShowSessionsViewer] = useState(false);
 
   // Node types mapping para Journey
   const nodeTypes = useMemo(
@@ -487,19 +492,27 @@ function JourneyFlowEditor() {
 
     try {
       setLoading(true);
-      const response = await journeyService.getJourney(id);
+      const [response, recovery] = await Promise.all([
+        journeyService.getJourney(id),
+        loadSnapshot(id),
+      ]);
       setJourney(response);
 
-      // Ensure flowData has proper array structure
       const flowData = response.flowData || {};
-      currentFlowDataRef.current = {
-        nodes: Array.isArray(flowData.nodes) ? flowData.nodes : [],
-        edges: Array.isArray(flowData.edges) ? flowData.edges : [],
+      const serverSnapshot: FlowSnapshot = {
+        nodes: (Array.isArray(flowData.nodes) ? flowData.nodes : []) as never,
+        edges: (Array.isArray(flowData.edges) ? flowData.edges : []) as never,
+        variables: [],
       };
 
-      // Variáveis agora são carregadas via API dedicada (useJourneyVariables)
+      const lastSavedAt = response.updatedAt ? new Date(response.updatedAt) : new Date();
 
-      setLastSaved(new Date());
+      useFlowEditorStore.getState().hydrate({
+        journeyId: id,
+        server: serverSnapshot,
+        lastSavedAt,
+        recovery,
+      });
     } catch (error) {
       console.error('Erro ao carregar jornada:', error);
       toast.error(t('flowEditor.loadError'));
@@ -515,20 +528,18 @@ function JourneyFlowEditor() {
     }
   }, [id, loadJourney]);
 
-  const handleVariablesChange = useCallback(
-    (variables: JourneyVariable[]) => {
-      setJourneyVariables(variables);
-      setHasUnsavedChanges(true);
-    },
-    [id],
-  );
+  const handleVariablesChange = useCallback((variables: JourneyVariable[]) => {
+    useFlowEditorStore.getState().setVariables(variables);
+  }, []);
 
   const saveChanges = useCallback(async () => {
-    if (!journey || !journey.id || !hasUnsavedChanges || isSaving) return;
+    const store = useFlowEditorStore.getState();
+    const snapshot = store.currentSnapshot;
+    if (!journey || !journey.id || !snapshot || store.status === 'saving' || store.status === 'idle') return;
 
-    setIsSaving(true);
+    store.beginSave();
     try {
-      const flowData = currentFlowDataRef.current || { nodes: [], edges: [], variables: [] };
+      const flowData = { nodes: snapshot.nodes, edges: snapshot.edges };
 
       // Extrair triggers dos nodes
       const nodes = Array.isArray(flowData.nodes) ? flowData.nodes : [];
@@ -575,62 +586,42 @@ function JourneyFlowEditor() {
 
       const updatedJourney = {
         ...journey,
-        flowData: flowData,
+        flowData: flowData as Journey['flowData'],
         flowTriggers,
-      };
+      } as Journey;
 
       await journeyService.updateJourney(journey.id, updatedJourney);
       setJourney(updatedJourney);
-      setHasUnsavedChanges(false);
-      setLastSaved(new Date());
+      useFlowEditorStore.getState().commitSave(new Date());
       toast.success(t('flowEditor.saveSuccess'));
     } catch (error) {
       console.error('Erro ao salvar jornada:', error);
-      toast.error(t('flowEditor.saveError'));
-    } finally {
-      setIsSaving(false);
+      const message = error instanceof Error ? error.message : t('flowEditor.saveError');
+      useFlowEditorStore.getState().failSave(message);
     }
-  }, [journey, hasUnsavedChanges, isSaving, journeyVariables]);
+  }, [journey, t]);
 
-  // Auto-save quando variáveis mudarem (com delay)
-  useEffect(() => {
-    if (journeyVariables.length > 0 && hasUnsavedChanges) {
-      const timeoutId = setTimeout(() => {
-        saveChanges();
-      }, 1000);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [journeyVariables, hasUnsavedChanges, saveChanges]);
-
-  // Handle flow data changes
-  const handleFlowDataChange = useCallback((flowData: any) => {
-    const hasChanges = JSON.stringify(currentFlowDataRef.current) !== JSON.stringify(flowData);
-    currentFlowDataRef.current = flowData;
-    if (hasChanges) {
-      setHasUnsavedChanges(true);
-    }
+  const handleFlowDataChange = useCallback((flowData: { nodes: unknown[]; edges: unknown[] }) => {
+    useFlowEditorStore
+      .getState()
+      .setFlow(flowData.nodes as never[], flowData.edges as never[]);
   }, []);
 
-  // Auto-save every 10 seconds
+  // Register the autosave trigger so the store-owned debounced timer can fire
+  // saveChanges when the editor has been dirty for 5s without a new edit.
   useEffect(() => {
-    if (hasUnsavedChanges) {
-      autoSaveIntervalRef.current = setInterval(() => {
-        saveChanges();
-      }, 10000);
-    } else {
-      if (autoSaveIntervalRef.current) {
-        clearInterval(autoSaveIntervalRef.current);
-        autoSaveIntervalRef.current = null;
-      }
-    }
+    return registerAutosaveTrigger(() => {
+      void saveChanges();
+    });
+  }, [saveChanges]);
 
+  // Tear the store down on unmount so a re-mount under a different journeyId
+  // does not see stale state.
+  useEffect(() => {
     return () => {
-      if (autoSaveIntervalRef.current) {
-        clearInterval(autoSaveIntervalRef.current);
-      }
+      useFlowEditorStore.getState().reset();
     };
-  }, [hasUnsavedChanges, saveChanges]);
+  }, []);
 
   const [pendingLeaveTarget, setPendingLeaveTarget] = useState<string | null>(null);
 
@@ -719,7 +710,7 @@ function JourneyFlowEditor() {
         onSave={saveChanges}
         hasUnsavedChanges={hasUnsavedChanges}
         isSaving={isSaving}
-        lastSaved={lastSaved}
+        lastSaved={lastSavedAt}
         saveLabel={t('flowEditor.save')}
         savingLabel={t('flowEditor.saving')}
         savedLabel={t('flowEditor.saved')}
@@ -733,6 +724,47 @@ function JourneyFlowEditor() {
         }
         unsavedChangesHint={t('flowEditor.autoSaveInfo')}
       />
+
+      {status === 'error' && lastError ? (
+        <FlowFeedbackBanner variant="error" className="mx-4 mt-2">
+          <p>{t('flowEditor.saveErrorBanner', { reason: lastError })}</p>
+        </FlowFeedbackBanner>
+      ) : null}
+
+      <AlertDialog
+        open={recoveryCandidate !== null}
+        onOpenChange={(open) => {
+          if (!open) useFlowEditorStore.getState().rejectRecovery();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('flowEditor.recoveryTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {recoveryCandidate
+                ? t('flowEditor.recoveryBody', {
+                    when: formatRelativeTime(recoveryCandidate.timestamp, relativeNow, {
+                      locale: currentLanguage,
+                      justNowLabel: t('flowEditor.lastSavedJustNow'),
+                    }),
+                  })
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => useFlowEditorStore.getState().rejectRecovery()}
+            >
+              {t('flowEditor.discard')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => useFlowEditorStore.getState().acceptRecovery()}
+            >
+              {t('flowEditor.recover')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={pendingLeaveTarget !== null}
