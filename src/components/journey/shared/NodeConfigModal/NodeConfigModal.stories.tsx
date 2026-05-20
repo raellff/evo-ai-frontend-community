@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Webhook } from 'lucide-react';
+import { GitFork, Send, Timer, Webhook } from 'lucide-react';
 import { NodeConfigModal } from './NodeConfigModal';
 
 const meta: Meta<typeof NodeConfigModal> = {
@@ -15,7 +15,10 @@ const meta: Meta<typeof NodeConfigModal> = {
           '(basic/advanced split), or `variant="disclosure"` (body + collapsible advanced ' +
           'settings). Focus trap + ESC + ARIA come from the underlying `@evoapi/design-system` ' +
           'Dialog primitive (Radix). Lifted state mandatory — every prop is controlled by the ' +
-          'consumer; the component itself holds no useState.',
+          'consumer; the component itself holds no useState.\n\n' +
+          'The body / tab / advanced slots below are intentionally abstract placeholders — ' +
+          'real consumers (e.g. EVO-1271 for Trigger Event) pass their own form JSX. This ' +
+          'card only ships the chrome.',
       },
     },
   },
@@ -26,6 +29,10 @@ const meta: Meta<typeof NodeConfigModal> = {
     },
     dirty: { control: 'boolean' },
     loading: { control: 'boolean' },
+    contentClassName: {
+      control: 'text',
+      description: 'Forwarded onto Dialog.Content className. Use for width overrides.',
+    },
   },
 };
 
@@ -33,32 +40,10 @@ export default meta;
 
 type Story = StoryObj<typeof NodeConfigModal>;
 
-function BasicBody() {
+function PlaceholderBody({ label = 'body slot' }: { label?: string }) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium block">Event name</label>
-      <input
-        type="text"
-        defaultValue="contact.created"
-        className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-      />
-      <p className="text-xs text-muted-foreground">
-        Canonical event name from the manifest. Use lowercase dotted form.
-      </p>
-    </div>
-  );
-}
-
-function AdvancedBody() {
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium block">Custom payload filter</label>
-      <textarea
-        rows={3}
-        defaultValue=""
-        placeholder='e.g. payload.priority === "high"'
-        className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm font-mono"
-      />
+    <div className="rounded-md border border-dashed border-flow-panel-divider bg-flow-palette-surface p-6 text-center text-sm text-muted-foreground">
+      <code className="text-xs">[Consumer provides this {label} via props]</code>
     </div>
   );
 }
@@ -75,10 +60,10 @@ export const SimpleDirty: Story = {
         variant="simple"
         title="Send message"
         description="Configure the message that will be sent on this branch."
-        icon={<Webhook className="h-5 w-5 text-flow-node-action-message-fg" />}
+        icon={<Send className="h-5 w-5 text-flow-node-action-message-fg" />}
         dirty
       >
-        <BasicBody />
+        <PlaceholderBody />
       </NodeConfigModal>
     );
   },
@@ -94,18 +79,19 @@ export const SimplePristine: Story = {
         onCancel={() => setOpen(false)}
         onSave={() => setOpen(false)}
         variant="simple"
-        title="Send message"
+        title="Send webhook"
         description="Save stays disabled until the form is dirty."
+        icon={<Webhook className="h-5 w-5 text-flow-node-action-webhook-fg" />}
         dirty={false}
       >
-        <BasicBody />
+        <PlaceholderBody />
       </NodeConfigModal>
     );
   },
 };
 
 export const SimpleLoading: Story = {
-  name: 'Simple — loading (both buttons disabled, spinner on Save)',
+  name: 'Simple — loading (spinner + disabled, "Saving…" for SR)',
   render: function Render() {
     return (
       <NodeConfigModal
@@ -114,11 +100,12 @@ export const SimpleLoading: Story = {
         onSave={() => undefined}
         variant="simple"
         title="Send message"
-        description="Both Save and Cancel are disabled while loading."
+        description="Both Save and Cancel are disabled while loading. Screen readers hear “Saving…”."
+        icon={<Send className="h-5 w-5 text-flow-node-action-message-fg" />}
         dirty
         loading
       >
-        <BasicBody />
+        <PlaceholderBody />
       </NodeConfigModal>
     );
   },
@@ -128,7 +115,6 @@ export const Tabs: Story = {
   name: 'Tabs — basic / advanced',
   render: function Render() {
     const [open, setOpen] = useState(true);
-    const [currentTab, setCurrentTab] = useState('basic');
     return (
       <NodeConfigModal
         open={open}
@@ -136,13 +122,16 @@ export const Tabs: Story = {
         onSave={() => setOpen(false)}
         variant="tabs"
         title="Trigger event"
-        description="Basic settings configure the event; advanced exposes filters."
+        description="Basic + advanced split via Radix Tabs. Tab state is uncontrolled here; pass `value` / `onTabChange` to control it from outside."
+        icon={<GitFork className="h-5 w-5 text-flow-node-trigger-fg" />}
         dirty
-        onTabChange={setCurrentTab}
-        defaultTab={currentTab}
         tabs={[
-          { value: 'basic', label: 'Basic', content: <BasicBody /> },
-          { value: 'advanced', label: 'Advanced', content: <AdvancedBody /> },
+          { value: 'basic', label: 'Basic', content: <PlaceholderBody label="basic tab body" /> },
+          {
+            value: 'advanced',
+            label: 'Advanced',
+            content: <PlaceholderBody label="advanced tab body" />,
+          },
         ]}
       />
     );
@@ -161,10 +150,11 @@ export const Disclosure: Story = {
         variant="disclosure"
         title="Wait condition"
         description="Default fields visible; advanced exposes optional filters."
+        icon={<Timer className="h-5 w-5 text-flow-node-control-fg" />}
         dirty
-        advanced={<AdvancedBody />}
+        advanced={<PlaceholderBody label="advanced disclosure body" />}
       >
-        <BasicBody />
+        <PlaceholderBody label="primary body" />
       </NodeConfigModal>
     );
   },
@@ -180,12 +170,35 @@ export const DisclosureOpen: Story = {
         onSave={() => undefined}
         variant="disclosure"
         title="Wait condition"
+        icon={<Timer className="h-5 w-5 text-flow-node-control-fg" />}
         defaultAdvancedOpen
         advancedLabel="Show fewer fields"
         dirty
-        advanced={<AdvancedBody />}
+        advanced={<PlaceholderBody label="advanced disclosure body" />}
       >
-        <BasicBody />
+        <PlaceholderBody label="primary body" />
+      </NodeConfigModal>
+    );
+  },
+};
+
+export const WideContent: Story = {
+  name: 'Simple — custom width via contentClassName',
+  render: function Render() {
+    const [open, setOpen] = useState(true);
+    return (
+      <NodeConfigModal
+        open={open}
+        onCancel={() => setOpen(false)}
+        onSave={() => setOpen(false)}
+        variant="simple"
+        title="Send webhook"
+        description="contentClassName=max-w-4xl widens the dialog beyond the default max-w-2xl."
+        icon={<Webhook className="h-5 w-5 text-flow-node-action-webhook-fg" />}
+        contentClassName="max-w-4xl"
+        dirty
+      >
+        <PlaceholderBody />
       </NodeConfigModal>
     );
   },

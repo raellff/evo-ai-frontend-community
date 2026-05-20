@@ -26,15 +26,23 @@ export type NodeConfigModalTab = {
 
 type CommonProps = {
   open: boolean;
+  /** Called on ESC, click outside, X button, and Cancel button. Required: consumer controls close. */
   onCancel: () => void;
+  /**
+   * Called when the Save button is clicked. Component does NOT await the returned promise —
+   * consumer is responsible for flipping `loading` true before the async work and false after
+   * (or on error). The component never auto-manages loading state.
+   */
   onSave: () => void | Promise<void>;
   title: string;
+  /** Optional category icon rendered before the title in the header. */
   icon?: ReactNode;
   description?: string;
   loading?: boolean;
   dirty?: boolean;
   saveLabel?: string;
   cancelLabel?: string;
+  /** Forwarded onto Dialog.Content's className via cn(). Useful for width overrides (e.g. max-w-4xl). */
   contentClassName?: string;
 };
 
@@ -86,7 +94,7 @@ export function NodeConfigModal(props: NodeConfigModalProps) {
           'bg-flow-panel-bg p-0 overflow-hidden max-w-2xl',
           contentClassName,
         )}
-        aria-describedby={description ? undefined : undefined}
+        {...(description ? {} : { 'aria-describedby': undefined })}
       >
         <DialogHeader className="bg-flow-panel-header-bg border-b border-flow-panel-divider px-6 py-4 space-y-1">
           <div className="flex items-center gap-3">
@@ -158,7 +166,12 @@ export function NodeConfigModal(props: NodeConfigModalProps) {
             disabled={!dirty || loading}
             className="flex-1 sm:flex-initial h-10"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                <span className="sr-only">Saving…</span>
+              </>
+            ) : null}
             {saveLabel}
           </Button>
         </DialogFooter>

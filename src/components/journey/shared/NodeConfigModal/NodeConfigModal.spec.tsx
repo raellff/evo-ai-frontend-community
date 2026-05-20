@@ -65,7 +65,8 @@ describe('NodeConfigModal — common chrome', () => {
         body
       </NodeConfigModal>,
     );
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    // accessible name during loading is "Saving… Save" because of the sr-only label
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
   });
 
@@ -116,6 +117,45 @@ describe('NodeConfigModal — common chrome', () => {
     );
     expect(screen.getByRole('button', { name: 'Aplicar' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Voltar' })).toBeTruthy();
+  });
+
+  it('renders the icon when provided and omits the slot when undefined', () => {
+    const { rerender } = render(
+      <NodeConfigModal
+        {...baseProps}
+        variant="simple"
+        icon={<svg data-testid="cat-icon" />}
+      >
+        body
+      </NodeConfigModal>,
+    );
+    expect(screen.getByTestId('cat-icon')).toBeTruthy();
+    rerender(
+      <NodeConfigModal {...baseProps} variant="simple">
+        body
+      </NodeConfigModal>,
+    );
+    expect(screen.queryByTestId('cat-icon')).toBeNull();
+  });
+
+  it('calls onCancel when the built-in close button (X) is clicked', async () => {
+    const onCancel = vi.fn();
+    render(
+      <NodeConfigModal {...baseProps} onCancel={onCancel} variant="simple">
+        body
+      </NodeConfigModal>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('announces "Saving…" to assistive tech while loading', () => {
+    render(
+      <NodeConfigModal {...baseProps} variant="simple" dirty loading>
+        body
+      </NodeConfigModal>,
+    );
+    expect(screen.getByText('Saving…')).toBeTruthy();
   });
 });
 
