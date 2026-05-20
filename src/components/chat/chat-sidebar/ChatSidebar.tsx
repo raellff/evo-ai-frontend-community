@@ -144,6 +144,7 @@ const ChatSidebar = ({
         page?: number;
         total_pages?: number;
         has_next_page?: boolean;
+        total?: number;
       } | null;
     };
     getUnreadCount: (conversationId: string) => number;
@@ -979,8 +980,8 @@ const ChatSidebar = ({
         {/* Filter Actions */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {visibleConversations.length}{' '}
-            {visibleConversations.length === 1
+            {(conversations.state.conversationsPagination?.total ?? visibleConversations.length)}{' '}
+            {(conversations.state.conversationsPagination?.total ?? visibleConversations.length) === 1
               ? t('chatSidebar.conversation')
               : t('chatSidebar.conversations')}
           </span>
