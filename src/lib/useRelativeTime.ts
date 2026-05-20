@@ -5,9 +5,9 @@ const MINUTE_MS = 60 * SECOND_MS;
 const HOUR_MS = 60 * MINUTE_MS;
 
 function intervalFor(deltaMs: number): number {
-  if (deltaMs < MINUTE_MS) return 5 * SECOND_MS;
-  if (deltaMs < HOUR_MS) return 30 * SECOND_MS;
-  return 5 * MINUTE_MS;
+  if (deltaMs < MINUTE_MS) return 30 * SECOND_MS;
+  if (deltaMs < HOUR_MS) return 60 * SECOND_MS;
+  return 10 * MINUTE_MS;
 }
 
 export function useRelativeTime(date: Date | null | undefined): Date {

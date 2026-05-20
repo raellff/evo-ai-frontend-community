@@ -41,7 +41,7 @@ import { JourneyEditorHeader } from '@/components/journey/shared/JourneyEditorHe
 />
 ```
 
-`relativeNow` comes from the `useRelativeTime(lastSaved)` hook in `@/lib/useRelativeTime` — it returns a `Date` that ticks at an adaptive cadence (5s when fresher than 1m, 30s up to 1h, 5min beyond), so the rendered text updates by itself without the header holding any state.
+`relativeNow` comes from the `useRelativeTime(lastSaved)` hook in `@/lib/useRelativeTime` — it returns a `Date` that ticks at an adaptive cadence (30s when fresher than 1m, 60s up to 1h, 10min beyond). Cadence is intentionally coarse: lastSaved is a status indicator, not a stopwatch — `agora mesmo` → `há 30 segundos` → `há 1 minuto` → `há 2 minutos` reads as state changes, not as a running clock.
 
 ### Props
 

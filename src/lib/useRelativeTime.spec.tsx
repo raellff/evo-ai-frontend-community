@@ -19,28 +19,32 @@ describe('useRelativeTime', () => {
     expect(result.current.getTime()).toBe(FIXED_NOW.getTime());
   });
 
-  it('ticks every 5s when the date is fresher than 1 minute', () => {
+  it('ticks every 30s when the date is fresher than 1 minute', () => {
     const date = new Date(FIXED_NOW.getTime() - 10_000);
     const { result } = renderHook(() => useRelativeTime(date));
     const initial = result.current.getTime();
     act(() => {
-      vi.advanceTimersByTime(5_000);
+      vi.advanceTimersByTime(15_000);
     });
-    expect(result.current.getTime()).toBe(initial + 5_000);
+    expect(result.current.getTime()).toBe(initial);
+    act(() => {
+      vi.advanceTimersByTime(15_000);
+    });
+    expect(result.current.getTime()).toBe(initial + 30_000);
   });
 
-  it('ticks every 30s when the date is between 1m and 1h old', () => {
+  it('ticks every 60s when the date is between 1m and 1h old', () => {
     const date = new Date(FIXED_NOW.getTime() - 5 * 60 * 1000);
     const { result } = renderHook(() => useRelativeTime(date));
     const initial = result.current.getTime();
     act(() => {
-      vi.advanceTimersByTime(5_000);
+      vi.advanceTimersByTime(30_000);
     });
     expect(result.current.getTime()).toBe(initial);
     act(() => {
-      vi.advanceTimersByTime(25_000);
+      vi.advanceTimersByTime(30_000);
     });
-    expect(result.current.getTime()).toBe(initial + 30_000);
+    expect(result.current.getTime()).toBe(initial + 60_000);
   });
 
   it('does not start the interval when date is null', () => {
