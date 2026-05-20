@@ -944,7 +944,7 @@ const ChatSidebar = ({
       data-tour="chat-sidebar"
       className={`
         ${mobileView === 'list' ? 'flex' : 'hidden'} md:flex
-        w-full ${selectedConversationIds.size > 0 ? 'md:w-96' : 'md:w-80'} border-r bg-card/50 flex-col h-full
+        w-full ${selectedConversationIds.size > 0 ? 'md:w-96' : 'md:w-80'} border-r bg-card/50 flex-col h-full overflow-hidden
       `}
     >
       {/* Search and Filter Header */}
@@ -1063,13 +1063,13 @@ const ChatSidebar = ({
       {/* Conversations List */}
       <div
         ref={sidebarScrollRef}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
         onScroll={handleSidebarScroll}
         data-tour="chat-conversations-list"
       >
         {!conversations ? (
           <ConversationSkeleton count={8} />
-        ) : conversations.state.conversationsLoading || filters.state.isApplyingFilters ? (
+        ) : (conversations.state.conversationsLoading && !isLoadingMoreConversations) || filters.state.isApplyingFilters ? (
           <ConversationSkeleton count={8} />
         ) : conversations.state.conversationsError ? (
           <div className="p-4 text-center">
