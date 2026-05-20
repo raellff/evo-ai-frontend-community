@@ -159,6 +159,7 @@ const ChatSidebar = ({
   const [showArchived, setShowArchived] = useState(false);
   const sidebarScrollRef = useRef<HTMLDivElement | null>(null);
   const loadingMoreRef = useRef(false);
+  const lastScrollTimeRef = useRef<number>(0);
 
   useEffect(() => {
     onClearSelection();
@@ -553,6 +554,9 @@ const ChatSidebar = ({
   const hasNextPage = pagination?.has_next_page ?? currentPage < totalPages;
 
   const handleSidebarScroll = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastScrollTimeRef.current < 150) return;
+
     const container = sidebarScrollRef.current;
     if (!container || loadingMoreRef.current) return;
 
@@ -567,26 +571,25 @@ const ChatSidebar = ({
     const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
     if (distanceToBottom > 120) return;
 
+    // Update throttle timestamp only when we're actually near the bottom and about to load
+    lastScrollTimeRef.current = now;
     loadingMoreRef.current = true;
     setIsLoadingMoreConversations(true);
 
-    // Save scroll position before loading — the re-sort in visibleConversations
-    // causes a DOM restructure that resets scrollTop to 0.
+    // Save position — visibleConversations re-sort after load can reset scrollTop to 0
     const scrollTop = container.scrollTop;
-    const scrollHeight = container.scrollHeight;
 
     try {
       await conversations.loadMoreConversations();
     } finally {
       setIsLoadingMoreConversations(false);
-      loadingMoreRef.current = false;
 
-      // Restore scroll position after React re-renders the appended list
+      // Release lock inside RAF so scroll position is restored before new scroll events can trigger
       requestAnimationFrame(() => {
         if (sidebarScrollRef.current) {
-          const newScrollHeight = sidebarScrollRef.current.scrollHeight;
-          sidebarScrollRef.current.scrollTop = scrollTop + (newScrollHeight - scrollHeight);
+          sidebarScrollRef.current.scrollTop = scrollTop;
         }
+        loadingMoreRef.current = false;
       });
     }
   }, [conversations]);
@@ -595,8 +598,8 @@ const ChatSidebar = ({
     if (loadingMoreRef.current || isLoadingMoreConversations || !hasNextPage) return;
 
     const container = sidebarScrollRef.current;
+    // Save position — visibleConversations re-sort after load can reset scrollTop to 0
     const savedScrollTop = container?.scrollTop ?? 0;
-    const savedScrollHeight = container?.scrollHeight ?? 0;
 
     loadingMoreRef.current = true;
     setIsLoadingMoreConversations(true);
@@ -604,13 +607,13 @@ const ChatSidebar = ({
       await conversations.loadMoreConversations();
     } finally {
       setIsLoadingMoreConversations(false);
-      loadingMoreRef.current = false;
 
+      // Release lock inside RAF so scroll position is restored before new scroll events can trigger
       requestAnimationFrame(() => {
         if (sidebarScrollRef.current) {
-          const newScrollHeight = sidebarScrollRef.current.scrollHeight;
-          sidebarScrollRef.current.scrollTop = savedScrollTop + (newScrollHeight - savedScrollHeight);
+          sidebarScrollRef.current.scrollTop = savedScrollTop;
         }
+        loadingMoreRef.current = false;
       });
     }
   }, [conversations, hasNextPage, isLoadingMoreConversations]);

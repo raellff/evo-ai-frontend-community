@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import ChatSidebar from './ChatSidebar';
@@ -122,6 +122,8 @@ const makePipeline = (
 
 const mockConversation = makeConversation();
 
+let overrideContext: ReturnType<typeof makeMockContext> | null = null;
+
 const makeMockContext = () => ({
   conversations: {
     state: {
@@ -144,7 +146,7 @@ const makeMockContext = () => ({
 });
 
 vi.mock('@/contexts/chat/ChatContext', () => ({
-  useChatContext: () => makeMockContext(),
+  useChatContext: () => overrideContext ?? makeMockContext(),
 }));
 
 const defaultProps = {
@@ -177,6 +179,7 @@ const defaultProps = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  overrideContext = null;
 });
 
 const open3DotPipelineStage = async (
@@ -551,5 +554,143 @@ describe('ChatSidebar pipeline', () => {
         pipeline_stage_id: 'stage-new',
       });
     });
+  });
+});
+
+describe('ChatSidebar scroll pagination (EVO-1407)', () => {
+  const makeScrollContext = (opts?: {
+    loadMoreConversations?: ReturnType<typeof vi.fn>;
+    hasNextPage?: boolean;
+  }) => {
+    const loadMore = opts?.loadMoreConversations ?? vi.fn().mockResolvedValue(undefined);
+    const ctx = makeMockContext();
+    ctx.conversations.state.conversationsPagination = {
+      page: 1,
+      total_pages: 3,
+      has_next_page: opts?.hasNextPage ?? true,
+    };
+    ctx.conversations.loadMoreConversations = loadMore;
+    return { ctx, loadMore };
+  };
+
+  const setScrollProps = (el: HTMLElement, scrollTop: number, scrollHeight: number, clientHeight: number) => {
+    Object.defineProperty(el, 'scrollHeight', { value: scrollHeight, configurable: true });
+    Object.defineProperty(el, 'clientHeight', { value: clientHeight, configurable: true });
+    Object.defineProperty(el, 'scrollTop', { value: scrollTop, configurable: true, writable: true });
+  };
+
+  beforeEach(() => {
+    overrideContext = null;
+    vi.mocked(pipelinesService.getPipelines).mockResolvedValue({ data: [] } as never);
+  });
+
+  afterEach(() => {
+    overrideContext = null;
+  });
+
+  it('renders "Carregar mais" button when has_next_page is true', async () => {
+    const { ctx } = makeScrollContext();
+    overrideContext = ctx;
+    render(<ChatSidebar {...defaultProps} />);
+    expect(await screen.findByRole('button', { name: /carregar mais/i })).toBeInTheDocument();
+  });
+
+  it('does not render "Carregar mais" button when has_next_page is false', () => {
+    const { ctx } = makeScrollContext({ hasNextPage: false });
+    overrideContext = ctx;
+    render(<ChatSidebar {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: /carregar mais/i })).not.toBeInTheDocument();
+  });
+
+  it('calls loadMoreConversations once when "Carregar mais" is clicked (CA-2)', async () => {
+    const { ctx, loadMore } = makeScrollContext();
+    overrideContext = ctx;
+    const user = userEvent.setup();
+    render(<ChatSidebar {...defaultProps} />);
+
+    const btn = await screen.findByRole('button', { name: /carregar mais/i });
+    await user.click(btn);
+
+    await waitFor(() => expect(loadMore).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows skeleton and hides button during load (CA-2 loading state)', async () => {
+    let resolveFn!: () => void;
+    const loadMore = vi.fn().mockReturnValue(new Promise<void>(res => { resolveFn = res; }));
+    const { ctx } = makeScrollContext({ loadMoreConversations: loadMore });
+    overrideContext = ctx;
+
+    const user = userEvent.setup();
+    render(<ChatSidebar {...defaultProps} />);
+
+    const btn = await screen.findByRole('button', { name: /carregar mais/i });
+    await user.click(btn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: /carregar mais/i })).not.toBeInTheDocument();
+      expect(screen.getByTestId('skeleton')).toBeInTheDocument();
+    });
+
+    await act(async () => { resolveFn(); });
+  });
+
+  it('scroll near bottom triggers loadMoreConversations (CA-2)', async () => {
+    const { ctx, loadMore } = makeScrollContext();
+    overrideContext = ctx;
+    render(<ChatSidebar {...defaultProps} />);
+
+    const container = document.querySelector('[data-tour="chat-conversations-list"]') as HTMLElement;
+    // distanceToBottom = 1000 - 550 - 400 = 50 (below 120px threshold)
+    setScrollProps(container, 550, 1000, 400);
+    fireEvent.scroll(container);
+
+    await waitFor(() => expect(loadMore).toHaveBeenCalledTimes(1));
+  });
+
+  it('scroll far from bottom does not trigger load (CA-2 negative)', async () => {
+    const { ctx, loadMore } = makeScrollContext();
+    overrideContext = ctx;
+    render(<ChatSidebar {...defaultProps} />);
+
+    const container = document.querySelector('[data-tour="chat-conversations-list"]') as HTMLElement;
+    // distanceToBottom = 1000 - 0 - 400 = 600 (above 120px threshold)
+    setScrollProps(container, 0, 1000, 400);
+    fireEvent.scroll(container);
+
+    await new Promise(r => setTimeout(r, 50));
+    expect(loadMore).not.toHaveBeenCalled();
+  });
+
+  it('rapid scroll events near bottom only trigger one load (CA-2 throttle + lock)', async () => {
+    const { ctx, loadMore } = makeScrollContext();
+    overrideContext = ctx;
+    render(<ChatSidebar {...defaultProps} />);
+
+    const container = document.querySelector('[data-tour="chat-conversations-list"]') as HTMLElement;
+    setScrollProps(container, 550, 1000, 400);
+
+    fireEvent.scroll(container);
+    fireEvent.scroll(container);
+    fireEvent.scroll(container);
+
+    await waitFor(() => expect(loadMore).toHaveBeenCalledTimes(1));
+    expect(loadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not load more after last page (CA-3)', async () => {
+    const loadMore = vi.fn().mockResolvedValue(undefined);
+    const ctx = makeMockContext();
+    ctx.conversations.state.conversationsPagination = { page: 3, total_pages: 3, has_next_page: false };
+    ctx.conversations.loadMoreConversations = loadMore;
+    overrideContext = ctx;
+    render(<ChatSidebar {...defaultProps} />);
+
+    const container = document.querySelector('[data-tour="chat-conversations-list"]') as HTMLElement;
+    setScrollProps(container, 550, 1000, 400);
+    fireEvent.scroll(container);
+
+    await new Promise(r => setTimeout(r, 50));
+    expect(loadMore).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /carregar mais/i })).not.toBeInTheDocument();
   });
 });
