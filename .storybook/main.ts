@@ -3,6 +3,7 @@ import type { StorybookConfig } from '@storybook/react-vite';
 const config: StorybookConfig = {
   stories: [
     '../src/components/journey/_ui/**/*.stories.@(ts|tsx)',
+    '../src/components/journey/shared/**/*.stories.@(ts|tsx)',
   ],
   addons: [
     '@storybook/addon-a11y',
