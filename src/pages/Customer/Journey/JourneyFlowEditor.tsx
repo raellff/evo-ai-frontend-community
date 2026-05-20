@@ -1,6 +1,16 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@evoapi/design-system';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+} from '@evoapi/design-system';
 import { toast } from 'sonner';
 import { journeyService } from '@/services';
 import type { Journey } from '@/types/automation';
@@ -622,9 +632,16 @@ function JourneyFlowEditor() {
     };
   }, [hasUnsavedChanges, saveChanges]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigate('/journeys');
-  };
+  }, [navigate]);
+
+  // Block navigation away from the editor while there are unsaved changes.
+  // Triggers on Back button, browser back/forward, and any sidebar link click.
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname,
+  );
 
   if (loading) {
     return (
@@ -664,7 +681,6 @@ function JourneyFlowEditor() {
       <JourneyEditorHeader
         onBack={handleBack}
         backLabel={t('flowEditor.back')}
-        backShortcutHint={t('flowEditor.backShortcutHint')}
         title={t('flowEditor.title', { name: journey.name })}
         subtitle={journey.description || undefined}
         onViewSessions={() => setShowSessionsViewer(true)}
@@ -686,8 +702,39 @@ function JourneyFlowEditor() {
           })
         }
         unsavedChangesHint={t('flowEditor.autoSaveInfo')}
-        moreActionsLabel={t('flowEditor.moreActions')}
       />
+
+      <AlertDialog
+        open={blocker.state === 'blocked'}
+        onOpenChange={(open) => {
+          if (!open && blocker.state === 'blocked') blocker.reset();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('flowEditor.unsavedChangesTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('flowEditor.unsavedChangesBody')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                if (blocker.state === 'blocked') blocker.reset();
+              }}
+            >
+              {t('flowEditor.stay')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (blocker.state === 'blocked') blocker.proceed();
+              }}
+            >
+              {t('flowEditor.leaveAnyway')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <BaseFlowEditor
         flowData={flowData}
         isLoading={loading}

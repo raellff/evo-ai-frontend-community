@@ -11,13 +11,15 @@ const meta: Meta<typeof JourneyEditorHeader> = {
     docs: {
       description: {
         component:
-          'Header chrome for the Journey Editor page. 3 zones (navigation / identity / actions), ' +
-          'ESC and Cmd/Ctrl+B keyboard shortcuts for Back (skipped when focus is inside an INPUT / ' +
-          'TEXTAREA / SELECT / contentEditable element OR when a Radix overlay is open), responsive ' +
-          'kebab below 1024px. Lifted state mandatory — every prop is consumer-controlled; the ' +
-          'component holds no useState. The `environmentSlot` is a ReactNode slot for the ' +
-          'EnvironmentManager component (which stays self-contained — not refactored as part of ' +
-          'EVO-1269).',
+          'Header chrome for the Journey Editor page. 3 zones (navigation / identity / actions). ' +
+          'No global keyboard shortcuts — Back navigation is via the visible button only. The ' +
+          'browser-native Alt+← still works for Back through React Router. View sessions collapses ' +
+          'to an icon-only button (with aria-label) below 768px. Lifted state mandatory — every ' +
+          'prop is consumer-controlled; the component holds no useState. The `environmentSlot` is ' +
+          'a ReactNode slot for the EnvironmentManager component (which stays self-contained — not ' +
+          'refactored as part of EVO-1269). The aria-live region wraps the Save button so Save → ' +
+          'Saving… → Saved transitions are announced to assistive tech; the lastSaved timestamp is ' +
+          'intentionally NOT aria-live to avoid re-announcement on every relative-time tick.',
       },
     },
   },
@@ -110,12 +112,10 @@ export const PortugueseLabels: Story = {
   args: {
     ...baseArgs,
     backLabel: 'Voltar',
-    backShortcutHint: 'Esc',
     viewSessionsLabel: 'Ver Sessões',
     saveLabel: 'Salvar',
     savingLabel: 'Salvando…',
     savedLabel: 'Salvo',
-    moreActionsLabel: 'Mais ações',
     unsavedChangesHint: 'Auto-save em 10s',
     hasUnsavedChanges: true,
     lastSaved: new Date(Date.now() - 30_000),

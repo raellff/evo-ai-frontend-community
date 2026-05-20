@@ -28,6 +28,12 @@ describe('JourneyEditorHeader — layout', () => {
     expect(identity.textContent).toContain('Journey Editor: onboarding');
   });
 
+  it('exposes the full title via the title attribute on h1 (fallback when truncated)', () => {
+    const { container } = render(<JourneyEditorHeader {...baseProps} />);
+    const h1 = container.querySelector('[data-zone="identity"] h1')!;
+    expect(h1.getAttribute('title')).toBe('Journey Editor: onboarding');
+  });
+
   it('renders the subtitle paragraph only when a subtitle prop is provided', () => {
     const { container, rerender } = render(<JourneyEditorHeader {...baseProps} />);
     const identity = container.querySelector('[data-zone="identity"]')!;
@@ -83,18 +89,35 @@ describe('JourneyEditorHeader — actions', () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it('exposes the keyboard shortcut as a tooltip on the Back button', () => {
-    render(<JourneyEditorHeader {...baseProps} backLabel="Voltar" backShortcutHint="Esc" />);
-    const back = screen.getByRole('button', { name: /voltar/i });
-    expect(back.getAttribute('title')).toBe('Voltar (Esc)');
-    expect(back.getAttribute('aria-keyshortcuts')).toBe('Escape');
+  it('does NOT install a global keydown listener for ESC or Cmd/Ctrl+B', async () => {
+    const onBack = vi.fn();
+    render(<JourneyEditorHeader {...baseProps} onBack={onBack} />);
+
+    document.body.focus();
+    await userEvent.keyboard('{Escape}');
+    expect(onBack).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Meta>}b{/Meta}');
+    expect(onBack).not.toHaveBeenCalled();
+
+    await userEvent.keyboard('{Control>}b{/Control}');
+    expect(onBack).not.toHaveBeenCalled();
   });
 
-  it('calls onViewSessions when View sessions button is clicked', async () => {
+  it('calls onViewSessions when the inline View sessions button is clicked', async () => {
     const onViewSessions = vi.fn();
     render(<JourneyEditorHeader {...baseProps} onViewSessions={onViewSessions} />);
-    await userEvent.click(screen.getAllByRole('button', { name: /view sessions/i })[0]);
+    const buttons = screen.getAllByRole('button', { name: /view sessions/i });
+    expect(buttons.length).toBeGreaterThan(0);
+    await userEvent.click(buttons[0]);
     expect(onViewSessions).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes a compact icon-only View sessions button at narrow viewports with aria-label', () => {
+    const { container } = render(<JourneyEditorHeader {...baseProps} />);
+    const iconOnly = container.querySelector('[data-zone="actions"] button.md\\:hidden');
+    expect(iconOnly).not.toBeNull();
+    expect(iconOnly!.getAttribute('aria-label')).toBe('View sessions');
   });
 
   it('keeps Save disabled when hasUnsavedChanges is false and shows the Saved label', () => {
@@ -110,11 +133,32 @@ describe('JourneyEditorHeader — actions', () => {
   });
 
   it('disables Save during isSaving and announces the saving label to assistive tech', () => {
-    render(
-      <JourneyEditorHeader {...baseProps} hasUnsavedChanges isSaving />,
-    );
+    render(<JourneyEditorHeader {...baseProps} hasUnsavedChanges isSaving />);
     expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled();
     expect(screen.getByText('Saving…')).toBeTruthy();
+  });
+
+  it('wraps the Save button in an aria-live="polite" region so Save → Saving… → Saved transitions are announced', () => {
+    const { container } = render(<JourneyEditorHeader {...baseProps} hasUnsavedChanges />);
+    const persist = container.querySelector('[data-cluster="persist"]')!;
+    const live = persist.querySelector('[aria-live="polite"]');
+    expect(live).not.toBeNull();
+    expect(live!.querySelector('button')?.textContent?.toLowerCase()).toContain('save');
+  });
+
+  it('does NOT mark the lastSaved timestamp with aria-live (passive status, would re-announce on every tick)', () => {
+    const lastSaved = new Date('2026-05-20T14:30:00Z');
+    const { container } = render(
+      <JourneyEditorHeader
+        {...baseProps}
+        lastSaved={lastSaved}
+        lastSavedFormatter={(d) => `last-saved-${d.toISOString()}`}
+      />,
+    );
+    const liveRegions = container.querySelectorAll('[aria-live="polite"]');
+    for (const region of Array.from(liveRegions)) {
+      expect(region.textContent).not.toMatch(/last-saved-/);
+    }
   });
 
   it('renders the last saved timestamp formatted via consumer formatter when provided', () => {
@@ -131,8 +175,8 @@ describe('JourneyEditorHeader — actions', () => {
 
   it('hides the last saved indicator when lastSaved is null/undefined', () => {
     const { container } = render(<JourneyEditorHeader {...baseProps} />);
-    const actions = container.querySelector('[data-zone="actions"]')!;
-    expect(actions.querySelector('[aria-live="polite"]')).toBeNull();
+    const persist = container.querySelector('[data-cluster="persist"]')!;
+    expect(persist.querySelector('span')).toBeNull();
   });
 
   it('appends the unsavedChangesHint suffix to lastSaved when dirty', () => {
@@ -161,143 +205,12 @@ describe('JourneyEditorHeader — actions', () => {
     );
     expect(screen.queryByText(/Auto-save in 10s/)).toBeNull();
   });
-});
 
-describe('JourneyEditorHeader — keyboard shortcuts', () => {
-  it('calls onBack when the user presses Escape outside an input', async () => {
-    const onBack = vi.fn();
-    render(<JourneyEditorHeader {...baseProps} onBack={onBack} />);
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onBack when the user presses Cmd+B (Meta) outside an input', async () => {
-    const onBack = vi.fn();
-    render(<JourneyEditorHeader {...baseProps} onBack={onBack} />);
-    await userEvent.keyboard('{Meta>}b{/Meta}');
-    expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('calls onBack when the user presses Ctrl+B outside an input', async () => {
-    const onBack = vi.fn();
-    render(<JourneyEditorHeader {...baseProps} onBack={onBack} />);
-    await userEvent.keyboard('{Control>}b{/Control}');
-    expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('does NOT call onBack when Escape is pressed while focus is in an INPUT', async () => {
-    const onBack = vi.fn();
-    render(
-      <>
-        <JourneyEditorHeader {...baseProps} onBack={onBack} />
-        <input data-testid="external-input" />
-      </>,
-    );
-    const input = screen.getByTestId('external-input');
-    input.focus();
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-
-  it('does NOT call onBack when Cmd+B is pressed while focus is in an INPUT', async () => {
-    const onBack = vi.fn();
-    render(
-      <>
-        <JourneyEditorHeader {...baseProps} onBack={onBack} />
-        <input data-testid="external-input" />
-      </>,
-    );
-    const input = screen.getByTestId('external-input');
-    input.focus();
-    await userEvent.keyboard('{Meta>}b{/Meta}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-
-  it('does NOT call onBack when Escape is pressed while focus is in a TEXTAREA', async () => {
-    const onBack = vi.fn();
-    render(
-      <>
-        <JourneyEditorHeader {...baseProps} onBack={onBack} />
-        <textarea data-testid="external-textarea" />
-      </>,
-    );
-    const textarea = screen.getByTestId('external-textarea');
-    textarea.focus();
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-
-  it('does NOT call onBack when Escape is pressed while focus is in a contentEditable element', async () => {
-    const onBack = vi.fn();
-    render(
-      <>
-        <JourneyEditorHeader {...baseProps} onBack={onBack} />
-        <div data-testid="rich-text" contentEditable suppressContentEditableWarning />
-      </>,
-    );
-    const editor = screen.getByTestId('rich-text');
-    editor.focus();
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-
-  it('does NOT call onBack when an open Radix overlay (role=dialog, data-state=open) is present', async () => {
-    const onBack = vi.fn();
-    render(
-      <>
-        <JourneyEditorHeader {...baseProps} onBack={onBack} />
-        <div role="dialog" data-state="open" data-testid="open-dialog" />
-      </>,
-    );
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-
-  it('does NOT call onBack when an open role=menu overlay is present (kebab open)', async () => {
-    const onBack = vi.fn();
-    render(
-      <>
-        <JourneyEditorHeader {...baseProps} onBack={onBack} />
-        <div role="menu" data-state="open" data-testid="open-menu" />
-      </>,
-    );
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-
-  it('cleans up the keydown listener on unmount', async () => {
-    const onBack = vi.fn();
-    const { unmount } = render(<JourneyEditorHeader {...baseProps} onBack={onBack} />);
-    unmount();
-    await userEvent.keyboard('{Escape}');
-    expect(onBack).not.toHaveBeenCalled();
-  });
-});
-
-describe('JourneyEditorHeader — responsive kebab', () => {
-  it('renders a kebab DropdownMenu trigger labeled by moreActionsLabel', () => {
-    render(
-      <JourneyEditorHeader
-        {...baseProps}
-        moreActionsLabel="Mais ações"
-      />,
-    );
-    expect(screen.getByRole('button', { name: 'Mais ações' })).toBeTruthy();
-  });
-
-  it('exposes onViewSessions through the kebab menu item', async () => {
-    const onViewSessions = vi.fn();
-    render(
-      <JourneyEditorHeader
-        {...baseProps}
-        onViewSessions={onViewSessions}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: /more actions/i }));
-    const items = await screen.findAllByRole('menuitem');
-    const viewSessionsItem = items.find((el) => /view sessions/i.test(el.textContent ?? ''));
-    expect(viewSessionsItem).toBeDefined();
-    await userEvent.click(viewSessionsItem!);
-    expect(onViewSessions).toHaveBeenCalledTimes(1);
+  it('renders Back as a prominent outline button (not the lowest-emphasis ghost variant)', () => {
+    render(<JourneyEditorHeader {...baseProps} />);
+    const back = screen.getByRole('button', { name: /back/i });
+    // outline variant has a transparent background + border ring; ghost has no border.
+    expect(back.className).not.toContain('bg-transparent');
+    expect(back.className).toContain('border');
   });
 });
