@@ -47,7 +47,7 @@ describe('JourneyEditorHeader — layout', () => {
     render(
       <JourneyEditorHeader
         {...baseProps}
-        environmentSlot={<button data-testid="env-trigger">Env</button>}
+        environmentSlot={<div data-testid="env-trigger">Env</div>}
       />,
     );
     expect(screen.getByTestId('env-trigger')).toBeTruthy();

@@ -7,6 +7,7 @@ import type { Journey } from '@/types/automation';
 import { useLanguage } from '@/hooks/useLanguage';
 import { BaseFlowEditor, type NodeType, type NodeCategory } from '@/components/base';
 import { EnvironmentManager, type JourneyVariable } from '@/components/journey/environment-manager';
+import { JourneyEditorHeader } from '@/components/journey/shared/JourneyEditorHeader';
 import { SessionsViewer } from '@/components/journey/SessionsViewer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
@@ -82,10 +83,7 @@ import {
   Volume2,
   CheckCircle,
   AlertTriangle,
-  ArrowLeft,
-  Save,
   Clock,
-  Activity,
 } from 'lucide-react';
 
 function JourneyFlowEditor() {
@@ -660,96 +658,50 @@ function JourneyFlowEditor() {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Usar BaseFlowEditor com todas as configurações da jornada */}
-      <BaseFlowEditor
-        // Configurações básicas
+      <JourneyEditorHeader
+        onBack={handleBack}
+        backLabel={t('flowEditor.back')}
         title={t('flowEditor.title', { name: journey.name })}
         subtitle={journey.description || t('flowEditor.subtitleFallback')}
-        // Dados do flow
+        onViewSessions={() => setShowSessionsViewer(true)}
+        viewSessionsLabel="Ver Sessões"
+        environmentSlot={<EnvironmentManager journeyId={id} />}
+        onSave={saveChanges}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isSaving={isSaving}
+        lastSaved={lastSaved}
+        saveLabel={t('flowEditor.save')}
+        savingLabel={t('flowEditor.saving')}
+        savedLabel={t('flowEditor.saved')}
+        lastSavedFormatter={(date) =>
+          t('flowEditor.lastSaved', { time: date.toLocaleTimeString() })
+        }
+      />
+      <BaseFlowEditor
+        title={t('flowEditor.title', { name: journey.name })}
+        subtitle={journey.description || t('flowEditor.subtitleFallback')}
         flowData={flowData}
         isLoading={loading}
         isSaving={isSaving}
-        // Callbacks
         onSave={saveChanges}
         onFlowDataChange={handleFlowDataChange}
-        // Configurações de auto-save
         autoSave={true}
         autoSaveInterval={10000}
-        // Configurações visuais
-        showHeader={true}
+        showHeader={false}
         showToolbar={false}
-        // Header customizado com botão à esquerda
-        headerLeftActions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('flowEditor.back')}
-          </Button>
-        }
-        // Ações à direita do header
-        headerActions={
-          <div className="flex items-center gap-3">
-            {/* Status de auto-save */}
-            <div className="flex items-center gap-2 text-xs text-sidebar-foreground/60">
-              <Clock className="h-3 w-3" />
-              {lastSaved && (
-                <span>
-                  {t('flowEditor.lastSaved', { time: lastSaved.toLocaleTimeString() })}
-                  {hasUnsavedChanges && ` • ${t('flowEditor.autoSaveInfo')}`}
-                </span>
-              )}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSessionsViewer(true)}
-              className="flex items-center gap-2"
-            >
-              <Activity className="h-4 w-4" />
-              Ver Sessões
-            </Button>
-
-            <EnvironmentManager journeyId={id} />
-
-            <Button
-              variant={hasUnsavedChanges ? 'default' : 'outline'}
-              size="sm"
-              onClick={saveChanges}
-              disabled={isSaving || !hasUnsavedChanges}
-              className="min-w-[100px]"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving
-                ? t('flowEditor.saving')
-                : hasUnsavedChanges
-                  ? t('flowEditor.save')
-                  : t('flowEditor.saved')}
-            </Button>
-          </div>
-        }
-        // Configurações específicas da jornada para o BaseFlowCanvas
         nodeTypes={nodeTypes}
         renderConfigPanel={renderConfigPanel}
-        // Configurações do NodePanel integrado
         nodePanelNodeTypes={nodePanelNodeTypes}
         nodePanelCategories={nodePanelCategories}
         nodePanelTitle={t('flowEditor.nodePanel.title')}
         nodePanelSubtitle={t('flowEditor.nodePanel.subtitle')}
-        // Configurações ReactFlow
         showMiniMap={true}
         showControls={true}
         showBackground={true}
         backgroundVariant="dots"
         miniMapNodeColors={miniMapNodeColors}
-        // Helper lines e configurações avançadas
         customHelperLines={true}
         configPanelSystem={true}
-        // Classes CSS
         className="h-full bg-sidebar"
         canvasWrapperClassName="flex-1"
       />
