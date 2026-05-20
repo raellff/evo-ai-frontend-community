@@ -98,6 +98,7 @@ function JourneyFlowEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const relativeNow = useRelativeTime(lastSaved);
   const [journeyVariables, setJourneyVariables] = useState<JourneyVariable[]>([]);
   const [showSessionsViewer, setShowSessionsViewer] = useState(false);
 
@@ -657,8 +658,6 @@ function JourneyFlowEditor() {
         : initialNodes,
     edges: Array.isArray(journey.flowData?.edges) ? journey.flowData.edges : initialEdges,
   };
-
-  const relativeNow = useRelativeTime(lastSaved);
 
   return (
     <div className="h-screen flex flex-col">
