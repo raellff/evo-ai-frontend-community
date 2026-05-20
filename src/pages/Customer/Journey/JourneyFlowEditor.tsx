@@ -8,6 +8,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { BaseFlowEditor, type NodeType, type NodeCategory } from '@/components/base';
 import { EnvironmentManager, type JourneyVariable } from '@/components/journey/environment-manager';
 import { SessionsViewer } from '@/components/journey/SessionsViewer';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Importar todos os nodes da jornada por categoria
 import { JourneyTriggerNode } from '@/components/journey/nodes/trigger/JourneyTriggerNode';
@@ -87,7 +88,7 @@ import {
   Activity,
 } from 'lucide-react';
 
-export default function JourneyFlowEditor() {
+function JourneyFlowEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage('journey');
@@ -781,5 +782,13 @@ export default function JourneyFlowEditor() {
         />
       )}
     </div>
+  );
+}
+
+export default function JourneyFlowEditorPage() {
+  return (
+    <ErrorBoundary>
+      <JourneyFlowEditor />
+    </ErrorBoundary>
   );
 }
