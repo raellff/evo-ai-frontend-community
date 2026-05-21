@@ -122,10 +122,40 @@ function scheduleIdbWrite(journeyId: string, snapshot: FlowSnapshot): void {
   }, IDB_DEBOUNCE_MS);
 }
 
+/**
+ * Strip volatile fields that xyflow attaches at render time. These reflect
+ * pure UI state (selection ring, DOM measurements, in-flight drag), NOT a
+ * user-intended edit, so they must not contribute to dirty detection nor
+ * be persisted to the server. Persisting `selected:true` was particularly
+ * harmful — every saved node came back selected on the next load, which
+ * fired a `select` change, which the snapshot diff treated as a real
+ * edit, which marked the editor dirty before the user touched anything.
+ */
+export function stripVolatileNodeFields(node: Node): Node {
+  const {
+    selected: _selected,
+    measured: _measured,
+    dragging: _dragging,
+    ...rest
+  } = node as Node & { measured?: unknown; dragging?: unknown };
+  return rest as Node;
+}
+
+export function normalizeNodesForPersist(nodes: Node[]): Node[] {
+  return nodes.map(stripVolatileNodeFields);
+}
+
+function normalizeSnapshotForCompare(s: FlowSnapshot): FlowSnapshot {
+  return { ...s, nodes: normalizeNodesForPersist(s.nodes) };
+}
+
 function snapshotsEqual(a: FlowSnapshot | null, b: FlowSnapshot | null): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
-  return JSON.stringify(a) === JSON.stringify(b);
+  return (
+    JSON.stringify(normalizeSnapshotForCompare(a)) ===
+    JSON.stringify(normalizeSnapshotForCompare(b))
+  );
 }
 
 function armAutosaveTimer(): void {
