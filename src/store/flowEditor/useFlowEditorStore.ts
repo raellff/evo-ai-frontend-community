@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 import type { Node, Edge } from '@xyflow/react';
-import type { JourneyVariable } from '@/components/journey/environment-manager';
 import { saveSnapshot, clearSnapshot, type StoredFlowSnapshot } from './idbSnapshot';
 import { persistLastSavedAt } from './lastSavedMark';
 
+/**
+ * The store tracks only `nodes` + `edges`. Journey variables live in their
+ * own persistence path (`useJourneyVariables` hook + `EnvironmentManager`).
+ * Earlier iterations of this store also tracked variables, but they were
+ * never wired into the save payload nor hydrated from the server — the
+ * result was false recovery prompts when only the (ignored) variables
+ * field diverged. Keep that responsibility out of here.
+ */
 export type FlowSnapshot = {
   nodes: Node[];
   edges: Edge[];
-  variables: JourneyVariable[];
 };
 
 export type FlowEditorStatus = 'idle' | 'dirty' | 'saving' | 'error';
@@ -46,7 +52,6 @@ export type FlowEditorState = {
 
   // User edits
   setFlow: (nodes: Node[], edges: Edge[]) => void;
-  setVariables: (variables: JourneyVariable[]) => void;
 
   // Save lifecycle (driven by consumer — store provides transitions only)
   beginSave: () => void;
@@ -116,7 +121,6 @@ function scheduleIdbWrite(journeyId: string, snapshot: FlowSnapshot): void {
     void saveSnapshot(journeyId, {
       nodes: snapshot.nodes,
       edges: snapshot.edges,
-      variables: snapshot.variables,
     });
     idbWriteTimerId = null;
   }, IDB_DEBOUNCE_MS);
@@ -263,7 +267,6 @@ export const useFlowEditorStore = create<FlowEditorState>((set, get) => {
     },
 
     setFlow: (nodes, edges) => applyEdit({ nodes, edges }),
-    setVariables: (variables) => applyEdit({ variables }),
 
     beginSave: () => {
       clearAutosaveTimer();
