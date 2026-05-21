@@ -18,8 +18,6 @@ export interface HubConnectButtonProps {
   channelType: 'whatsapp_cloud' | 'facebook_page' | 'instagram';
   /** Inbox name chosen by the operator in the form before this step. */
   name: string;
-  /** Account scope for the inbox endpoint. */
-  accountId: number;
   /** Optional callback fired after the inbox is created (and the link opened). */
   onCreated?: (payload: { inboxId: number; publicLink: string }) => void;
 }
@@ -35,7 +33,6 @@ interface InboxCreateResponse {
 export default function HubConnectButton({
   channelType,
   name,
-  accountId,
   onCreated,
 }: HubConnectButtonProps) {
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +47,7 @@ export default function HubConnectButton({
     setSubmitting(true);
     try {
       const response = await api.post<InboxCreateResponse>(
-        `/api/v2/accounts/${accountId}/inboxes`,
+        `/api/v1/inboxes`,
         {
           via_hub: true,
           inbox: { name: name.trim(), channel_type: channelType },
