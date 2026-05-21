@@ -26,6 +26,14 @@ export type FlowEditorState = {
   serverSnapshot: FlowSnapshot | null;
   currentSnapshot: FlowSnapshot | null;
   recoveryCandidate: { snapshot: FlowSnapshot; timestamp: Date } | null;
+  /**
+   * Monotonic counter that increments every time `acceptRecovery` lands a
+   * recovered snapshot. Consumers can use it as a React `key` to force the
+   * canvas to remount and re-seed `useNodesState(initialNodes)` — `xyflow`
+   * is uncontrolled internally, so updating `currentSnapshot` alone does
+   * NOT propagate the recovered nodes to the canvas without a remount.
+   */
+  recoveryEpoch: number;
 
   // Lifecycle
   hydrate: (params: {
@@ -173,6 +181,7 @@ export const useFlowEditorStore = create<FlowEditorState>((set, get) => {
     serverSnapshot: null,
     currentSnapshot: null,
     recoveryCandidate: null,
+    recoveryEpoch: 0,
 
     hydrate: ({ journeyId, server, lastSavedAt, recovery }) => {
       clearAutosaveTimer();
@@ -201,6 +210,7 @@ export const useFlowEditorStore = create<FlowEditorState>((set, get) => {
         serverSnapshot: server,
         currentSnapshot: server,
         recoveryCandidate,
+        recoveryEpoch: 0,
       });
     },
 
@@ -218,6 +228,7 @@ export const useFlowEditorStore = create<FlowEditorState>((set, get) => {
         serverSnapshot: null,
         currentSnapshot: null,
         recoveryCandidate: null,
+        recoveryEpoch: 0,
       });
     },
 
@@ -313,6 +324,7 @@ export const useFlowEditorStore = create<FlowEditorState>((set, get) => {
         recoveryCandidate: null,
         lastError: null,
         retryScheduled: false,
+        recoveryEpoch: state.recoveryEpoch + 1,
       });
 
       // The recovery snapshot is already in IDB (we read it from there).

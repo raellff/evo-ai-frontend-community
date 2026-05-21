@@ -137,6 +137,7 @@ function JourneyFlowEditor() {
   const lastError = useFlowEditorStore((s) => s.lastError);
   const retryScheduled = useFlowEditorStore((s) => s.retryScheduled);
   const recoveryCandidate = useFlowEditorStore((s) => s.recoveryCandidate);
+  const recoveryEpoch = useFlowEditorStore((s) => s.recoveryEpoch);
 
   const isSaving = status === 'saving';
   const hasUnsavedChanges = status !== 'idle';
@@ -839,6 +840,7 @@ function JourneyFlowEditor() {
         </AlertDialogContent>
       </AlertDialog>
       <BaseFlowEditor
+        key={`flow-canvas-${recoveryEpoch}`}
         flowData={flowData}
         isLoading={loading}
         isSaving={isSaving}
