@@ -389,26 +389,31 @@ export function BaseFlowCanvas({
   // dirty/autosave/IDB pipeline would stay clean despite a real change in
   // a panel field. Wire the callbacks here so the data path matches what
   // `handleNodesChange` does for canvas-level edits.
+  //
+  // IMPORTANT: side effects (onFlowDataChange / onFlowDataChangeExtended)
+  // run AFTER setNodes returns, NOT inside the updater callback. Updaters
+  // must be pure — React (and StrictMode in particular) double-invokes
+  // them in dev to surface non-idempotency, which would cause the store
+  // notifications to fire twice. This mirrors the pattern used by
+  // `handleNodesChange` above.
   const updateNode = useCallback(
     (nodeId: string, newData: any) => {
-      setNodes(nds => {
-        const updated = nds.map(node =>
-          node.id === nodeId ? { ...node, data: newData } : node,
-        );
-        if (onFlowDataChange) {
-          onFlowDataChange(updated, edges);
-        }
-        if (onFlowDataChangeExtended) {
-          onFlowDataChangeExtended({
-            nodes: updated,
-            edges,
-            variables: flowVariables,
-          });
-        }
-        return updated;
-      });
+      const updated = nodes.map(node =>
+        node.id === nodeId ? { ...node, data: newData } : node,
+      );
+      setNodes(updated);
+      if (onFlowDataChange) {
+        onFlowDataChange(updated, edges);
+      }
+      if (onFlowDataChangeExtended) {
+        onFlowDataChangeExtended({
+          nodes: updated,
+          edges,
+          variables: flowVariables,
+        });
+      }
     },
-    [setNodes, onFlowDataChange, onFlowDataChangeExtended, edges, flowVariables],
+    [nodes, setNodes, onFlowDataChange, onFlowDataChangeExtended, edges, flowVariables],
   );
 
   // Controle de conexões
