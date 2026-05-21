@@ -523,6 +523,54 @@ describe('useFlowEditorStore — recovery', () => {
     expect(state.recoveryCandidate).toBeNull();
   });
 
+  it('acceptRecovery increments recoveryEpoch so consumers can force canvas remount', () => {
+    const recoveryRecord: StoredFlowSnapshot = {
+      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
+    };
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: recoveryRecord,
+    });
+
+    expect(useFlowEditorStore.getState().recoveryEpoch).toBe(0);
+
+    useFlowEditorStore.getState().acceptRecovery();
+    expect(useFlowEditorStore.getState().recoveryEpoch).toBe(1);
+
+    // Hydrating with a fresh recovery candidate resets to 0; accepting it
+    // increments again. Counter is monotonic per editor session, not globally.
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: recoveryRecord,
+    });
+    expect(useFlowEditorStore.getState().recoveryEpoch).toBe(0);
+
+    useFlowEditorStore.getState().acceptRecovery();
+    expect(useFlowEditorStore.getState().recoveryEpoch).toBe(1);
+  });
+
+  it('rejectRecovery does NOT bump recoveryEpoch — canvas should not remount', () => {
+    const recoveryRecord: StoredFlowSnapshot = {
+      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
+    };
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: recoveryRecord,
+    });
+
+    expect(useFlowEditorStore.getState().recoveryEpoch).toBe(0);
+    useFlowEditorStore.getState().rejectRecovery();
+    expect(useFlowEditorStore.getState().recoveryEpoch).toBe(0);
+  });
+
   it('rejectRecovery clears IDB and drops the candidate', async () => {
     await saveSnapshot('journey-1', {
       nodes: editedSnapshotNodes,
