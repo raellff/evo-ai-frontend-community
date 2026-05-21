@@ -209,9 +209,10 @@ describe('useFlowEditorStore — save lifecycle', () => {
       variables: [],
     });
 
+    const syncedSnapshot = useFlowEditorStore.getState().currentSnapshot!;
     useFlowEditorStore.getState().beginSave();
     const savedAt = new Date('2026-05-20T12:15:00Z');
-    useFlowEditorStore.getState().commitSave(savedAt);
+    useFlowEditorStore.getState().commitSave(savedAt, syncedSnapshot);
 
     const state = useFlowEditorStore.getState();
     expect(state.status).toBe('idle');
@@ -220,6 +221,31 @@ describe('useFlowEditorStore — save lifecycle', () => {
 
     await new Promise(resolve => setTimeout(resolve, 10));
     expect(await loadSnapshot('journey-1')).toBeNull();
+  });
+
+  it('commitSave with a stale syncedSnapshot stays DIRTY when the user edited during the save (atomic update / AC#4 from EVO-1258)', () => {
+    useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    // Capture the snapshot that the consumer would send to the server.
+    const syncedSnapshot = useFlowEditorStore.getState().currentSnapshot!;
+    useFlowEditorStore.getState().beginSave();
+    expect(useFlowEditorStore.getState().status).toBe('saving');
+
+    // User edits during the API roundtrip — currentSnapshot now diverges
+    // from what was actually sent to the server.
+    const midSaveEdit: Node[] = [
+      ...editedSnapshotNodes,
+      { id: 'wait-2', type: 'wait-node', position: { x: 400, y: 0 }, data: {} } as Node,
+    ];
+    useFlowEditorStore.getState().setFlow(midSaveEdit, []);
+    expect(useFlowEditorStore.getState().status).toBe('dirty');
+
+    // Server returns success — but with the OLDER snapshot's data.
+    useFlowEditorStore.getState().commitSave(new Date(), syncedSnapshot);
+
+    const state = useFlowEditorStore.getState();
+    expect(state.status).toBe('dirty');
+    expect(state.serverSnapshot).toEqual(syncedSnapshot);
+    expect(state.currentSnapshot?.nodes).toEqual(midSaveEdit);
   });
 
   it('failSave moves to error with the message, leaving currentSnapshot intact', () => {
@@ -331,13 +357,75 @@ describe('useFlowEditorStore — error retry (AC#4)', () => {
     const unregister = registerAutosaveTrigger(trigger);
 
     useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    const syncedSnapshot = useFlowEditorStore.getState().currentSnapshot!;
     useFlowEditorStore.getState().beginSave();
     useFlowEditorStore.getState().failSave('Network error');
 
-    useFlowEditorStore.getState().commitSave(new Date('2026-05-20T12:00:30Z'));
+    useFlowEditorStore
+      .getState()
+      .commitSave(new Date('2026-05-20T12:00:30Z'), syncedSnapshot);
 
     vi.advanceTimersByTime(FLOW_EDITOR_ERROR_RETRY_DELAY_MS * 2);
     expect(trigger).not.toHaveBeenCalled();
+
+    unregister();
+  });
+
+  it('cancels the retry timer when the consumer unregisters the trigger (e.g. effect re-runs)', () => {
+    vi.useFakeTimers();
+    const trigger = vi.fn();
+    const unregister = registerAutosaveTrigger(trigger);
+
+    useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    useFlowEditorStore.getState().beginSave();
+    useFlowEditorStore.getState().failSave('Network error');
+
+    // Consumer's effect re-runs (e.g. saveChanges identity changed) and
+    // unregisters the trigger. The retry timer must be cleared too,
+    // otherwise a stale trigger would fire 30s later.
+    unregister();
+
+    vi.advanceTimersByTime(FLOW_EDITOR_ERROR_RETRY_DELAY_MS * 2);
+    expect(trigger).not.toHaveBeenCalled();
+  });
+
+  it('sets retryScheduled=true when failSave fires with a trigger registered', () => {
+    const trigger = vi.fn();
+    const unregister = registerAutosaveTrigger(trigger);
+
+    useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    useFlowEditorStore.getState().beginSave();
+    useFlowEditorStore.getState().failSave('Network error');
+
+    expect(useFlowEditorStore.getState().retryScheduled).toBe(true);
+
+    unregister();
+  });
+
+  it('keeps retryScheduled=false when failSave fires without a trigger (consumer not registered yet)', () => {
+    useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    useFlowEditorStore.getState().beginSave();
+    useFlowEditorStore.getState().failSave('Network error');
+
+    expect(useFlowEditorStore.getState().retryScheduled).toBe(false);
+  });
+
+  it('flips retryScheduled back to false when a new edit cancels the error', () => {
+    const trigger = vi.fn();
+    const unregister = registerAutosaveTrigger(trigger);
+
+    useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    useFlowEditorStore.getState().beginSave();
+    useFlowEditorStore.getState().failSave('Network error');
+    expect(useFlowEditorStore.getState().retryScheduled).toBe(true);
+
+    const further: Node[] = [
+      ...editedSnapshotNodes,
+      { id: 'wait-2', type: 'wait-node', position: { x: 400, y: 0 }, data: {} } as Node,
+    ];
+    useFlowEditorStore.getState().setFlow(further, []);
+
+    expect(useFlowEditorStore.getState().retryScheduled).toBe(false);
 
     unregister();
   });
@@ -373,6 +461,48 @@ describe('useFlowEditorStore — error retry (AC#4)', () => {
 });
 
 describe('useFlowEditorStore — recovery', () => {
+  it('acceptRecovery cancels any pending retry timer (defensive)', () => {
+    vi.useFakeTimers();
+    const trigger = vi.fn();
+    const unregister = registerAutosaveTrigger(trigger);
+
+    // Manually arm a retry timer to simulate a leftover from a prior
+    // error state (the production flow guarantees idle after hydrate, but
+    // this guards against future refactors that could leave the timer
+    // armed when entering a recovery prompt).
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: {
+        payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+        timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
+      },
+    });
+    useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
+    useFlowEditorStore.getState().beginSave();
+    useFlowEditorStore.getState().failSave('Network error');
+    // Re-hydrate to put us back in a state where recoveryCandidate is set.
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: {
+        payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+        timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
+      },
+    });
+
+    useFlowEditorStore.getState().acceptRecovery();
+
+    vi.advanceTimersByTime(FLOW_EDITOR_ERROR_RETRY_DELAY_MS * 2);
+    // The autosave was armed by acceptRecovery, so trigger fires once via
+    // autosave at +5s. The retry timer must NOT add a second call.
+    expect(trigger.mock.calls.length).toBeLessThanOrEqual(1);
+
+    unregister();
+  });
+
   it('acceptRecovery loads the candidate snapshot and arms autosave', () => {
     const recoveryRecord: StoredFlowSnapshot = {
       payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },

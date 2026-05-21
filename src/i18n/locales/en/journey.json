@@ -75,6 +75,13 @@
     "recover": "Recover",
     "discard": "Discard",
     "saveErrorBanner": "Save failed: {{reason}}. Retrying in 30s.",
+    "saveErrorBannerNoRetry": "Save failed: {{reason}}. Click Save to try again.",
+    "saveErrorMessages": {
+      "network": "Network error",
+      "server": "Server error",
+      "unauthorized": "Not authorized",
+      "validation": "Invalid data"
+    },
     "saveSuccess": "Journey saved successfully",
     "saveError": "Unable to save journey",
     "loadError": "Unable to load journey",

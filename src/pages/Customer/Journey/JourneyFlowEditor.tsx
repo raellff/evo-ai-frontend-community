@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -106,6 +106,25 @@ import {
   Clock,
 } from 'lucide-react';
 
+/**
+ * Map common save-failure error shapes to translation keys so the banner
+ * shows a friendly message instead of "Request failed with status code 500".
+ */
+function friendlySaveErrorMessage(
+  error: unknown,
+  t: (key: string) => string,
+): string {
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const status = (error as { response?: { status?: number } }).response?.status;
+    if (status === undefined) return t('flowEditor.saveErrorMessages.network');
+    if (status >= 500) return t('flowEditor.saveErrorMessages.server');
+    if (status === 401 || status === 403) return t('flowEditor.saveErrorMessages.unauthorized');
+    if (status === 422) return t('flowEditor.saveErrorMessages.validation');
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return t('flowEditor.saveError');
+}
+
 function JourneyFlowEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -116,6 +135,7 @@ function JourneyFlowEditor() {
   const status = useFlowEditorStore((s) => s.status);
   const lastSavedAt = useFlowEditorStore((s) => s.lastSavedAt);
   const lastError = useFlowEditorStore((s) => s.lastError);
+  const retryScheduled = useFlowEditorStore((s) => s.retryScheduled);
   const recoveryCandidate = useFlowEditorStore((s) => s.recoveryCandidate);
 
   const isSaving = status === 'saving';
@@ -539,10 +559,23 @@ function JourneyFlowEditor() {
     useFlowEditorStore.getState().setVariables(variables);
   }, []);
 
+  const journeyRef = useRef<Journey | null>(null);
+  useEffect(() => {
+    journeyRef.current = journey;
+  }, [journey]);
+
   const saveChanges = useCallback(async () => {
+    const currentJourney = journeyRef.current;
     const store = useFlowEditorStore.getState();
     const snapshot = store.currentSnapshot;
-    if (!journey || !journey.id || !snapshot || store.status === 'saving' || store.status === 'idle') return;
+    if (
+      !currentJourney?.id ||
+      !snapshot ||
+      store.status === 'saving' ||
+      store.status === 'idle'
+    ) {
+      return;
+    }
 
     store.beginSave();
     try {
@@ -592,21 +625,26 @@ function JourneyFlowEditor() {
         }));
 
       const updatedJourney = {
-        ...journey,
+        ...currentJourney,
         flowData: flowData as Journey['flowData'],
         flowTriggers,
       } as Journey;
 
-      await journeyService.updateJourney(journey.id, updatedJourney);
+      await journeyService.updateJourney(currentJourney.id, updatedJourney);
       setJourney(updatedJourney);
-      useFlowEditorStore.getState().commitSave(new Date());
+      // Pass the snapshot we captured at beginSave time as the synced
+      // baseline. If the user edited during the API roundtrip, the store
+      // compares currentSnapshot against this and stays `dirty` so the
+      // next autosave tick picks up the unsynced edits (atomic update
+      // requirement of EVO-1258).
+      useFlowEditorStore.getState().commitSave(new Date(), snapshot);
       toast.success(t('flowEditor.saveSuccess'));
     } catch (error) {
       console.error('Erro ao salvar jornada:', error);
-      const message = error instanceof Error ? error.message : t('flowEditor.saveError');
+      const message = friendlySaveErrorMessage(error, t);
       useFlowEditorStore.getState().failSave(message);
     }
-  }, [journey, t]);
+  }, [t]);
 
   const handleFlowDataChange = useCallback((flowData: { nodes: unknown[]; edges: unknown[] }) => {
     useFlowEditorStore
@@ -734,7 +772,11 @@ function JourneyFlowEditor() {
 
       {status === 'error' && lastError ? (
         <FlowFeedbackBanner variant="error" className="mx-4 mt-2">
-          <p>{t('flowEditor.saveErrorBanner', { reason: lastError })}</p>
+          <p>
+            {retryScheduled
+              ? t('flowEditor.saveErrorBanner', { reason: lastError })
+              : t('flowEditor.saveErrorBannerNoRetry', { reason: lastError })}
+          </p>
         </FlowFeedbackBanner>
       ) : null}
 

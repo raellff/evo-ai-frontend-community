@@ -75,6 +75,13 @@
     "recover": "Recuperar",
     "discard": "Descartar",
     "saveErrorBanner": "Falha ao guardar: {{reason}}. A tentar novamente em 30s.",
+    "saveErrorBannerNoRetry": "Falha ao guardar: {{reason}}. Clique em Guardar para tentar novamente.",
+    "saveErrorMessages": {
+      "network": "Erro de rede",
+      "server": "Erro no servidor",
+      "unauthorized": "Sem permissão",
+      "validation": "Dados inválidos"
+    },
     "saveSuccess": "Jornada salva com sucesso",
     "saveError": "Não foi possível salvar a jornada",
     "loadError": "Não foi possível carregar a jornada",
