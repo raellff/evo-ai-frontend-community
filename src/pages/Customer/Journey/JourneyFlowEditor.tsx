@@ -737,14 +737,20 @@ function JourneyFlowEditor() {
     );
   }
 
-  // Preparar dados do flow para o BaseFlowEditor
-  const flowData = {
-    nodes:
-      Array.isArray(journey.flowData?.nodes) && journey.flowData.nodes.length > 0
-        ? journey.flowData.nodes
-        : initialNodes,
-    edges: Array.isArray(journey.flowData?.edges) ? journey.flowData.edges : initialEdges,
-  };
+  // Preparar dados do flow para o BaseFlowEditor.
+  // useMemo: BaseFlowEditor watches `flowData` reference in an effect that
+  // re-fires on every change. A fresh object literal per render flagged
+  // dirty unnecessarily — pin the reference to its actual deps.
+  const flowData = useMemo(
+    () => ({
+      nodes:
+        Array.isArray(journey.flowData?.nodes) && journey.flowData.nodes.length > 0
+          ? journey.flowData.nodes
+          : initialNodes,
+      edges: Array.isArray(journey.flowData?.edges) ? journey.flowData.edges : initialEdges,
+    }),
+    [journey.flowData?.nodes, journey.flowData?.edges],
+  );
 
   return (
     <div className="h-screen flex flex-col">
