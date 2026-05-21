@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@evoapi/design-system';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { adminConfigService } from '@/services/admin/adminConfigService';
 import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
@@ -20,6 +20,17 @@ import { extractError } from '@/utils/apiHelpers';
 
 const CONFIG_TYPE = 'evolution_hub';
 const MASKED = '••••';
+
+function errorMessage(e: unknown, fallback: string): string {
+  const info = extractError(e);
+  return info?.message || fallback;
+}
+
+function generateSecret(byteLength = 32): string {
+  const bytes = new Uint8Array(byteLength);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 const schema = z.object({
   EVOLUTION_HUB_ENABLED: z.union([z.string(), z.boolean()]).optional(),
@@ -76,7 +87,7 @@ export default function EvolutionHubConfig() {
           EVOLUTION_HUB_WEBHOOK_SECRET: null,
         });
       } catch (e) {
-        toast.error(extractError(e, t('evolutionHub.messages.loadError')));
+        toast.error(errorMessage(e, t('evolutionHub.messages.loadError')));
       } finally {
         setLoading(false);
       }
@@ -106,7 +117,7 @@ export default function EvolutionHubConfig() {
       if (payload.EVOLUTION_HUB_API_KEY) setApiKeyConfigured(true);
       if (payload.EVOLUTION_HUB_WEBHOOK_SECRET) setWebhookSecretConfigured(true);
     } catch (e) {
-      toast.error(extractError(e, t('evolutionHub.messages.saveError')));
+      toast.error(errorMessage(e, t('evolutionHub.messages.saveError')));
     } finally {
       setSaving(false);
     }
@@ -122,7 +133,7 @@ export default function EvolutionHubConfig() {
         message: String(result?.message ?? t('evolutionHub.messages.testUnknown')),
       });
     } catch (e) {
-      setTestResult({ ok: false, message: extractError(e, t('evolutionHub.messages.testError')) });
+      setTestResult({ ok: false, message: errorMessage(e, t('evolutionHub.messages.testError')) });
     } finally {
       setTesting(false);
     }
@@ -162,7 +173,14 @@ export default function EvolutionHubConfig() {
                 id="enabled"
                 type="checkbox"
                 checked={enabledBool}
-                onChange={(e) => setValue('EVOLUTION_HUB_ENABLED', e.target.checked ? 'true' : 'false')}
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setValue('EVOLUTION_HUB_ENABLED', next ? 'true' : 'false');
+                  if (next && !webhookSecretConfigured && !secretTouched) {
+                    setValue('EVOLUTION_HUB_WEBHOOK_SECRET', generateSecret());
+                    setSecretTouched(true);
+                  }
+                }}
                 className="h-5 w-5"
               />
             </div>
@@ -203,14 +221,27 @@ export default function EvolutionHubConfig() {
                   <span className="ml-2 text-xs text-muted-foreground">({t('evolutionHub.fields.secretSet')})</span>
                 )}
               </Label>
-              <Input
-                id="webhookSecret"
-                type="password"
-                placeholder={webhookSecretConfigured ? MASKED.repeat(4) : t('evolutionHub.fields.webhookSecretPlaceholder')}
-                {...register('EVOLUTION_HUB_WEBHOOK_SECRET', {
-                  onChange: () => setSecretTouched(true),
-                })}
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="webhookSecret"
+                  type="password"
+                  placeholder={webhookSecretConfigured ? MASKED.repeat(4) : t('evolutionHub.fields.webhookSecretPlaceholder')}
+                  {...register('EVOLUTION_HUB_WEBHOOK_SECRET', {
+                    onChange: () => setSecretTouched(true),
+                  })}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setValue('EVOLUTION_HUB_WEBHOOK_SECRET', generateSecret());
+                    setSecretTouched(true);
+                  }}
+                  title={t('evolutionHub.actions.generateSecret')}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 {t('evolutionHub.fields.webhookSecretHelp')}
               </p>

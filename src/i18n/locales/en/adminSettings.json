@@ -477,7 +477,8 @@
     },
     "actions": {
       "save": "Save",
-      "test": "Test connection"
+      "test": "Test connection",
+      "generateSecret": "Generate random secret"
     },
     "messages": {
       "saved": "Evolution Hub configuration saved",

@@ -473,7 +473,7 @@
       "webhookSecretHelp": "Use una cadena aleatoria fuerte.",
       "secretSet": "configurado"
     },
-    "actions": { "save": "Guardar", "test": "Probar conexión" },
+    "actions": { "save": "Guardar", "test": "Probar conexión", "generateSecret": "Generar secreto aleatorio" },
     "messages": {
       "saved": "Configuración guardada",
       "saveError": "Error al guardar",

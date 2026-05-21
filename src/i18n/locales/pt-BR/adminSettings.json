@@ -477,7 +477,8 @@
     },
     "actions": {
       "save": "Salvar",
-      "test": "Testar conexão"
+      "test": "Testar conexão",
+      "generateSecret": "Gerar segredo aleatório"
     },
     "messages": {
       "saved": "Configuração do Evolution Hub salva",

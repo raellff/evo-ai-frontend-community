@@ -47,7 +47,7 @@ export default function HubConnectButton({
     setSubmitting(true);
     try {
       const response = await api.post<InboxCreateResponse>(
-        `/api/v1/inboxes`,
+        `/inboxes`,
         {
           via_hub: true,
           inbox: { name: name.trim(), channel_type: channelType },
