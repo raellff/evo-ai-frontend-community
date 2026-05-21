@@ -69,6 +69,40 @@ describe('idbSnapshot', () => {
     expect(stored).toBeNull();
   });
 
+  it('strips non-serialisable values (functions) from the payload before persisting', async () => {
+    // xyflow attaches setNodes/setEdges closures to live node and edge data;
+    // structuredClone (used by IndexedDB) cannot clone functions, so the put
+    // would throw DataCloneError. The helper JSON-clones first to drop them.
+    const payloadWithFn = {
+      nodes: [
+        {
+          id: 'n1',
+          type: 'wait',
+          data: { duration: 3, onDelete: () => undefined },
+        } as unknown,
+      ],
+      edges: [
+        {
+          id: 'e1',
+          source: 'a',
+          target: 'b',
+          data: { onClick: (id: string) => `deleted-${id}` },
+        } as unknown,
+      ],
+      variables: [],
+    } as FlowSnapshotPayload;
+
+    await saveSnapshot('journey-1', payloadWithFn);
+    const stored = await loadSnapshot('journey-1');
+
+    expect(stored).not.toBeNull();
+    const storedNode = stored!.payload.nodes[0] as { data: Record<string, unknown> };
+    const storedEdge = stored!.payload.edges[0] as { data: Record<string, unknown> };
+    expect(storedNode.data.duration).toBe(3);
+    expect(storedNode.data.onDelete).toBeUndefined();
+    expect(storedEdge.data.onClick).toBeUndefined();
+  });
+
   it('keeps snapshots within the 7-day window', async () => {
     const baseline = new Date('2026-01-01T00:00:00Z').getTime();
     vi.spyOn(Date, 'now').mockReturnValue(baseline);

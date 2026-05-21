@@ -21,11 +21,18 @@ export async function saveSnapshot(
   payload: FlowSnapshotPayload,
 ): Promise<void> {
   try {
-    const record: StoredFlowSnapshot = { payload, timestamp: Date.now() };
+    // xyflow attaches non-serializable handlers (setNodes / setEdges closures)
+    // to the live node and edge objects. structuredClone (used by IndexedDB
+    // under the hood) cannot clone functions, so a raw put() throws
+    // DataCloneError. JSON.parse(JSON.stringify(...)) strips functions
+    // silently, which is fine: recovery only needs the plain data shape.
+    const cleanPayload = JSON.parse(JSON.stringify(payload)) as FlowSnapshotPayload;
+    const record: StoredFlowSnapshot = { payload: cleanPayload, timestamp: Date.now() };
     await idbSet(keyFor(journeyId), record);
   } catch (error) {
-    // IndexedDB unavailable (private mode strict / quota / old browser).
-    // Recovery becomes best-effort; never block the editor.
+    // IndexedDB unavailable (private mode strict / quota / old browser) or
+    // payload not even JSON-serialisable. Recovery becomes best-effort;
+    // never block the editor.
     console.warn('[flowEditor] failed to persist snapshot to IndexedDB', error);
   }
 }
