@@ -22,7 +22,7 @@ const baseSnapshot: FlowSnapshot = {
     { id: 'trigger', type: 'journey-trigger-node', position: { x: 0, y: 0 }, data: {} },
   ] as Node[],
   edges: [] as Edge[],
-  variables: [],
+
 };
 
 const editedSnapshotNodes: Node[] = [
@@ -60,7 +60,7 @@ describe('useFlowEditorStore — hydration', () => {
 
   it('exposes a recovery candidate when IDB snapshot is newer than server and diverges', () => {
     const recoveryRecord: StoredFlowSnapshot = {
-      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      payload: { nodes: editedSnapshotNodes, edges: [] },
       timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
     };
 
@@ -79,7 +79,7 @@ describe('useFlowEditorStore — hydration', () => {
 
   it('ignores IDB snapshot that is older than the server lastSavedAt', () => {
     const stale: StoredFlowSnapshot = {
-      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      payload: { nodes: editedSnapshotNodes, edges: [] },
       timestamp: new Date('2026-05-20T11:00:00Z').getTime(),
     };
 
@@ -208,7 +208,7 @@ describe('useFlowEditorStore — save lifecycle', () => {
     await saveSnapshot('journey-1', {
       nodes: editedSnapshotNodes,
       edges: [],
-      variables: [],
+
     });
 
     const syncedSnapshot = useFlowEditorStore.getState().currentSnapshot!;
@@ -477,7 +477,7 @@ describe('useFlowEditorStore — recovery', () => {
       server: baseSnapshot,
       lastSavedAt: new Date('2026-05-20T12:00:00Z'),
       recovery: {
-        payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+        payload: { nodes: editedSnapshotNodes, edges: [] },
         timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
       },
     });
@@ -490,7 +490,7 @@ describe('useFlowEditorStore — recovery', () => {
       server: baseSnapshot,
       lastSavedAt: new Date('2026-05-20T12:00:00Z'),
       recovery: {
-        payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+        payload: { nodes: editedSnapshotNodes, edges: [] },
         timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
       },
     });
@@ -507,7 +507,7 @@ describe('useFlowEditorStore — recovery', () => {
 
   it('acceptRecovery loads the candidate snapshot and arms autosave', () => {
     const recoveryRecord: StoredFlowSnapshot = {
-      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      payload: { nodes: editedSnapshotNodes, edges: [] },
       timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
     };
     useFlowEditorStore.getState().hydrate({
@@ -527,7 +527,7 @@ describe('useFlowEditorStore — recovery', () => {
 
   it('acceptRecovery increments recoveryEpoch so consumers can force canvas remount', () => {
     const recoveryRecord: StoredFlowSnapshot = {
-      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      payload: { nodes: editedSnapshotNodes, edges: [] },
       timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
     };
     useFlowEditorStore.getState().hydrate({
@@ -558,7 +558,7 @@ describe('useFlowEditorStore — recovery', () => {
 
   it('rejectRecovery does NOT bump recoveryEpoch — canvas should not remount', () => {
     const recoveryRecord: StoredFlowSnapshot = {
-      payload: { nodes: editedSnapshotNodes, edges: [], variables: [] },
+      payload: { nodes: editedSnapshotNodes, edges: [] },
       timestamp: new Date('2026-05-20T13:00:00Z').getTime(),
     };
     useFlowEditorStore.getState().hydrate({
@@ -577,7 +577,7 @@ describe('useFlowEditorStore — recovery', () => {
     await saveSnapshot('journey-1', {
       nodes: editedSnapshotNodes,
       edges: [],
-      variables: [],
+
     });
     const stored = await loadSnapshot('journey-1');
     expect(stored).not.toBeNull();
@@ -694,7 +694,7 @@ describe('useFlowEditorStore — volatile field normalisation (H2)', () => {
     const contaminatedServer: FlowSnapshot = {
       nodes: baseSnapshot.nodes.map(n => ({ ...n, selected: true })) as Node[],
       edges: [],
-      variables: [],
+
     };
     useFlowEditorStore.getState().hydrate({
       journeyId: 'journey-1',

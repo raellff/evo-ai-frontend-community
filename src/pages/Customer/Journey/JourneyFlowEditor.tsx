@@ -16,7 +16,7 @@ import { journeyService } from '@/services';
 import type { Journey } from '@/types/automation';
 import { useLanguage } from '@/hooks/useLanguage';
 import { BaseFlowEditor, type NodeType, type NodeCategory } from '@/components/base';
-import { EnvironmentManager, type JourneyVariable } from '@/components/journey/environment-manager';
+import { EnvironmentManager } from '@/components/journey/environment-manager';
 import { JourneyEditorHeader } from '@/components/journey/shared/JourneyEditorHeader';
 import { SessionsViewer } from '@/components/journey/SessionsViewer';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -457,7 +457,6 @@ function JourneyFlowEditor() {
         onUpdate,
         onClose,
         journeyId: id, // ID da jornada atual (now guaranteed to be string)
-        onVariablesChange: handleVariablesChange, // Callback para sincronizar variáveis
       };
 
       switch (nodeType) {
@@ -525,7 +524,6 @@ function JourneyFlowEditor() {
       const serverSnapshot: FlowSnapshot = {
         nodes: (Array.isArray(flowData.nodes) ? flowData.nodes : []) as never,
         edges: (Array.isArray(flowData.edges) ? flowData.edges : []) as never,
-        variables: [],
       };
 
       // Prefer a client-persisted save mark over response.updatedAt because
@@ -556,10 +554,6 @@ function JourneyFlowEditor() {
       loadJourney();
     }
   }, [id, loadJourney]);
-
-  const handleVariablesChange = useCallback((variables: JourneyVariable[]) => {
-    useFlowEditorStore.getState().setVariables(variables);
-  }, []);
 
   const journeyRef = useRef<Journey | null>(null);
   useEffect(() => {

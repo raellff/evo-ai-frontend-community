@@ -3,7 +3,6 @@ import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval';
 export type FlowSnapshotPayload = {
   nodes: unknown[];
   edges: unknown[];
-  variables: unknown[];
 };
 
 export type StoredFlowSnapshot = {
