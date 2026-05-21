@@ -382,12 +382,33 @@ export function BaseFlowCanvas({
     [configPanelSystem, onNodeClick],
   );
 
-  // 🆕 Função para atualizar node (sistema de painéis de configuração)
+  // 🆕 Função para atualizar node (sistema de painéis de configuração).
+  // Config-panel updates bypass xyflow's NodeChange path because they mutate
+  // `node.data` directly via `setNodes`. The parent's `onFlowDataChange`
+  // listener would otherwise never see the edit, so the journey editor's
+  // dirty/autosave/IDB pipeline would stay clean despite a real change in
+  // a panel field. Wire the callbacks here so the data path matches what
+  // `handleNodesChange` does for canvas-level edits.
   const updateNode = useCallback(
     (nodeId: string, newData: any) => {
-      setNodes(nds => nds.map(node => (node.id === nodeId ? { ...node, data: newData } : node)));
+      setNodes(nds => {
+        const updated = nds.map(node =>
+          node.id === nodeId ? { ...node, data: newData } : node,
+        );
+        if (onFlowDataChange) {
+          onFlowDataChange(updated, edges);
+        }
+        if (onFlowDataChangeExtended) {
+          onFlowDataChangeExtended({
+            nodes: updated,
+            edges,
+            variables: flowVariables,
+          });
+        }
+        return updated;
+      });
     },
-    [setNodes],
+    [setNodes, onFlowDataChange, onFlowDataChangeExtended, edges, flowVariables],
   );
 
   // Controle de conexões

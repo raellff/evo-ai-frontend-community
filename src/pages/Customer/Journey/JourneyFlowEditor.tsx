@@ -140,6 +140,7 @@ function JourneyFlowEditor() {
   const nextRetryDelayMs = useFlowEditorStore((s) => s.nextRetryDelayMs);
   const recoveryCandidate = useFlowEditorStore((s) => s.recoveryCandidate);
   const recoveryEpoch = useFlowEditorStore((s) => s.recoveryEpoch);
+  const currentSnapshot = useFlowEditorStore((s) => s.currentSnapshot);
 
   const isSaving = status === 'saving';
   const hasUnsavedChanges = status !== 'idle';
@@ -714,22 +715,25 @@ function JourneyFlowEditor() {
   }, [hasUnsavedChanges]);
 
   // Preparar dados do flow para o BaseFlowEditor.
-  // useMemo: BaseFlowEditor watches `flowData` reference in an effect that
-  // re-fires on every change. A fresh object literal per render flagged
-  // dirty unnecessarily — pin the reference to its actual deps. Declared
-  // BEFORE the loading/!journey early returns so the hook order stays
-  // stable across renders (rules-of-hooks); when journey is null the
-  // memo simply resolves to the initial flow fallback.
+  // SOURCE OF TRUTH: store.currentSnapshot, NOT journey.flowData. The
+  // store is updated by every edit AND by acceptRecovery, so reading
+  // from it is the only way the canvas remount on recovery (key change
+  // via recoveryEpoch) actually picks up the recovered nodes. Reading
+  // from journey.flowData would seed the canvas with server data even
+  // after the user accepted recovery, because journey is only refreshed
+  // on save success.
+  // Declared BEFORE the loading/!journey early returns so the hook
+  // order stays stable across renders (rules-of-hooks). Before hydrate
+  // the store snapshot is null, so we fall back to the initial nodes/edges.
   const flowData = useMemo(
     () => ({
       nodes:
-        Array.isArray(journey?.flowData?.nodes) && journey.flowData.nodes.length > 0
-          ? journey.flowData.nodes
+        Array.isArray(currentSnapshot?.nodes) && currentSnapshot.nodes.length > 0
+          ? currentSnapshot.nodes
           : initialNodes,
-      edges:
-        Array.isArray(journey?.flowData?.edges) ? journey.flowData.edges : initialEdges,
+      edges: Array.isArray(currentSnapshot?.edges) ? currentSnapshot.edges : initialEdges,
     }),
-    [journey?.flowData?.nodes, journey?.flowData?.edges, initialNodes, initialEdges],
+    [currentSnapshot, initialNodes, initialEdges],
   );
 
   if (loading) {
