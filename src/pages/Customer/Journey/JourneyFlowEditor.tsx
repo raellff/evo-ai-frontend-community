@@ -193,7 +193,7 @@ function JourneyFlowEditor() {
     [],
   );
 
-  const initialEdges: never[] = [];
+  const initialEdges = useMemo<never[]>(() => [], []);
 
   // Definir categorias para o NodePanel
   const nodePanelCategories: NodeCategory[] = [
@@ -713,6 +713,25 @@ function JourneyFlowEditor() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasUnsavedChanges]);
 
+  // Preparar dados do flow para o BaseFlowEditor.
+  // useMemo: BaseFlowEditor watches `flowData` reference in an effect that
+  // re-fires on every change. A fresh object literal per render flagged
+  // dirty unnecessarily — pin the reference to its actual deps. Declared
+  // BEFORE the loading/!journey early returns so the hook order stays
+  // stable across renders (rules-of-hooks); when journey is null the
+  // memo simply resolves to the initial flow fallback.
+  const flowData = useMemo(
+    () => ({
+      nodes:
+        Array.isArray(journey?.flowData?.nodes) && journey.flowData.nodes.length > 0
+          ? journey.flowData.nodes
+          : initialNodes,
+      edges:
+        Array.isArray(journey?.flowData?.edges) ? journey.flowData.edges : initialEdges,
+    }),
+    [journey?.flowData?.nodes, journey?.flowData?.edges, initialNodes, initialEdges],
+  );
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -736,21 +755,6 @@ function JourneyFlowEditor() {
       </div>
     );
   }
-
-  // Preparar dados do flow para o BaseFlowEditor.
-  // useMemo: BaseFlowEditor watches `flowData` reference in an effect that
-  // re-fires on every change. A fresh object literal per render flagged
-  // dirty unnecessarily — pin the reference to its actual deps.
-  const flowData = useMemo(
-    () => ({
-      nodes:
-        Array.isArray(journey.flowData?.nodes) && journey.flowData.nodes.length > 0
-          ? journey.flowData.nodes
-          : initialNodes,
-      edges: Array.isArray(journey.flowData?.edges) ? journey.flowData.edges : initialEdges,
-    }),
-    [journey.flowData?.nodes, journey.flowData?.edges],
-  );
 
   return (
     <div className="h-screen flex flex-col">

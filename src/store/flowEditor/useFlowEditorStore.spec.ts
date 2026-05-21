@@ -825,12 +825,13 @@ describe('useFlowEditorStore — auto-retry backoff cap (L2)', () => {
     ];
     useFlowEditorStore.getState().setFlow(furtherEdit, []);
     expect(useFlowEditorStore.getState().retryAttempt).toBe(0);
+
+    unregister();
   });
 
   it('manual save resets the retry budget; auto-retry-triggered save does not', () => {
     vi.useFakeTimers();
-    const trigger = vi.fn();
-    const unregister = registerAutosaveTrigger(trigger);
+    const unregister = registerAutosaveTrigger(vi.fn());
 
     useFlowEditorStore.getState().setFlow(editedSnapshotNodes, []);
 

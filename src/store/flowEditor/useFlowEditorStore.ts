@@ -170,13 +170,11 @@ function scheduleIdbWrite(journeyId: string, snapshot: FlowSnapshot): void {
  * edit, which marked the editor dirty before the user touched anything.
  */
 export function stripVolatileNodeFields(node: Node): Node {
-  const {
-    selected: _selected,
-    measured: _measured,
-    dragging: _dragging,
-    ...rest
-  } = node as Node & { measured?: unknown; dragging?: unknown };
-  return rest as Node;
+  const copy = { ...node } as Record<string, unknown>;
+  delete copy.selected;
+  delete copy.measured;
+  delete copy.dragging;
+  return copy as Node;
 }
 
 export function normalizeNodesForPersist(nodes: Node[]): Node[] {
