@@ -70,6 +70,18 @@
     "unsavedChangesBody": "Você tem alterações que serão perdidas se sair agora.",
     "stay": "Ficar",
     "leaveAnyway": "Sair mesmo assim",
+    "recoveryTitle": "Recuperar trabalho não salvo?",
+    "recoveryBody": "Encontramos alterações não salvas de {{when}} armazenadas localmente. Recuperar ou descartar?",
+    "recover": "Recuperar",
+    "discard": "Descartar",
+    "saveErrorBanner": "Falha ao salvar: {{reason}}. Tentando de novo em {{seconds}}s.",
+    "saveErrorBannerNoRetry": "Falha ao salvar: {{reason}}. Clique em Salvar para tentar novamente.",
+    "saveErrorMessages": {
+      "network": "Erro de rede",
+      "server": "Erro no servidor",
+      "unauthorized": "Sem permissão",
+      "validation": "Dados inválidos"
+    },
     "saveSuccess": "Jornada salva com sucesso",
     "saveError": "Não foi possível salvar a jornada",
     "loadError": "Não foi possível carregar a jornada",

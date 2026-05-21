@@ -70,6 +70,18 @@
     "unsavedChangesBody": "Hai modifiche non salvate che andranno perse se esci ora.",
     "stay": "Resta",
     "leaveAnyway": "Esci comunque",
+    "recoveryTitle": "Recuperare il lavoro non salvato?",
+    "recoveryBody": "Abbiamo trovato modifiche non salvate da {{when}} memorizzate localmente. Recuperare o scartare?",
+    "recover": "Recupera",
+    "discard": "Scarta",
+    "saveErrorBanner": "Salvataggio fallito: {{reason}}. Nuovo tentativo tra {{seconds}}s.",
+    "saveErrorBannerNoRetry": "Salvataggio fallito: {{reason}}. Fai clic su Salva per riprovare.",
+    "saveErrorMessages": {
+      "network": "Errore di rete",
+      "server": "Errore del server",
+      "unauthorized": "Non autorizzato",
+      "validation": "Dati non validi"
+    },
     "saveSuccess": "Percorso salvato con successo",
     "saveError": "Impossibile salvare il percorso",
     "loadError": "Impossibile caricare il percorso",
