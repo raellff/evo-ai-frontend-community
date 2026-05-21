@@ -75,6 +75,13 @@
     "recover": "Récupérer",
     "discard": "Ignorer",
     "saveErrorBanner": "Échec de l'enregistrement : {{reason}}. Nouvelle tentative dans 30s.",
+    "saveErrorBannerNoRetry": "Échec de l'enregistrement : {{reason}}. Cliquez sur Enregistrer pour réessayer.",
+    "saveErrorMessages": {
+      "network": "Erreur réseau",
+      "server": "Erreur serveur",
+      "unauthorized": "Non autorisé",
+      "validation": "Données invalides"
+    },
     "saveSuccess": "Parcours enregistré avec succès",
     "saveError": "Impossible d'enregistrer le parcours",
     "loadError": "Impossible de charger le parcours",
