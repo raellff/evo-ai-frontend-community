@@ -25,6 +25,7 @@ import { useRelativeTime } from '@/lib/useRelativeTime';
 import {
   useFlowEditorStore,
   registerAutosaveTrigger,
+  normalizeNodesForPersist,
   type FlowSnapshot,
 } from '@/store/flowEditor/useFlowEditorStore';
 import { loadSnapshot } from '@/store/flowEditor/idbSnapshot';
@@ -580,7 +581,10 @@ function JourneyFlowEditor() {
 
     store.beginSave();
     try {
-      const flowData = { nodes: snapshot.nodes, edges: snapshot.edges };
+      const flowData = {
+        nodes: normalizeNodesForPersist(snapshot.nodes),
+        edges: snapshot.edges,
+      };
 
       // Extrair triggers dos nodes
       const nodes = Array.isArray(flowData.nodes) ? flowData.nodes : [];

@@ -4,6 +4,8 @@ import type { Edge, Node } from '@xyflow/react';
 import {
   useFlowEditorStore,
   registerAutosaveTrigger,
+  normalizeNodesForPersist,
+  stripVolatileNodeFields,
   FLOW_EDITOR_AUTOSAVE_DELAY_MS,
   FLOW_EDITOR_ERROR_RETRY_DELAY_MS,
   type FlowSnapshot,
@@ -592,5 +594,135 @@ describe('useFlowEditorStore — recovery', () => {
 
     await new Promise(resolve => setTimeout(resolve, 10));
     expect(await loadSnapshot('journey-1')).toBeNull();
+  });
+});
+
+describe('useFlowEditorStore — volatile field normalisation (H2)', () => {
+  it('stripVolatileNodeFields drops selected, measured, dragging but preserves the rest', () => {
+    const node = {
+      id: 'n1',
+      type: 'wait-node',
+      position: { x: 10, y: 20 },
+      data: { duration: 5 },
+      selected: true,
+      measured: { width: 200, height: 80 },
+      dragging: true,
+    } as unknown as Node;
+
+    const stripped = stripVolatileNodeFields(node);
+    expect(stripped).toEqual({
+      id: 'n1',
+      type: 'wait-node',
+      position: { x: 10, y: 20 },
+      data: { duration: 5 },
+    });
+    expect('selected' in stripped).toBe(false);
+    expect('measured' in stripped).toBe(false);
+    expect('dragging' in stripped).toBe(false);
+  });
+
+  it('setFlow with only `selected:true` change does NOT mark dirty', () => {
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: null,
+    });
+
+    const selectedNodes = baseSnapshot.nodes.map(n => ({ ...n, selected: true }));
+    useFlowEditorStore.getState().setFlow(selectedNodes, baseSnapshot.edges);
+
+    expect(useFlowEditorStore.getState().status).toBe('idle');
+  });
+
+  it('setFlow with only `measured` set does NOT mark dirty (post-render measure pass)', () => {
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: null,
+    });
+
+    const measuredNodes = baseSnapshot.nodes.map(n => ({
+      ...n,
+      measured: { width: 200, height: 80 },
+    })) as Node[];
+    useFlowEditorStore.getState().setFlow(measuredNodes, baseSnapshot.edges);
+
+    expect(useFlowEditorStore.getState().status).toBe('idle');
+  });
+
+  it('setFlow with only `dragging:true` does NOT mark dirty (transient drag indicator)', () => {
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: null,
+    });
+
+    const draggingNodes = baseSnapshot.nodes.map(n => ({
+      ...n,
+      dragging: true,
+    })) as Node[];
+    useFlowEditorStore.getState().setFlow(draggingNodes, baseSnapshot.edges);
+
+    expect(useFlowEditorStore.getState().status).toBe('idle');
+  });
+
+  it('setFlow with a real position change DOES mark dirty', () => {
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: baseSnapshot,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: null,
+    });
+
+    const movedNodes = baseSnapshot.nodes.map(n => ({
+      ...n,
+      position: { x: 100, y: 200 },
+    }));
+    useFlowEditorStore.getState().setFlow(movedNodes, baseSnapshot.edges);
+
+    expect(useFlowEditorStore.getState().status).toBe('dirty');
+  });
+
+  it('reload regression: hydrating with server payload that still contains selected:true stays idle', () => {
+    // Simulates the contaminated state that the original H2 bug used to
+    // persist: server returns nodes with `selected:true`, which a naive
+    // setFlow→snapshotsEqual would interpret as divergent from the freshly
+    // hydrated currentSnapshot (which xyflow renders without the flag yet).
+    const contaminatedServer: FlowSnapshot = {
+      nodes: baseSnapshot.nodes.map(n => ({ ...n, selected: true })) as Node[],
+      edges: [],
+      variables: [],
+    };
+    useFlowEditorStore.getState().hydrate({
+      journeyId: 'journey-1',
+      server: contaminatedServer,
+      lastSavedAt: new Date('2026-05-20T12:00:00Z'),
+      recovery: null,
+    });
+
+    // First render pass: xyflow drops `selected` because nothing is clicked.
+    useFlowEditorStore.getState().setFlow(baseSnapshot.nodes, baseSnapshot.edges);
+
+    expect(useFlowEditorStore.getState().status).toBe('idle');
+  });
+
+  it('normalizeNodesForPersist returns a fresh array with all volatile fields stripped', () => {
+    const dirty = [
+      { id: 'a', position: { x: 0, y: 0 }, data: {}, selected: true } as unknown as Node,
+      { id: 'b', position: { x: 1, y: 1 }, data: {}, measured: { width: 1, height: 1 } } as unknown as Node,
+      { id: 'c', position: { x: 2, y: 2 }, data: {}, dragging: false } as unknown as Node,
+    ];
+    const clean = normalizeNodesForPersist(dirty);
+    expect(clean).toHaveLength(3);
+    clean.forEach(n => {
+      expect('selected' in n).toBe(false);
+      expect('measured' in n).toBe(false);
+      expect('dragging' in n).toBe(false);
+    });
+    // Source array untouched.
+    expect((dirty[0] as Node & { selected?: boolean }).selected).toBe(true);
   });
 });
