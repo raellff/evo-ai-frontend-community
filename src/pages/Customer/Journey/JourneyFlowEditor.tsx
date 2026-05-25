@@ -31,6 +31,7 @@ import {
 import { loadSnapshot } from '@/store/flowEditor/idbSnapshot';
 import { loadLastSavedAt } from '@/store/flowEditor/lastSavedMark';
 import { FlowFeedbackBanner } from '@/components/journey/_ui';
+import { flowTokens } from '@/components/journey/_ui/tokens';
 
 // Importar todos os nodes da jornada por categoria
 import { JourneyTriggerNode } from '@/components/journey/nodes/trigger/JourneyTriggerNode';
@@ -438,33 +439,37 @@ function JourneyFlowEditor() {
     ],
   };
 
-  // Cores para o MiniMap
+  // Maps each node type to a flow-* design-system token via the
+  // typed `flowTokens` object from `@/components/journey/_ui/tokens`
+  // (EVO-1253 contract for consumers outside Tailwind className). Nodes
+  // without a direct subtype match in the current taxonomy fall back to
+  // action-pipeline (see EVO-1259 audit §G3).
   const miniMapNodeColors = useMemo(
     () => ({
-      'journey-trigger-node': '#10b981', // verde para trigger
-      'wait-node': '#3b82f6', // azul para wait
-      'scheduled-action-node': '#fb923c', // orange para scheduled action
-      'conditional-node': '#eab308', // amarelo para condicional
-      'split-node': '#6366f1', // indigo para split
-      'exit-journey-node': '#ef4444', // vermelho para sair da jornada
-      'send-webhook-node': '#a855f7', // purple para webhook
-      'add-label-node': '#10b981', // verde para adicionar etiqueta
-      'remove-label-node': '#ef4444', // vermelho para remover etiqueta
-      'update-contact-node': '#06b6d4', // cyan para atualizar contato
-      'update-custom-attribute-node': '#ec4899', // pink para atributo personalizado
-      'transfer-journey-node': '#fb923c', // orange para transferir jornada
-      'send-message-node': '#3b82f6', // blue para enviar mensagem
-      'set-variable-node': '#a855f7', // purple para definir variável
-      'assign-agent-node': '#8b5cf6', // violet para atribuir agente
-      'assign-team-node': '#0ea5e9', // sky para atribuir equipe
-      'assign-bot-node': '#a855f7', // purple, matches AssignBotNode borderColor — converted to the flow token in the EVO-1270 sweep alongside the other 22 entries
-      'send-email-team-node': '#10b981', // emerald para enviar email equipe
-      'send-transcript-node': '#14b8a6', // teal para enviar transcrição
-      'mute-conversation-node': '#64748b', // gray para silenciar conversa
-      'defer-conversation-node': '#eab308', // yellow para adiar conversa
-      'resolve-conversation-node': '#10b981', // green para resolver conversa
-      'change-priority-node': '#6366f1', // indigo para alterar prioridade
-      default: '#64748b', // cinza para outros
+      'journey-trigger-node': flowTokens.node.trigger.border,
+      'conditional-node': flowTokens.node.condition.border,
+      'wait-node': flowTokens.node.control.border,
+      'split-node': flowTokens.node.control.border,
+      'scheduled-action-node': flowTokens.node.control.border,
+      'set-variable-node': flowTokens.node.control.border,
+      'exit-journey-node': flowTokens.node.exit.border,
+      'transfer-journey-node': flowTokens.node.exit.border,
+      'send-message-node': flowTokens.node.action.message.border,
+      'send-transcript-node': flowTokens.node.action.message.border,
+      'send-email-team-node': flowTokens.node.action.message.border,
+      'send-webhook-node': flowTokens.node.action.webhook.border,
+      'add-label-node': flowTokens.node.action.label.border,
+      'remove-label-node': flowTokens.node.action.label.border,
+      'update-contact-node': flowTokens.node.action.pipeline.border,
+      'update-custom-attribute-node': flowTokens.node.action.pipeline.border,
+      'assign-agent-node': flowTokens.node.action.pipeline.border,
+      'assign-team-node': flowTokens.node.action.pipeline.border,
+      'assign-bot-node': flowTokens.node.action.pipeline.border,
+      'change-priority-node': flowTokens.node.action.pipeline.border,
+      'mute-conversation-node': flowTokens.node.action.pipeline.border,
+      'defer-conversation-node': flowTokens.node.action.pipeline.border,
+      'resolve-conversation-node': flowTokens.node.action.pipeline.border,
+      default: 'var(--color-muted-foreground)',
     }),
     [],
   );
