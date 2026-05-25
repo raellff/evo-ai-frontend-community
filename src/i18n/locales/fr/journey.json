@@ -56,15 +56,32 @@
   },
   "flowEditor": {
     "title": "Éditeur de parcours : {{name}}",
-    "subtitleFallback": "Sans description",
     "loading": "Chargement du parcours...",
     "notFound": "Parcours introuvable",
     "back": "Retour",
     "save": "Enregistrer",
     "saving": "Enregistrement...",
     "saved": "Enregistré",
-    "lastSaved": "Dernière sauvegarde : {{time}}",
+    "viewSessions": "Voir les sessions",
+    "lastSavedRelative": "Enregistré {{relative}}",
+    "lastSavedJustNow": "à l'instant",
     "autoSaveInfo": "Sauvegarde auto dans 10s",
+    "unsavedChangesTitle": "Modifications non enregistrées",
+    "unsavedChangesBody": "Vous avez des modifications non enregistrées qui seront perdues si vous quittez maintenant.",
+    "stay": "Rester",
+    "leaveAnyway": "Quitter quand même",
+    "recoveryTitle": "Récupérer le travail non enregistré ?",
+    "recoveryBody": "Nous avons trouvé des modifications non enregistrées de {{when}} stockées localement. Récupérer ou ignorer ?",
+    "recover": "Récupérer",
+    "discard": "Ignorer",
+    "saveErrorBanner": "Échec de l'enregistrement : {{reason}}. Nouvelle tentative dans {{seconds}}s.",
+    "saveErrorBannerNoRetry": "Échec de l'enregistrement : {{reason}}. Cliquez sur Enregistrer pour réessayer.",
+    "saveErrorMessages": {
+      "network": "Erreur réseau",
+      "server": "Erreur serveur",
+      "unauthorized": "Non autorisé",
+      "validation": "Données invalides"
+    },
     "saveSuccess": "Parcours enregistré avec succès",
     "saveError": "Impossible d'enregistrer le parcours",
     "loadError": "Impossible de charger le parcours",
@@ -233,7 +250,8 @@
         "description": "Envoie un message au contact",
         "eventChannel": "Canal de l'événement",
         "oneAttachment": "+ 1 pièce jointe",
-        "multipleAttachments": "+ {{count}} pièces jointes"
+        "multipleAttachments": "+ {{count}} pièces jointes",
+        "channelLabel": "Canal :"
       },
       "sendWebhook": {
         "name": "Envoyer un webhook",
@@ -979,6 +997,9 @@
       "emptyState": {
         "noPathsConfigured": "No path configured",
         "clickToCreateFirst": "Click on \"Add Path\" to create your first conditional path"
+      },
+      "placeholders": {
+        "selectVariable": "Sélectionner une variable..."
       }
     },
     "deferConversation": {
@@ -1546,13 +1567,19 @@
         "webhookUrl": "https://example.com/webhook",
         "journeyId": "Select a journey",
         "taskTitle": "Enter task title",
-        "taskDescription": "Enter task description"
+        "taskDescription": "Enter task description",
+        "selectAction": "Sélectionner une action",
+        "selectChannel": "Sélectionner un canal",
+        "loadingChannels": "Chargement des canaux...",
+        "loadingJourneys": "Chargement des parcours..."
       },
       "hints": {
-        "journeyId": "The ID of the journey to trigger"
+        "journeyId": "The ID of the journey to trigger",
+        "characterCount": "{{count}} caractères"
       },
       "messages": {
-        "noChannelsConfigured": "Aucun canal de messagerie configuré. Veuillez d'abord configurer un canal WhatsApp, SMS, Email ou Telegram dans les paramètres des Canaux."
+        "noChannelsConfigured": "Aucun canal de messagerie configuré. Veuillez d'abord configurer un canal WhatsApp, SMS, Email ou Telegram dans les paramètres des Canaux.",
+        "noChannelsConfiguredInline": "Aucun canal configuré"
       }
     }
   },

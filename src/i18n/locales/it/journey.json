@@ -56,15 +56,32 @@
   },
   "flowEditor": {
     "title": "Editor di Percorso: {{name}}",
-    "subtitleFallback": "Senza descrizione",
     "loading": "Caricamento percorso...",
     "notFound": "Percorso non trovato",
     "back": "Indietro",
     "save": "Salva",
     "saving": "Salvataggio...",
     "saved": "Salvato",
-    "lastSaved": "Ultimo salvataggio: {{time}}",
+    "viewSessions": "Vedi sessioni",
+    "lastSavedRelative": "Salvato {{relative}}",
+    "lastSavedJustNow": "adesso",
     "autoSaveInfo": "Salvataggio automatico in 10s",
+    "unsavedChangesTitle": "Modifiche non salvate",
+    "unsavedChangesBody": "Hai modifiche non salvate che andranno perse se esci ora.",
+    "stay": "Resta",
+    "leaveAnyway": "Esci comunque",
+    "recoveryTitle": "Recuperare il lavoro non salvato?",
+    "recoveryBody": "Abbiamo trovato modifiche non salvate da {{when}} memorizzate localmente. Recuperare o scartare?",
+    "recover": "Recupera",
+    "discard": "Scarta",
+    "saveErrorBanner": "Salvataggio fallito: {{reason}}. Nuovo tentativo tra {{seconds}}s.",
+    "saveErrorBannerNoRetry": "Salvataggio fallito: {{reason}}. Fai clic su Salva per riprovare.",
+    "saveErrorMessages": {
+      "network": "Errore di rete",
+      "server": "Errore del server",
+      "unauthorized": "Non autorizzato",
+      "validation": "Dati non validi"
+    },
     "saveSuccess": "Percorso salvato con successo",
     "saveError": "Impossibile salvare il percorso",
     "loadError": "Impossibile caricare il percorso",
@@ -245,7 +262,8 @@
         "description": "Invia un messaggio al contatto",
         "eventChannel": "Canale dell'Evento",
         "oneAttachment": "+ 1 allegato",
-        "multipleAttachments": "+ {{count}} allegati"
+        "multipleAttachments": "+ {{count}} allegati",
+        "channelLabel": "Canale:"
       },
       "sendWebhook": {
         "name": "Invia Webhook",
@@ -991,6 +1009,9 @@
       "emptyState": {
         "noPathsConfigured": "No path configured",
         "clickToCreateFirst": "Click on \"Add Path\" to create your first conditional path"
+      },
+      "placeholders": {
+        "selectVariable": "Seleziona variabile..."
       }
     },
     "deferConversation": {
@@ -1558,13 +1579,19 @@
         "webhookUrl": "https://example.com/webhook",
         "journeyId": "Select a journey",
         "taskTitle": "Enter task title",
-        "taskDescription": "Enter task description"
+        "taskDescription": "Enter task description",
+        "selectAction": "Seleziona un'azione",
+        "selectChannel": "Seleziona un canale",
+        "loadingChannels": "Caricamento canali...",
+        "loadingJourneys": "Caricamento percorsi..."
       },
       "hints": {
-        "journeyId": "The ID of the journey to trigger"
+        "journeyId": "The ID of the journey to trigger",
+        "characterCount": "{{count}} caratteri"
       },
       "messages": {
-        "noChannelsConfigured": "Nessun canale di messaggistica configurato. Si prega di configurare prima un canale WhatsApp, SMS, Email o Telegram nelle impostazioni dei Canali."
+        "noChannelsConfigured": "Nessun canale di messaggistica configurato. Si prega di configurare prima un canale WhatsApp, SMS, Email o Telegram nelle impostazioni dei Canali.",
+        "noChannelsConfiguredInline": "Nessun canale configurato"
       }
     }
   },

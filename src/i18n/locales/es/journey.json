@@ -56,15 +56,32 @@
   },
   "flowEditor": {
     "title": "Editor de Jornada: {{name}}",
-    "subtitleFallback": "Sin descripción",
     "loading": "Cargando jornada...",
     "notFound": "Jornada no encontrada",
     "back": "Volver",
     "save": "Guardar",
     "saving": "Guardando...",
     "saved": "Guardado",
-    "lastSaved": "Último guardado: {{time}}",
+    "viewSessions": "Ver sesiones",
+    "lastSavedRelative": "Guardado {{relative}}",
+    "lastSavedJustNow": "ahora mismo",
     "autoSaveInfo": "Auto-guardado en 10s",
+    "unsavedChangesTitle": "Cambios sin guardar",
+    "unsavedChangesBody": "Tienes cambios sin guardar que se perderán si sales ahora.",
+    "stay": "Quedarme",
+    "leaveAnyway": "Salir igualmente",
+    "recoveryTitle": "¿Recuperar trabajo sin guardar?",
+    "recoveryBody": "Encontramos cambios sin guardar de {{when}} almacenados localmente. ¿Recuperar o descartar?",
+    "recover": "Recuperar",
+    "discard": "Descartar",
+    "saveErrorBanner": "Error al guardar: {{reason}}. Reintentando en {{seconds}}s.",
+    "saveErrorBannerNoRetry": "Error al guardar: {{reason}}. Haz clic en Guardar para intentarlo de nuevo.",
+    "saveErrorMessages": {
+      "network": "Error de red",
+      "server": "Error del servidor",
+      "unauthorized": "Sin permiso",
+      "validation": "Datos no válidos"
+    },
     "saveSuccess": "Jornada guardada con éxito",
     "saveError": "No fue posible guardar la jornada",
     "loadError": "No fue posible cargar la jornada",
@@ -233,7 +250,8 @@
         "description": "Envía un mensaje al contacto",
         "eventChannel": "Canal del Evento",
         "oneAttachment": "+ 1 adjunto",
-        "multipleAttachments": "+ {{count}} adjuntos"
+        "multipleAttachments": "+ {{count}} adjuntos",
+        "channelLabel": "Canal:"
       },
       "sendWebhook": {
         "name": "Enviar Webhook",
@@ -979,6 +997,9 @@
       "emptyState": {
         "noPathsConfigured": "No path configured",
         "clickToCreateFirst": "Click on \"Add Path\" to create your first conditional path"
+      },
+      "placeholders": {
+        "selectVariable": "Seleccionar variable..."
       }
     },
     "deferConversation": {
@@ -1546,13 +1567,19 @@
         "webhookUrl": "https://example.com/webhook",
         "journeyId": "Select a journey",
         "taskTitle": "Enter task title",
-        "taskDescription": "Enter task description"
+        "taskDescription": "Enter task description",
+        "selectAction": "Selecciona una acción",
+        "selectChannel": "Selecciona un canal",
+        "loadingChannels": "Cargando canales...",
+        "loadingJourneys": "Cargando jornadas..."
       },
       "hints": {
-        "journeyId": "The ID of the journey to trigger"
+        "journeyId": "The ID of the journey to trigger",
+        "characterCount": "{{count}} caracteres"
       },
       "messages": {
-        "noChannelsConfigured": "No hay canales de mensajería configurados. Por favor, configure primero un canal de WhatsApp, SMS, Email o Telegram en la configuración de Canales."
+        "noChannelsConfigured": "No hay canales de mensajería configurados. Por favor, configure primero un canal de WhatsApp, SMS, Email o Telegram en la configuración de Canales.",
+        "noChannelsConfiguredInline": "Sin canales configurados"
       }
     }
   },
