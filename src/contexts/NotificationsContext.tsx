@@ -42,7 +42,7 @@ type NotificationsAction =
   | { type: 'MARK_ALL_AS_READ' }
   | { type: 'SET_FILTERS'; payload: Record<string, any> };
 
-const initialState: NotificationsState = {
+export const initialState: NotificationsState = {
   notifications: [],
   meta: {
     count: 0,
@@ -60,7 +60,7 @@ const initialState: NotificationsState = {
   notificationFilters: {},
 };
 
-function notificationsReducer(
+export function notificationsReducer(
   state: NotificationsState,
   action: NotificationsAction,
 ): NotificationsState {
@@ -586,21 +586,30 @@ const NotificationsProviderInner: React.FC<NotificationsProviderProps> = ({ chil
 
   const handleNotificationUpdated = useCallback((data: any) => {
     if (!data.id) return;
-    const normalized: Partial<Notification> = { ...data };
-    if (data.last_activity_at) {
+    // Only forward the fields an "updated" event actually changes. Spreading the
+    // raw payload could clobber a rich primary_actor already in state (contact,
+    // display_id, channel) with a shallow {id} from the WS message.
+    const normalized: Partial<Notification> = {};
+    if (data.last_activity_at !== undefined) {
       normalized.last_activity_at =
-        unixTimestampToIso(data.last_activity_at) ?? normalized.last_activity_at;
+        unixTimestampToIso(data.last_activity_at) ?? data.last_activity_at;
     }
-    // read_at: WS currently sends datetime string, but normalize defensively in case
-    // the backend switches to Unix int (like created_at) for consistency.
-    if (typeof data.read_at === 'number') {
-      normalized.read_at = data.read_at ? new Date(data.read_at * 1000).toISOString() : null;
+    // read_at: WS currently sends a datetime string, but normalize defensively in
+    // case the backend switches to a Unix int (like created_at) for consistency.
+    if (data.read_at !== undefined) {
+      normalized.read_at =
+        typeof data.read_at === 'number'
+          ? (data.read_at ? new Date(data.read_at * 1000).toISOString() : null)
+          : data.read_at;
     }
     if (data.sender) {
       normalized.sender = data.sender;
     }
     if (data.push_message_body !== undefined) {
       normalized.push_message_body = data.push_message_body;
+    }
+    if (data.push_message_title !== undefined) {
+      normalized.push_message_title = data.push_message_title;
     }
     actions.updateNotification(data.id, normalized);
   }, [actions]);
