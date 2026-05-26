@@ -84,7 +84,7 @@ export default function EvolutionHubConfig() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, watch, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: DEFAULTS,
   });
