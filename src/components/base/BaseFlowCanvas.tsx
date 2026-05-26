@@ -608,25 +608,21 @@ export function BaseFlowCanvas({
           />
         ))}
 
-      {/* 🆕 Sistema de painéis de configuração */}
       {configPanelSystem &&
         showConfigPanel &&
         configNodeData &&
         configPanelType &&
-        renderConfigPanel && (
-          <div className="absolute top-16 left-4 z-50">
-            {renderConfigPanel(
-              configPanelType,
-              configNodeData.data,
-              configNodeData.id,
-              updateNode,
-              () => {
-                setShowConfigPanel(false);
-                setConfigNodeData(null);
-                setConfigPanelType('');
-              },
-            )}
-          </div>
+        renderConfigPanel &&
+        renderConfigPanel(
+          configPanelType,
+          configNodeData.data,
+          configNodeData.id,
+          updateNode,
+          () => {
+            setShowConfigPanel(false);
+            setConfigNodeData(null);
+            setConfigPanelType('');
+          },
         )}
     </div>
   );
