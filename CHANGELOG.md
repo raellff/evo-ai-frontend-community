@@ -40,6 +40,7 @@ Hardening release on the frontend side of CRM Community rc5 — **"fresh-install
 - **EVO-1421 — Remove inert floating-panel wrapper and retire `BaseFlowPanel`** — the wrapper was rendered but inert (no click/keyboard interaction reached the panel); removed and the legacy `BaseFlowPanel` was retired now that consumers migrated.
 - **EVO-1454 — `ConditionalNode` empty-state hint contrast bumped to `text-yellow-700` for WCAG AA** — previous shade did not meet AA contrast on the node background.
 - **i18n — Spanish accent in `channel_message` key + double blank line cleanup** — corrected the Spanish translation accent and removed a stray double blank line in the same locale file.
+- **Build — sync `package-lock.json` and exclude `.stories.tsx` from `tsc -b`** — the `@tanstack/react-virtual` dep was added to `package.json` without updating the lock file, breaking `npm ci` in the Docker build; storybook devDependencies were removed but `.stories.tsx` files remained, causing `tsc -b` to fail on missing `@storybook/react-vite`. Lock file was regenerated against Node 20 (the CI/Dockerfile target) and `*.stories.{ts,tsx}` are now excluded from `tsconfig.app.json`. Stories were not part of the production bundle anyway.
 
 ### Upgrade notes
 
