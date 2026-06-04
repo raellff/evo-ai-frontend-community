@@ -113,11 +113,15 @@ export default function NewChannel({ initialChannelId, onExit }: NewChannelProps
 
   // Pré-seleciona o canal quando montado com initialChannelId (pula o grid).
   // Só roda uma vez, e apenas se nenhum canal estiver selecionado ainda.
+  // Usa handleChannelSelect direto (não a versão com validação canFB/canIG): o
+  // canal já foi escolhido pela tela host, e o gating de config dos canais Meta
+  // é aplicado adiante (no provider/form), não aqui — senão um config ainda não
+  // carregado (async) faria cair no grid de seleção inteiro.
   useEffect(() => {
     if (!initialChannelId || selectedChannel) return;
     const channel = channelTypes.find(c => c.id === initialChannelId);
     if (channel) {
-      handleChannelSelectWithValidation(channel);
+      handleChannelSelect(channel);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialChannelId, channelTypes]);
@@ -137,6 +141,20 @@ export default function NewChannel({ initialChannelId, onExit }: NewChannelProps
     // voltar, sai do fluxo.
     if (!goBack()) {
       exitToChannels();
+    }
+  };
+
+  // Após criar um canal com sucesso. No CRM standalone navega para as settings
+  // do inbox recém-criado. Embutido (onExit fornecido), navigate não resolve
+  // dentro do MemoryRouter sem <Routes>, então apenas fechamos o host (o canal
+  // já foi criado); a tela host reabre as settings se desejar.
+  const handleCreated = (createdId?: string) => {
+    if (onExit) {
+      onExit();
+    } else if (createdId) {
+      navigate(`/channels/${createdId}/settings`);
+    } else {
+      navigate('/channels');
     }
   };
 
@@ -183,11 +201,17 @@ export default function NewChannel({ initialChannelId, onExit }: NewChannelProps
   const handleSubmitCreate = async () => {
     if (!selectedChannel) return;
 
-    await submitCreate(selectedChannel, selectedProvider, form, {
-      hasEvolutionConfig,
-      hasEvolutionGoConfig,
-      ...config,
-    });
+    await submitCreate(
+      selectedChannel,
+      selectedProvider,
+      form,
+      {
+        hasEvolutionConfig,
+        hasEvolutionGoConfig,
+        ...config,
+      },
+      handleCreated,
+    );
   };
 
   // Generate breadcrumbs based on current state
@@ -258,7 +282,7 @@ export default function NewChannel({ initialChannelId, onExit }: NewChannelProps
             onSuccess={data => {
               const createdId = data?.id ?? data?.payload?.id;
               toast.success(t('newChannel.success.channelCreated'));
-              navigate(`/channels/${createdId}/settings`);
+              handleCreated(createdId);
             }}
             onCancel={handleGoBack}
           />
@@ -280,7 +304,7 @@ export default function NewChannel({ initialChannelId, onExit }: NewChannelProps
             provider={selectedProvider.id as 'google' | 'microsoft' | 'other_provider'}
             onSuccess={channelId => {
               toast.success(t('newChannel.success.emailChannelCreated'));
-              navigate(`/channels/${channelId}/settings`);
+              handleCreated(channelId);
             }}
             onBack={handleGoBack}
           />
@@ -328,7 +352,7 @@ export default function NewChannel({ initialChannelId, onExit }: NewChannelProps
             onWhatsappCloudSuccess={data => {
               const createdId = data?.id ?? data?.payload?.id;
               toast.success(t('newChannel.success.channelCreated'));
-              navigate(`/channels/${createdId}/settings`);
+              handleCreated(createdId);
             }}
             onCancel={handleGoBack}
           />
