@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -40,7 +40,23 @@ import { InstagramChannelTour } from '@/tours/InstagramChannelTour';
 import { FacebookChannelTour } from '@/tours/FacebookChannelTour';
 import { EmailChannelTour } from '@/tours/EmailChannelTour';
 
-export default function NewChannel() {
+interface NewChannelProps {
+  /**
+   * Quando fornecido, o canal correspondente (por `id` em getChannelTypes) é
+   * pré-selecionado no mount, pulando o grid de seleção de canal. Usado quando
+   * o NewChannel é montado a partir de uma tela que já escolheu o canal.
+   */
+  initialChannelId?: string;
+  /**
+   * Callback opcional invocado quando o usuário sairia do fluxo (voltar/cancelar
+   * no topo, ou clique no breadcrumb "Canais"). Quando fornecido, é chamado em
+   * vez de navegar para /channels — permite que um host (ex.: modal) feche a si
+   * mesmo. Sem ele, o comportamento original de navegação é mantido.
+   */
+  onExit?: () => void;
+}
+
+export default function NewChannel({ initialChannelId, onExit }: NewChannelProps = {}) {
   const navigate = useNavigate();
   const { t } = useLanguage('channels');
 
@@ -95,9 +111,32 @@ export default function NewChannel() {
     [canEmailGoogle, canEmailMicrosoft, t],
   );
 
-  const handleGoBack = () => {
-    if (!goBack()) {
+  // Pré-seleciona o canal quando montado com initialChannelId (pula o grid).
+  // Só roda uma vez, e apenas se nenhum canal estiver selecionado ainda.
+  useEffect(() => {
+    if (!initialChannelId || selectedChannel) return;
+    const channel = channelTypes.find(c => c.id === initialChannelId);
+    if (channel) {
+      handleChannelSelectWithValidation(channel);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialChannelId, channelTypes]);
+
+  // Sai do fluxo voltando à lista de canais. Quando um host fornece onExit
+  // (ex.: modal no shell), fecha-o; senão navega para /channels (CRM standalone).
+  const exitToChannels = () => {
+    if (onExit) {
+      onExit();
+    } else {
       navigate('/channels');
+    }
+  };
+
+  const handleGoBack = () => {
+    // goBack() volta um nível (provider -> canal). Quando não há mais para onde
+    // voltar, sai do fluxo.
+    if (!goBack()) {
+      exitToChannels();
     }
   };
 
@@ -154,7 +193,7 @@ export default function NewChannel() {
   // Generate breadcrumbs based on current state
   const getBreadcrumbs = (): BreadcrumbItem[] => {
     const breadcrumbs: BreadcrumbItem[] = [
-      { label: t('newChannel.breadcrumb.channels'), onClick: () => navigate('/channels') },
+      { label: t('newChannel.breadcrumb.channels'), onClick: exitToChannels },
     ];
 
     if (!selectedChannel) {
@@ -395,7 +434,7 @@ export default function NewChannel() {
               }}
               onProviderSelect={handleProviderSelectWithValidation}
               onBack={handleGoBack}
-              onChannelListClick={() => navigate('/channels')}
+              onChannelListClick={exitToChannels}
             />
           </>
 
