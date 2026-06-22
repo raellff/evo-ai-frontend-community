@@ -294,6 +294,8 @@ export function ConditionalPanel({
               journeyId={journeyId}
               className="w-full"
               showSystemVariables={true}
+              showContactAttributes={true}
+              triggerTestId="conditional-field-select"
             />
           </div>
 
