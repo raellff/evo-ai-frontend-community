@@ -31,8 +31,10 @@
       "price": "Precio",
       "status": "Estado",
       "variants": "Variantes",
-      "actions": "Acciones"
-    }
+      "actions": "Acciones",
+      "stock": "Stock"
+    },
+    "outOfStock": "Agotado"
   },
   "modal": {
     "createTitle": "Crear producto",
@@ -59,7 +61,10 @@
     "descriptionPlaceholder": "Descripción corta del producto (también usada por el agente de IA)",
     "labels": "Categorías / etiquetas",
     "labelsPlaceholder": "Separadas por comas, ej.: ropa, coleccion-verano",
-    "labelsHint": "Las categorías ayudan a filtrar productos y pueden ser usadas por reglas de automatización."
+    "labelsHint": "Las categorías ayudan a filtrar productos y pueden ser usadas por reglas de automatización.",
+    "skuPlaceholder": "SKU-001",
+    "purchaseUrlPlaceholder": "https://...",
+    "digitalNoStockHint": "Los productos digitales no tienen stock."
   },
   "media": {
     "uploadHint": "Arrastre imágenes aquí o use el botón de abajo.",
@@ -74,7 +79,8 @@
     "sku": "SKU",
     "priceOverride": "Precio (anula el predeterminado)",
     "stock": "Stock",
-    "digitalHint": "Generalmente no se usan variantes en productos digitales."
+    "digitalHint": "Generalmente no se usan variantes en productos digitales.",
+    "namePlaceholder": "ej.: P / M / G"
   },
   "actions": {
     "cancel": "Cancelar",
@@ -215,5 +221,20 @@
     "noVariant": "Sin variante",
     "quantity": "Cantidad",
     "notes": "Notas (opcional)"
+  },
+  "currency": {
+    "BRL": "Real (BRL)",
+    "USD": "Dólar (USD)",
+    "EUR": "Euro (EUR)"
+  },
+  "validation": {
+    "nameRequired": "El nombre es obligatorio",
+    "priceRequired": "El precio es obligatorio",
+    "priceMin": "El precio debe ser 0 o mayor",
+    "urlInvalid": "Introduce una URL válida (http/https)",
+    "requiredLegend": "Los campos marcados con * son obligatorios",
+    "skuTaken": "Este SKU ya está en uso",
+    "variantPriceCurrency": "en {{currency}}",
+    "fixErrors": "Completa los campos obligatorios para continuar."
   }
 }
