@@ -3,6 +3,7 @@ import { Button } from '@evoapi/design-system';
 import { toast } from 'sonner';
 import { Loader2, ExternalLink, CheckCircle2, Link2 } from 'lucide-react';
 import { api } from '@/services/core';
+import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
 import {
   evolutionHubService,
   type HubChannel,
@@ -56,6 +57,14 @@ export default function HubConnectButton({
   name,
   onCreated,
 }: HubConnectButtonProps) {
+  // Flag genérica (default ON p/ community standalone): quando false (deploy
+  // enterprise/SaaS), esconde "Usar canal existente do Hub". Motivo: a listagem
+  // de canais existentes do Hub usa credenciais GLOBAIS e NÃO filtra por tenant
+  // → vaza conexões de outras agências (vazamento cross-tenant). Só "Criar nova
+  // conexão". Defesa em profundidade: o backend também 403a available_channels.
+  const config = useGlobalConfig();
+  const allowExistingHubChannels = config.hubAllowExistingChannels !== false;
+
   const [mode, setMode] = useState<Mode>('new');
   const [submitting, setSubmitting] = useState(false);
   const [publicLink, setPublicLink] = useState<string | null>(null);
@@ -232,22 +241,24 @@ export default function HubConnectButton({
             </div>
           </div>
         </label>
-        <label className="flex items-start gap-2 text-sm cursor-pointer">
-          <input
-            type="radio"
-            name="hub_mode"
-            value="existing"
-            checked={mode === 'existing'}
-            onChange={() => setMode('existing')}
-            className="mt-1"
-          />
-          <div>
-            <div className="font-medium">Usar canal existente do Hub</div>
-            <div className="text-xs text-muted-foreground">
-              Apenas configura o webhook deste CRM em um canal já conectado.
+        {allowExistingHubChannels && (
+          <label className="flex items-start gap-2 text-sm cursor-pointer">
+            <input
+              type="radio"
+              name="hub_mode"
+              value="existing"
+              checked={mode === 'existing'}
+              onChange={() => setMode('existing')}
+              className="mt-1"
+            />
+            <div>
+              <div className="font-medium">Usar canal existente do Hub</div>
+              <div className="text-xs text-muted-foreground">
+                Apenas configura o webhook deste CRM em um canal já conectado.
+              </div>
             </div>
-          </div>
-        </label>
+          </label>
+        )}
       </fieldset>
 
       {mode === 'existing' && (

@@ -21,6 +21,10 @@ export interface GlobalConfig {
   hasEvolutionGoConfig?: boolean;
   hasEvolutionHubConfig?: boolean;
   evolutionHubEnabled?: boolean;
+  // Flag genérica (default true quando ausente). false esconde "Usar canal
+  // existente do Hub" (anti-vazamento cross-tenant no SaaS). Backend a emite no
+  // public_config a partir da env HUB_ALLOW_EXISTING_CHANNELS.
+  hubAllowExistingChannels?: boolean;
   hasTwitterConfig?: boolean;
   openaiConfigured?: boolean;
   enableAccountSignup?: boolean;
