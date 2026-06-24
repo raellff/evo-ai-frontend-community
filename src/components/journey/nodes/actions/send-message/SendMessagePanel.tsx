@@ -150,7 +150,13 @@ const getChannelTypeName = (channelType: string) => {
   }
 };
 
-export function SendMessagePanel({ nodeId, data, onUpdate, onClose }: SendMessagePanelProps) {
+export function SendMessagePanel({
+  nodeId,
+  data,
+  onUpdate,
+  onClose,
+  journeyId,
+}: SendMessagePanelProps) {
   const { t } = useLanguage('journey');
 
   const initialFormData: SendMessageNodeData = {
@@ -780,6 +786,7 @@ export function SendMessagePanel({ nodeId, data, onUpdate, onClose }: SendMessag
                       mapping.source === 'expression' &&
                       !!(mapping.expression ?? '').trim() &&
                       !isBalancedExpression(mapping.expression!);
+                    const exprErrorId = `send-message-expr-error-${variable.name}`;
 
                     return (
                       <div key={variable.name} className="space-y-1">
@@ -860,9 +867,15 @@ export function SendMessagePanel({ nodeId, data, onUpdate, onClose }: SendMessag
                                 }
                                 placeholder={t('panels.sendMessage.expressionPlaceholder')}
                                 className="min-h-[40px] resize-none"
+                                journeyId={journeyId}
+                                aria-invalid={expressionInvalid}
+                                aria-describedby={expressionInvalid ? exprErrorId : undefined}
                               />
                               {expressionInvalid && (
-                                <p className="text-xs text-flow-feedback-error-fg">
+                                <p
+                                  id={exprErrorId}
+                                  className="text-xs text-flow-feedback-error-fg"
+                                >
                                   {t('panels.sendMessage.invalidExpression')}
                                 </p>
                               )}
@@ -900,9 +913,7 @@ export function SendMessagePanel({ nodeId, data, onUpdate, onClose }: SendMessag
               placeholder={t('panels.sendMessage.messagePlaceholder')}
               className="min-h-[120px] resize-none"
               disabled={loading}
-              onVariableInsert={variable => {
-                console.log('Variable inserted:', variable);
-              }}
+              journeyId={journeyId}
             />
 
             <div className="flex justify-between items-center text-xs">
