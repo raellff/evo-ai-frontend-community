@@ -789,7 +789,7 @@ export default function Contacts() {
   };
 
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="h-full flex flex-col p-3 sm:p-4">
       <ContactsTour />
       <div data-tour="contacts-header">
       <ContactsHeader
@@ -810,7 +810,7 @@ export default function Contacts() {
       </div>
 
       {/* View Mode Toggle */}
-      <div className="flex items-center justify-end mt-6 mb-3" data-tour="contacts-view-toggle">
+      <div className="flex items-center justify-end mt-3 mb-2 sm:mt-6 sm:mb-3" data-tour="contacts-view-toggle">
         <div className="flex items-center border rounded-lg">
           <Button
             variant={viewMode === 'cards' ? 'default' : 'ghost'}
@@ -901,7 +901,7 @@ export default function Contacts() {
 
       {/* Pagination */}
       {state.meta.pagination.total > 0 && (
-        <div data-tour="contacts-pagination">
+        <div data-tour="contacts-pagination" className="mt-4 border-t border-border pt-4">
           <ContactsPagination
             currentPage={state.meta.pagination.page}
             totalPages={state.meta.pagination.total_pages}
