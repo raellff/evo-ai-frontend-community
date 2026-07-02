@@ -4,11 +4,25 @@ import { EditorView } from 'prosemirror-view';
 import { DOMParser as ProseDOMParser, DOMSerializer } from 'prosemirror-model';
 import { keymap } from 'prosemirror-keymap';
 import { history, undo, redo } from 'prosemirror-history';
-import { baseKeymap } from 'prosemirror-commands';
+import { baseKeymap, chainCommands, exitCode } from 'prosemirror-commands';
 import { toggleMark } from 'prosemirror-commands';
 import { wrapInList } from 'prosemirror-schema-list';
 import { messageSchema } from './schema';
-import { EditorToolbar } from './EditorToolbar';
+import FormattingBubbleMenu, { BubbleMenuRect } from './FormattingBubbleMenu';
+
+/**
+ * baseKeymap só mapeia "Enter" (→ splitBlock); "Shift-Enter" não tem binding
+ * nenhum no prosemirror-commands, então sem isto a tecla não fazia NADA dentro
+ * do editor (nem quebrava linha, nem sobrava pro browser — o contenteditable é
+ * controlado pelo ProseMirror). O schema já tem `hard_break` (schema.ts) — só
+ * faltava um comando pra inserir o node nele. exitCode primeiro (no-op aqui,
+ * sem code_block no schema) por paridade com o Mod-Enter do baseKeymap.
+ */
+const insertHardBreak = chainCommands(exitCode, (state, dispatch) => {
+  const br = messageSchema.nodes.hard_break;
+  if (dispatch) dispatch(state.tr.replaceSelectionWith(br.create()).scrollIntoView());
+  return true;
+});
 
 export interface RichTextEditorRef {
   focus: () => void;
@@ -25,7 +39,8 @@ interface RichTextEditorProps {
   onKeyDown?: (event: KeyboardEvent) => boolean | void;
   disabled?: boolean;
   className?: string;
-  showToolbar?: boolean;
+  /** Composer estilo pill (§3.1/§3.8): parte com 1 linha; Shift-Enter quebra e a pill cresce até um teto (ver RichTextEditor.css), depois rola verticalmente. */
+  singleLine?: boolean;
 }
 
 export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>(
@@ -37,13 +52,13 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       onKeyDown,
       disabled = false,
       className = '',
-      showToolbar = true,
+      singleLine = false,
     },
     ref,
   ) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
-    const [editorState, setEditorState] = useState<EditorState | null>(null);
+    const [bubbleRect, setBubbleRect] = useState<BubbleMenuRect | null>(null);
 
     const onKeyDownRef = useRef(onKeyDown);
     const onChangeRef = useRef(onChange);
@@ -84,7 +99,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           plugins: viewRef.current.state.plugins,
         });
         viewRef.current.updateState(newState);
-        setEditorState(newState);
+        setBubbleRect(null);
       },
       insertText: (text: string) => {
         if (!viewRef.current) return;
@@ -104,7 +119,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           plugins: viewRef.current.state.plugins,
         });
         viewRef.current.updateState(newState);
-        setEditorState(newState);
+        setBubbleRect(null);
         onChangeRef.current?.('');
       },
     }));
@@ -130,55 +145,76 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             'Mod-z': undo,
             'Mod-y': redo,
             'Mod-Shift-z': redo,
+            'Shift-Enter': insertHardBreak,
             'Mod-b': toggleMark(messageSchema.marks.strong),
             'Mod-i': toggleMark(messageSchema.marks.em),
             'Mod-`': toggleMark(messageSchema.marks.code),
             'Shift-Ctrl-8': wrapInList(messageSchema.nodes.bullet_list),
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            Enter: (_state, _dispatch) => {
-              if (onKeyDownRef.current) {
-                const handled = onKeyDownRef.current(new KeyboardEvent('keydown', { key: 'Enter' }));
-                if (handled) return true;
-              }
-              return false;
-            },
           }),
           keymap(baseKeymap),
         ],
       });
 
+      // Enter é decidido SÓ aqui, via handleKeyDown (a prop CORRETA do
+      // EditorProps para interceptar teclas antes dos keymaps do state — ver
+      // prosemirror-view). handleDOMEvents.keydown NÃO é a API certa para
+      // isso: é um hook de evento DOM genérico, sem a garantia de rodar antes
+      // do keymap(baseKeymap) processar Enter (splitBlock) — por isso
+      // Shift+Enter não quebrava linha de forma confiável antes desta troca.
       const view = new EditorView(editorRef.current, {
         state,
         dispatchTransaction: transaction => {
           const newState = view.state.apply(transaction);
           view.updateState(newState);
-          setEditorState(newState);
 
           if (transaction.docChanged) {
             const doc = newState.doc;
             const content = doc.textContent;
             onChangeRef.current?.(content);
           }
+
+          const { selection } = newState;
+          if (selection.empty) {
+            setBubbleRect(null);
+          } else {
+            const anchorCoords = view.coordsAtPos(selection.from);
+            const headCoords = view.coordsAtPos(selection.to);
+            setBubbleRect({
+              top: Math.min(anchorCoords.top, headCoords.top),
+              left: (Math.min(anchorCoords.left, headCoords.left) + Math.max(anchorCoords.right, headCoords.right)) / 2,
+            });
+          }
+        },
+        handleKeyDown: (_view, event) => {
+          if (onKeyDownRef.current) {
+            const handled = onKeyDownRef.current(event);
+            if (handled) return true;
+          }
+          return false;
         },
         handleDOMEvents: {
-          keydown: (_view, event) => {
-            if (onKeyDownRef.current) {
-              const handled = onKeyDownRef.current(event);
-              if (handled) return true;
-            }
+          // Botões do bubble menu usam onMouseDown preventDefault, então um
+          // blur real só acontece quando o foco vai pra fora do editor E do
+          // menu (ex.: clicar em outro campo da tela) — seguro fechar aqui.
+          blur: () => {
+            setBubbleRect(null);
             return false;
           },
         },
         editable: () => !disabled,
         attributes: {
-          class:
-            'prosemirror-editor p-3 min-h-[100px] max-h-[200px] overflow-y-auto focus:outline-none resize-none text-sm leading-relaxed text-foreground',
+          class: [
+            'prosemirror-editor',
+            'w-full',
+            singleLine ? 'prosemirror-editor-singleline' : 'px-1 py-0 max-h-[120px] overflow-y-auto',
+            'focus:outline-none resize-none text-sm leading-relaxed text-foreground',
+          ].join(' '),
           'data-placeholder': placeholder,
+          spellcheck: 'false',
         },
       });
 
       viewRef.current = view;
-      setEditorState(state);
 
       return () => {
         view.destroy();
@@ -194,45 +230,16 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       }
     }, [disabled]);
 
-    const handleToolbarAction = (action: string) => {
-      if (!viewRef.current || !editorState) return;
-
-      const { state, dispatch } = viewRef.current;
-
-      switch (action) {
-        case 'bold':
-          toggleMark(messageSchema.marks.strong)(state, dispatch);
-          break;
-        case 'italic':
-          toggleMark(messageSchema.marks.em)(state, dispatch);
-          break;
-        case 'code':
-          toggleMark(messageSchema.marks.code)(state, dispatch);
-          break;
-        case 'bulletList':
-          wrapInList(messageSchema.nodes.bullet_list)(state, dispatch);
-          break;
-        case 'undo':
-          undo(state, dispatch);
-          break;
-        case 'redo':
-          redo(state, dispatch);
-          break;
-      }
-
-      viewRef.current.focus();
-    };
-
     return (
-      <div className={`border border-border rounded-lg overflow-hidden bg-background ${className}`}>
-        {showToolbar && (
-          <EditorToolbar
-            editorState={editorState}
-            onAction={handleToolbarAction}
-            disabled={disabled}
+      <div className={className}>
+        <div ref={editorRef} className={`relative w-full ${disabled ? 'opacity-50' : ''}`} />
+        {bubbleRect && viewRef.current && (
+          <FormattingBubbleMenu
+            view={viewRef.current}
+            rect={bubbleRect}
+            onClose={() => setBubbleRect(null)}
           />
         )}
-        <div ref={editorRef} className={`relative ${disabled ? 'opacity-50' : ''}`} />
       </div>
     );
   },

@@ -5,6 +5,25 @@
   white-space: pre-wrap;
 }
 
+/* Variante single-line (composer estilo pill, §3.1/§3.8) — parte como 1 linha,
+   mas Shift/Ctrl+Enter (WhatsApp-style) quebra e a pill CRESCE verticalmente
+   (não rola escondido) até um teto, depois rola. Enter puro envia (tratado
+   via onKeyDown no MessageInput, nunca chega a inserir parágrafo aqui). */
+.prosemirror-editor-singleline {
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.prosemirror-editor-singleline::-webkit-scrollbar {
+  display: none;
+}
+
+.prosemirror-editor-singleline p {
+  margin: 0;
+}
+
 /* Placeholder */
 .prosemirror-editor:empty:before {
   content: attr(data-placeholder);
