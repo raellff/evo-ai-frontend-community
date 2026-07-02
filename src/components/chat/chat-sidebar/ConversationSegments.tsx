@@ -10,7 +10,7 @@ import {
 import { useLanguage } from '@/hooks/useLanguage';
 import type { BaseFilter } from '@/types/core/filters';
 import type { ConversationFilter } from '@/types/chat/api';
-import { CONVERSATION_SEGMENTS, getActiveSegmentId, ALL_SEGMENT_PRESET } from './conversationSegments';
+import { CONVERSATION_SEGMENTS, getActiveSegmentId, ALL_SEGMENT_PRESET } from './conversationSegmentsHelpers';
 
 interface ConversationSegmentsProps {
   /** Current GLOBAL active filters, used to highlight the matching chip. */
