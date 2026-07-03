@@ -85,7 +85,6 @@ const ChatArea = ({
   onLoadMore,
   onRetryMessage,
   isPendingConversation = false,
-  onOpenConversation,
 }: ChatAreaProps) => {
   const { t } = useLanguage('chat');
   const { messages, websocket } = useChatContext();
