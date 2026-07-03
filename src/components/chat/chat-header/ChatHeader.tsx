@@ -3,10 +3,6 @@ import { Button } from '@evoapi/design-system/button';
 import {
   ArrowLeft,
   X,
-  MessageCircle,
-  CheckCircle,
-  Clock,
-  Pause,
   MoreVertical,
   ArrowUp,
   ArrowDown,
@@ -15,9 +11,6 @@ import {
   User as UserIcon,
   Users,
   Tag,
-  Trash2,
-  Mail,
-  MailOpen,
   GitBranch,
   Check,
 } from 'lucide-react';
