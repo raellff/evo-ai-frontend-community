@@ -45,8 +45,39 @@
     },
     "submit": {
       "idle": "Créer un compte et continuer",
-      "loading": "Configuration en cours..."
+      "loading": "Configuration en cours...",
+      "continue": "Continuer"
     }
+  },
+  "brand": {
+    "title": "Votre marque",
+    "subtitle": "Personnalisez l'apparence de ce box — modifiable plus tard",
+    "appTitle": {
+      "label": "Nom de l'app",
+      "placeholder": "Evolution"
+    },
+    "primaryColor": {
+      "label": "Couleur primaire"
+    },
+    "secondaryColor": {
+      "label": "Couleur secondaire",
+      "placeholder": "Facultatif"
+    },
+    "color": {
+      "invalid": "Utilisez une couleur hex comme #22C55E"
+    },
+    "logo": {
+      "label": "Logo et favicon",
+      "hint": "PNG ou WebP. Vous pourrez les ajouter plus tard dans les paramètres.",
+      "light": "Logo clair",
+      "dark": "Logo sombre",
+      "favicon": "Favicon"
+    },
+    "skip": "Configurer plus tard",
+    "finish": "Terminer",
+    "finishLoading": "Finalisation...",
+    "back": "Retour",
+    "logoUploadFailed": "Marque enregistrée, mais l'envoi du logo n'a pas abouti. Vous pourrez l'ajouter plus tard dans les paramètres."
   },
   "success": {
     "title": "Configuration terminée !",
