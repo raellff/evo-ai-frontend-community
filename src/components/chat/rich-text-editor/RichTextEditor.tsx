@@ -24,6 +24,18 @@ const insertHardBreak = chainCommands(exitCode, (state, dispatch) => {
   return true;
 });
 
+/**
+ * The empty state must still satisfy the schema (`doc: { content: 'block+' }`):
+ * one empty paragraph, never a zero-block doc. A zero-block doc renders a
+ * 0px-high contenteditable, so after send the visible placeholder detaches from
+ * the editor (absolute ::before anchored to a collapsed box) and clicks on it
+ * land on the wrapper instead of the editor — blurring it with no way to focus
+ * back. The placeholder CSS targets this empty-paragraph state (see
+ * RichTextEditor.css).
+ */
+const emptyParagraphDoc = () =>
+  messageSchema.nodeFromJSON({ type: 'doc', content: [{ type: 'paragraph' }] });
+
 export interface RichTextEditorRef {
   focus: () => void;
   getContent: () => string;
@@ -72,6 +84,10 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       getContent: () => {
         if (!viewRef.current) return '';
         const doc = viewRef.current.state.doc;
+        // A single empty paragraph is the cleared state — report it as ''
+        // so callers' empty-checks keep working (serializing it would yield
+        // '<p></p>', which is truthy).
+        if (!doc.textContent.trim() && doc.content.size <= 2) return '';
         const serializer = DOMSerializer.fromSchema(messageSchema);
         const fragment = serializer.serializeFragment(doc.content);
         const div = document.createElement('div');
@@ -87,12 +103,12 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
           wrapper.innerHTML = content;
           doc = ProseDOMParser.fromSchema(messageSchema).parse(wrapper);
         } else {
-          doc = messageSchema.nodeFromJSON({
-            type: 'doc',
-            content: content
-              ? [{ type: 'paragraph', content: [{ type: 'text', text: content }] }]
-              : [],
-          });
+          doc = content
+            ? messageSchema.nodeFromJSON({
+                type: 'doc',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: content }] }],
+              })
+            : emptyParagraphDoc();
         }
         const newState = EditorState.create({
           doc,
@@ -110,12 +126,8 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       },
       clear: () => {
         if (!viewRef.current) return;
-        const emptyDoc = messageSchema.nodeFromJSON({
-          type: 'doc',
-          content: [],
-        });
         const newState = EditorState.create({
-          doc: emptyDoc,
+          doc: emptyParagraphDoc(),
           plugins: viewRef.current.state.plugins,
         });
         viewRef.current.updateState(newState);
@@ -132,10 +144,7 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
             type: 'doc',
             content: [{ type: 'paragraph', content: [{ type: 'text', text: value }] }],
           })
-        : messageSchema.nodeFromJSON({
-            type: 'doc',
-            content: [],
-          });
+        : emptyParagraphDoc();
 
       const state = EditorState.create({
         doc: initialDoc,
@@ -222,16 +231,27 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
       };
     }, []);
 
+    // Restore focus when re-enabling if the editor had it when it was disabled.
+    // Sending disables the editor (contenteditable=false drops focus) and the
+    // caller's async re-focus can fire while it is still disabled, becoming a
+    // no-op — this makes the round-trip deterministic.
+    const hadFocusRef = useRef(false);
     useEffect(() => {
-      if (viewRef.current) {
-        viewRef.current.setProps({
-          editable: () => !disabled,
-        });
+      if (!viewRef.current) return;
+      if (disabled) hadFocusRef.current = viewRef.current.hasFocus();
+      viewRef.current.setProps({
+        editable: () => !disabled,
+      });
+      if (!disabled && hadFocusRef.current) {
+        hadFocusRef.current = false;
+        viewRef.current.focus();
       }
     }, [disabled]);
 
     return (
-      <div className={className}>
+      // Clicks on the wrapper's padding (e.g. the composer pill around the text
+      // line) would otherwise blur the editor — forward them to focus.
+      <div className={className} onClick={() => !disabled && viewRef.current?.focus()}>
         <div ref={editorRef} className={`relative w-full ${disabled ? 'opacity-50' : ''}`} />
         {bubbleRect && viewRef.current && (
           <FormattingBubbleMenu
