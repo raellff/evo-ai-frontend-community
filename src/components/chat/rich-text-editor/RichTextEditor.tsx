@@ -250,8 +250,19 @@ export const RichTextEditor = forwardRef<RichTextEditorRef, RichTextEditorProps>
 
     return (
       // Clicks on the wrapper's padding (e.g. the composer pill around the text
-      // line) would otherwise blur the editor — forward them to focus.
-      <div className={className} onClick={() => !disabled && viewRef.current?.focus()}>
+      // line) would otherwise blur the editor — forward them to focus. Scope to
+      // clicks that land on the wrapper itself (target === currentTarget), so
+      // clicks on the editor content or on nested children (e.g. the formatting
+      // bubble menu) are left untouched. onMouseDown + preventDefault runs
+      // before the browser moves focus, avoiding a blur/refocus flicker.
+      <div
+        className={className}
+        onMouseDown={event => {
+          if (disabled || event.target !== event.currentTarget) return;
+          event.preventDefault();
+          viewRef.current?.focus();
+        }}
+      >
         <div ref={editorRef} className={`relative w-full ${disabled ? 'opacity-50' : ''}`} />
         {bubbleRect && viewRef.current && (
           <FormattingBubbleMenu
