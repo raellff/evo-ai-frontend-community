@@ -198,14 +198,19 @@ const ChatSidebar = ({
     setSelectionMode(false);
   }, [showArchived, onClearSelection]);
 
-  // 🎯 SYNC: activeFilters (global) -> estado local do modal avançado.
-  // Exclui TODA navegação por chip (status/unread/is_group): status é dirigido
-  // pelos chips, não pelo modal. Sem isso o default "Ativas" (status != resolved)
-  // abriria uma linha confusa no modal ("Status ... Resolved"). O apply do modal
-  // remescla a navegação (handleApplyAdvancedFilters), então nada se perde.
+  // 🎯 SYNC: activeFilters (global) -> estado local do popover avançado.
+  // Exclui só CHIP_ONLY_FILTER_KEYS (unread/is_group): esses não têm seção no
+  // popover (não estão em CONVERSATION_FILTER_TYPES), então precisam ficar de
+  // fora do sync ou o popover não teria onde exibi-los. `status` NÃO é excluído
+  // aqui: o popover tem seção própria pra ele (checkboxes por status), e todo
+  // `status` que chega em activeFilters é um `equal_to` explícito (o default da
+  // tela usa DEFAULT_CONVERSATION_FILTER em `assignee_type`, nunca `status`) —
+  // por isso incluir status no sync não semeia linha-fantasma nenhuma; sem essa
+  // inclusão, reabrir o popover depois de escolher um status pelo chip OU pelo
+  // próprio popover não vinha com o checkbox pré-marcado.
   useEffect(() => {
     const modalFilters = filters.state.activeFilters
-      .filter((f: ConversationFilter) => !CHIP_NAV_KEYS.includes(f.attribute_key))
+      .filter((f: ConversationFilter) => !CHIP_ONLY_FILTER_KEYS.includes(f.attribute_key))
       .map(conversationFilterToBaseFilter);
 
     if (JSON.stringify(conversationFilters) !== JSON.stringify(modalFilters)) {
