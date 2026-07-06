@@ -24,15 +24,21 @@
   margin: 0;
 }
 
-/* Placeholder */
-.prosemirror-editor:empty:before {
+/* Placeholder — the empty state is a single empty paragraph (the schema
+   requires `block+`, see emptyParagraphDoc in RichTextEditor.tsx), so the
+   editor is never literally :empty; ProseMirror renders it as
+   <p><br class="ProseMirror-trailingBreak"></p>. The :empty variant is kept
+   as a safety net. */
+.prosemirror-editor:empty:before,
+.prosemirror-editor:has(> p:only-child > br.ProseMirror-trailingBreak:only-child):before {
   content: attr(data-placeholder);
   color: hsl(var(--muted-foreground));
   position: absolute;
   pointer-events: none;
 }
 
-.prosemirror-editor:focus:empty:before {
+.prosemirror-editor:focus:empty:before,
+.prosemirror-editor:focus:has(> p:only-child > br.ProseMirror-trailingBreak:only-child):before {
   opacity: 0.5;
 }
 
