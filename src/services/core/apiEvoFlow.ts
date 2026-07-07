@@ -2,7 +2,8 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 import { applySetupInterceptor } from '@/services/core/setupInterceptor';
 
-// Dedicated axios instance for evo-flow (segments, journeys, campaigns).
+// Dedicated axios instance for evo-flow (journeys, campaigns; segments
+// migrated to the CRM proxy).
 // Backend is single-account: no `account-id` header and no `/journeys` 401 bypass.
 const evoFlowApi = axios.create({
   baseURL: `${import.meta.env.VITE_EVOFLOW_API_URL}/api/v1`,
