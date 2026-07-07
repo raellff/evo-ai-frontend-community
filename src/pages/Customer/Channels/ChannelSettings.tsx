@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import {
   Card,
   CardContent,
@@ -295,8 +296,18 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
   const navigate = useNavigate();
   const { id } = useParams();
   const { t } = useLanguage('channels');
+  const { can, isReady: permissionsReady } = usePermissions();
   const inboxId = inboxIdProp || id || '';
   const exitToChannels = () => (onExit ? onExit() : navigate('/channels'));
+  const canUpdate = permissionsReady && can('inboxes', 'update');
+
+  const ensureCanUpdate = () => {
+    if (!canUpdate) {
+      toast.error(t('permissions.updateDenied'));
+      return false;
+    }
+    return true;
+  };
 
   const [inbox, setInbox] = useState<Inbox | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -454,6 +465,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
   }, [loadChannelData]);
 
   const handleSave = async () => {
+    if (!ensureCanUpdate()) return;
     if (activeTab !== 'inbox_settings') {
       toast.info(t('settings.errors.useTabUpdate'));
       return;
@@ -514,6 +526,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
   };
 
   const handleAvatarUpload = (file: File) => {
+    if (!ensureCanUpdate()) return;
     setAvatarFile(file);
     // Create preview URL
     const url = URL.createObjectURL(file);
@@ -521,6 +534,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
   };
 
   const handleAvatarDelete = async () => {
+    if (!ensureCanUpdate()) return;
     try {
       // await InboxesService.deleteAvatar(accountId, inboxId);
       setAvatarFile(null);
@@ -567,7 +581,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
         </div>
 
         {/* Save Button */}
-        {activeTab === 'inbox_settings' ? (
+        {activeTab === 'inbox_settings' && canUpdate ? (
           <Button onClick={handleSave} disabled={isSaving} className="min-w-40">
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? t('settings.saving') : t('settings.save')}
@@ -691,6 +705,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
                         senderNameType={formData.sender_name_type as 'friendly' | 'professional'}
                         businessName={formData.business_name || ''}
                         onUpdate={async data => {
+                          if (!ensureCanUpdate()) return;
                           try {
                             await InboxesService.update(inboxId, data);
                             toast.success(t('settings.success.senderUpdateSuccess'));
@@ -731,6 +746,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
 
                           <Button
                             onClick={async () => {
+                              if (!ensureCanUpdate()) return;
                               setIsSavingSignature(true);
                               try {
                                 await InboxesService.update(inboxId, {
@@ -896,6 +912,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
                 inboxId={inboxId}
                 inbox={inbox}
                 onUpdate={async data => {
+                  if (!ensureCanUpdate()) return;
                   try {
                     await InboxesService.update(inboxId, data);
                     toast.success(t('settings.success.configUpdateSuccess'));

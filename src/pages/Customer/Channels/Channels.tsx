@@ -61,7 +61,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'read')) {
+    if (!can('inboxes', 'read')) {
       toast.error(t('permissions.viewDenied'));
       return;
     }
@@ -108,7 +108,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'create')) {
+    if (!can('inboxes', 'create')) {
       toast.error(t('permissions.createDenied'));
       return;
     }
@@ -132,7 +132,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'create')) {
+    if (!can('inboxes', 'create')) {
       toast.error(t('permissions.createDenied'));
       return;
     }
@@ -145,7 +145,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'delete')) {
+    if (!can('inboxes', 'delete')) {
       toast.error(t('permissions.deleteDenied'));
       return;
     }

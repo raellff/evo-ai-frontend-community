@@ -28,6 +28,7 @@
   "permissions": {
     "viewDenied": "Vous n'avez pas la permission de visualiser les canaux",
     "createDenied": "Vous n'avez pas la permission de créer des canaux",
+    "updateDenied": "Vous n'avez pas la permission de modifier les canaux",
     "deleteDenied": "Vous n'avez pas la permission de supprimer des canaux"
   },
   "errors": {

@@ -30,6 +30,7 @@
   "permissions": {
     "viewDenied": "You don't have permission to view channels",
     "createDenied": "You don't have permission to create channels",
+    "updateDenied": "You don't have permission to update channels",
     "deleteDenied": "You don't have permission to delete channels"
   },
   "errors": {

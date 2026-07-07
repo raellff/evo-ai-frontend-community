@@ -23,7 +23,7 @@ export default function ChannelsHeader({
   const { t } = useLanguage('channels');
   const { can, isReady } = useUserPermissions();
 
-  const primaryAction: HeaderAction | undefined = isReady && can('channels', 'create') ? {
+  const primaryAction: HeaderAction | undefined = isReady && can('inboxes', 'create') ? {
     label: t('actions.newChannel'),
     icon: <Plus className="h-4 w-4" />,
     onClick: onNewChannel,

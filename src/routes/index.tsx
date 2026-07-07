@@ -1175,7 +1175,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="channels" action="read">
+                    <PermissionRoute resource="inboxes" action="read">
                       <Channels />
                     </PermissionRoute>
                   </MainLayout>
@@ -1190,7 +1190,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="channels" action="create">
+                    <PermissionRoute resource="inboxes" action="create">
                       <NewChannel />
                     </PermissionRoute>
                   </MainLayout>
@@ -1205,7 +1205,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="channels" action="create">
+                    <PermissionRoute resource="inboxes" action="update">
                       <ChannelSettings />
                     </PermissionRoute>
                   </MainLayout>

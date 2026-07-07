@@ -171,7 +171,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     name: t('menu.customer.channels'),
     href: '/channels',
     icon: Layers,
-    resource: 'channels',
+    resource: 'inboxes',
     action: 'read',
   },
   {
