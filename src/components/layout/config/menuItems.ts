@@ -184,7 +184,11 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         name: t('menu.settings.account'),
         href: '/settings/account',
         icon: User,
-        // Configurações de conta são sempre disponíveis - sem permissão específica
+        // Mirrors the /settings/account route gate; accounts.read is a basic
+        // grant every role holds, so the item stays visible — but menu and
+        // route now agree instead of the menu linking into Não Autorizado.
+        resource: 'accounts',
+        action: 'read',
       },
       {
         name: t('menu.settings.users'),

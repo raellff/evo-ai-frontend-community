@@ -11,6 +11,7 @@ import {
 import { X } from 'lucide-react';
 import { useId } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { CONTACT_EVENT_CHANNEL_OPTIONS } from '@/constants/contactEventsChannels';
 import { getEventLabel, resolveLegacyEventName, type EvoFlowEventName } from '@/lib/events-manifest';
 import type { ContactEventsQuery, ContactEventType } from '@/types/contacts';
@@ -61,6 +62,10 @@ function isFilterActive(filters: ContactEventsQuery): boolean {
 
 export function ContactEventsFilters({ value, onChange, disabled }: ContactEventsFiltersProps) {
   const { t, currentLanguage } = useLanguage('contacts');
+  const { can, isReady } = useUserPermissions();
+  // The campaign filter reads the campaigns backend — a different resource
+  // from the contacts screen that hosts it.
+  const canReadCampaigns = isReady && can('campaigns', 'read');
   const baseId = useId();
 
   const update = <K extends keyof ContactEventsQuery>(key: K, next: ContactEventsQuery[K]) => {
@@ -150,15 +155,17 @@ export function ContactEventsFilters({ value, onChange, disabled }: ContactEvent
         </Select>
       </div>
 
-      <div className="flex min-w-[200px] flex-col gap-1">
-        <Label htmlFor={campaignId}>{t('events.filters.campaign')}</Label>
-        <CampaignFilterAutocomplete
-          id={campaignId}
-          value={value.campaign_id}
-          onChange={(next) => update('campaign_id', next)}
-          disabled={disabled}
-        />
-      </div>
+      {canReadCampaigns && (
+        <div className="flex min-w-[200px] flex-col gap-1">
+          <Label htmlFor={campaignId}>{t('events.filters.campaign')}</Label>
+          <CampaignFilterAutocomplete
+            id={campaignId}
+            value={value.campaign_id}
+            onChange={(next) => update('campaign_id', next)}
+            disabled={disabled}
+          />
+        </div>
+      )}
 
       <div className="flex min-w-[150px] flex-col gap-1">
         <Label htmlFor={afterId}>{t('events.filters.occurredAfter')}</Label>
