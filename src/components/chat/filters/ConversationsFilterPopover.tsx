@@ -47,13 +47,23 @@ const SECTIONS: FilterSection[] = [
 // os chips de busca (ConversationSegments), sem duplicar a arquitetura.
 const STATUS_OPTIONS: ConversationStatus[] = ['pending', 'open', 'resolved', 'snoozed'];
 
+// `status: ['all']` é o DEFAULT_FILTER global (FiltersContext.tsx) — sentinela de
+// "sem filtro de status", não uma seleção real. Chega até o draft deste popover via
+// o sync activeFilters->popover em ChatSidebar.tsx (que inclui `status` de propósito,
+// para refletir chips de status já ativos). Sem filtrar o sentinela aqui, ele: (1)
+// acende o badge/dot como se houvesse um filtro aplicado com nenhum checkbox marcado,
+// e (2) ao marcar um status real, é ACUMULADO junto (['all','pending']) em vez de
+// substituído, e o attribute_key final chega ao backend como 'all' sozinho de novo.
+const STATUS_SENTINEL = 'all';
+
 const filterToValues = (filter: BaseFilter | undefined): string[] => {
   if (!filter) return [];
-  return Array.isArray(filter.values)
+  const raw = Array.isArray(filter.values)
     ? filter.values.map(String)
     : String(filter.values || '')
         .split(',')
         .filter(Boolean);
+  return filter.attributeKey === 'status' ? raw.filter(v => v !== STATUS_SENTINEL) : raw;
 };
 
 const buildFilter = (attributeKey: string, values: string[]): BaseFilter => ({
