@@ -306,20 +306,22 @@ const ChatSidebar = ({
     onFilterApply([...segmentPreset, ...advanced]);
   };
 
-  // Apply do MODAL avançado: status/unread/is_group são navegação por chip e NÃO
-  // aparecem no modal. Preserva SÓ o `status` ao aplicar filtros avançados, pois é
-  // a única navegação por chip que TAMBÉM é atributo válido no POST /filter.
-  // unread/is_group são GET-only (CHIP_ONLY) — incluí-los no POST daria 400; são
-  // descartados ao aplicar um filtro avançado (comportamento original). Se o
-  // usuário adicionou o mesmo atributo no modal, o do modal vence.
+  // Apply do POPOVER avançado: unread/is_group são navegação SÓ de chip (não têm
+  // seção no popover) e precisam ser preservados, senão desaparecem a cada apply
+  // avançado. `status`, ao contrário, TEM seção própria no popover (checkboxes) —
+  // o popover é autoritativo pra ele, e `advancedFilters` já reflete exatamente o
+  // que o usuário deixou marcado (inclusive "nada marcado" = sem filtro de status).
+  // Tentar "preservar" status vindo de activeFilters aqui reintroduzia um status
+  // stale sempre que o usuário desmarcava tudo e aplicava (EVO-2037): activeFilters
+  // ainda carregava o status do apply ANTERIOR, e como advancedFilters não tinha
+  // mais nenhuma entrada 'status', ele voltava a ser re-mesclado.
   const handleApplyAdvancedFilters = async (advancedFilters: BaseFilter[]) => {
     setConversationFilters(advancedFilters);
     const advancedKeys = new Set(advancedFilters.map(f => f.attributeKey));
     const chipNav = filters.state.activeFilters
       .filter(
         (f: ConversationFilter) =>
-          CHIP_NAV_KEYS.includes(f.attribute_key) &&
-          !CHIP_ONLY_FILTER_KEYS.includes(f.attribute_key) &&
+          CHIP_ONLY_FILTER_KEYS.includes(f.attribute_key) &&
           !advancedKeys.has(f.attribute_key),
       )
       .map(conversationFilterToBaseFilter);
