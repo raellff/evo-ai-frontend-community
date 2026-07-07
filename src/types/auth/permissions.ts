@@ -17,13 +17,20 @@ export interface PermissionDetail {
 }
 
 // Configuração de um recurso
+export interface ResourceActionConfig {
+  name: string;
+  description: string;
+  // Non-manageable permissions: `basic` is held by every authenticated user;
+  // `implied_by` names the grant that carries it operationally. Either locks
+  // the checkbox in the role editor (granting/revoking on a role is a no-op).
+  basic?: boolean;
+  implied_by?: string | null;
+}
+
 export interface ResourceConfig {
   name: string;
   description: string;
-  actions: Record<string, {
-    name: string;
-    description: string;
-  }>;
+  actions: Record<string, ResourceActionConfig>;
 }
 
 export interface ResourceActionsData {
