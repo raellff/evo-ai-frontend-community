@@ -1,4 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { Button, Input } from '@evoapi/design-system';
 import { Search, Plus } from 'lucide-react';
 
@@ -16,6 +17,7 @@ export default function PipelinesHeader({
   onNewPipeline,
 }: PipelinesHeaderProps) {
   const { t } = useLanguage('pipelines');
+  const { can, isReady } = useUserPermissions();
 
   return (
     <div className="flex items-center justify-between mb-6">
@@ -41,10 +43,12 @@ export default function PipelinesHeader({
           />
         </div>
 
-        <Button onClick={onNewPipeline} data-tour="pipelines-new-button">
-          <Plus className="h-4 w-4 mr-2" />
-          {t('pipelinesHeader.newPipeline')}
-        </Button>
+        {isReady && can('pipelines', 'create') && (
+          <Button onClick={onNewPipeline} data-tour="pipelines-new-button">
+            <Plus className="h-4 w-4 mr-2" />
+            {t('pipelinesHeader.newPipeline')}
+          </Button>
+        )}
       </div>
     </div>
   );

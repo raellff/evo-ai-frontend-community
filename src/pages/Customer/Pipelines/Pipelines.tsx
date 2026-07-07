@@ -354,7 +354,7 @@ export default function Pipelines() {
                 : t('empty.noPipelinesDescription')
             }
             action={
-              !state.searchQuery
+              !state.searchQuery && permissionsReady && can('pipelines', 'create')
                 ? {
                     label: t('empty.createPipeline'),
                     onClick: handleCreatePipeline,

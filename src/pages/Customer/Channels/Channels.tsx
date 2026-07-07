@@ -256,7 +256,9 @@ export default function Channels() {
             icon={Layers}
             title={t('emptyState.title')}
             description={t('emptyState.description')}
-            action={{ label: t('emptyState.action'), onClick: handleNewChannel }}
+            action={permissionsReady && can('inboxes', 'create')
+              ? { label: t('emptyState.action'), onClick: handleNewChannel }
+              : undefined}
             className="h-full"
           />
         ) : viewMode === 'cards' ? (

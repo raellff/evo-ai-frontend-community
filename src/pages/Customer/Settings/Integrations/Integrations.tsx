@@ -102,6 +102,10 @@ export default function Integrations() {
 
   // Handle integration toggle
   const handleToggleIntegration = async (integration: Integration) => {
+    if (!can('integrations', 'update')) {
+      toast.error(t('messages.permissionDenied.update'));
+      return;
+    }
     setProcessingId(integration.id);
     try {
       if (integration.enabled) {
@@ -291,7 +295,7 @@ export default function Integrations() {
                   }}
                   onConfigure={() => handleConfigureIntegration(integration)}
                   onToggle={
-                    isConfigOnlyIntegration(integration.id)
+                    isConfigOnlyIntegration(integration.id) || !can('integrations', 'update')
                       ? undefined
                       : () => handleToggleIntegration(integration)
                   }

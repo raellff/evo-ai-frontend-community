@@ -323,10 +323,10 @@ export default function CannedResponses() {
               icon={MessageSquare}
               title={t('empty.title')}
               description={t('empty.description')}
-              action={{
+              action={permissionsReady && can('canned_responses', 'create') ? {
                 label: t('empty.action'),
                 onClick: handleCreateCannedResponse,
-              }}
+              } : undefined}
               className="h-full"
             />
           )

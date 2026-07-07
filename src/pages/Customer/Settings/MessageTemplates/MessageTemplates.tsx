@@ -389,10 +389,12 @@ export default function MessageTemplates() {
               {t('actions.sync')}
             </Button>
           )}
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            {t('newTemplate')}
-          </Button>
+          {can('message_templates', 'create') && (
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t('newTemplate')}
+            </Button>
+          )}
         </div>
       </div>
 

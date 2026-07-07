@@ -221,16 +221,9 @@ export default function Macros() {
     setBulkDeleteDialogOpen(true);
   };
 
-  const canDeleteMacro = () => {
-    // Add your business logic here
-    // For example, only allow deletion if user is admin or owns the macro
-    return true;
-  };
+  const canDeleteMacro = () => permissionsReady && can('macros', 'delete');
 
-  const canEditMacro = () => {
-    // Add your business logic here
-    return true;
-  };
+  const canEditMacro = () => permissionsReady && can('macros', 'update');
 
   // Confirm delete single macro
   const confirmDeleteMacro = async () => {
