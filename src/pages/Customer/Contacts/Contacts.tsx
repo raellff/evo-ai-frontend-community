@@ -14,7 +14,7 @@ import {
 import { Grid3X3, List, Users } from 'lucide-react';
 import EmptyState from '@/components/base/EmptyState';
 
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { contactsService } from '@/services/contacts';
 import { Contact, ContactsState, ContactsListParams, ContactFormData } from '@/types/contacts';
 import { BaseFilter, AppliedFilter, CONTACT_FILTER_TYPES } from '@/types/core';
@@ -65,7 +65,7 @@ export default function Contacts() {
   const { t } = useLanguage('contacts');
   const { contactId: contactIdFromRoute } = useParams<{ contactId?: string }>();
   const navigate = useNavigate();
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const [state, setState] = useState<ContactsState>(INITIAL_STATE);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);

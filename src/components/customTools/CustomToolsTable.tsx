@@ -3,7 +3,7 @@ import { Badge, Button } from '@evoapi/design-system';
 import { Edit, Trash2, Wand, Loader2, Globe } from 'lucide-react';
 import { CustomTool } from '@/types/ai';
 import { BaseTable, TableColumn, TableAction } from '@/components/base';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface CustomToolsTableProps {
   tools: CustomTool[];
@@ -31,7 +31,7 @@ export default function CustomToolsTable({
   testingToolId,
 }: CustomToolsTableProps) {
   const { t } = useLanguage('customTools');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const toolsList = tools || [];
 
   const getMethodColor = (method: string) => {

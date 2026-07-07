@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Plus, Trash2 } from 'lucide-react';
 import BaseHeader from '@/components/base/BaseHeader';
 import { AttributeModel, ATTRIBUTE_TABS } from '@/types/settings';
@@ -28,7 +28,7 @@ export default function CustomAttributesHeader({
   activeTab,
 }: CustomAttributesHeaderProps) {
   const { t } = useLanguage('customAttributes');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const currentTab = ATTRIBUTE_TABS.find(tab => tab.key === activeTab);
 
   return (

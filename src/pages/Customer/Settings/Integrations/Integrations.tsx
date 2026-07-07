@@ -19,7 +19,7 @@ import { integrationsService } from '@/services/integrations';
 import { Integration, IntegrationCategory } from '@/types/integrations';
 import { IntegrationCard } from '@/components/integrations/base';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
 
 // Integration categories for organization - will be translated
@@ -60,7 +60,7 @@ const INTEGRATION_CATEGORY_MAP: Record<string, string> = {
 
 export default function Integrations() {
   const { t } = useLanguage('integrations');
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const { openaiConfigured } = useGlobalConfig();
   const navigate = useNavigate();
   const [integrations, setIntegrations] = useState<Integration[]>([]);

@@ -29,7 +29,7 @@ import {
 } from '@evoapi/design-system';
 import { Pipeline } from '@/types/analytics';
 import { cn } from '@/lib/utils';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface PipelinesTableProps {
   pipelines: Pipeline[];
@@ -57,7 +57,7 @@ export default function PipelinesTable({
   onSort,
 }: PipelinesTableProps) {
   const { t } = useLanguage('pipelines');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

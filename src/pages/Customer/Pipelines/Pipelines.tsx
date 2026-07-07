@@ -14,7 +14,7 @@ import {
 import { Grid3X3, List, GitBranch } from 'lucide-react';
 import EmptyState from '@/components/base/EmptyState';
 
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { pipelinesService } from '@/services/pipelines';
 import {
   Pipeline,
@@ -60,7 +60,7 @@ const INITIAL_STATE: PipelinesState = {
 
 export default function Pipelines() {
   const { t } = useLanguage('pipelines');
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const navigate = useNavigate();
   const [state, setState] = useState<PipelinesState>(INITIAL_STATE);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');

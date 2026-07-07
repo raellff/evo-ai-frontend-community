@@ -13,7 +13,7 @@ import {
 } from '@evoapi/design-system';
 import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { campaignsService } from '@/services/campaigns/campaignsService';
 import type { Campaign } from '@/types/campaigns';
 
@@ -41,7 +41,7 @@ export function CampaignFilterAutocomplete({
   disabled,
 }: CampaignFilterAutocompleteProps) {
   const { t } = useLanguage('contacts');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   // The autocomplete reads the campaigns backend, a different resource from
   // the contacts screen that hosts it — without campaigns.read it renders
   // nothing and never fetches.

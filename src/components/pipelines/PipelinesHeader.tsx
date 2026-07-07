@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Button, Input } from '@evoapi/design-system';
 import { Search, Plus } from 'lucide-react';
 
@@ -17,7 +17,7 @@ export default function PipelinesHeader({
   onNewPipeline,
 }: PipelinesHeaderProps) {
   const { t } = useLanguage('pipelines');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   return (
     <div className="flex items-center justify-between mb-6">

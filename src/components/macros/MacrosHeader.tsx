@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Plus, Trash2 } from 'lucide-react';
 import { BaseHeader } from '@/components/base';
 
@@ -29,7 +29,7 @@ export default function MacrosHeader({
   showFilters = true,
 }: MacrosHeaderProps) {
   const { t } = useLanguage('macros');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   return (
     <BaseHeader

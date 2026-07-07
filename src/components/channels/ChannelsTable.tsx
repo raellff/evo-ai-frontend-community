@@ -5,7 +5,7 @@ import { Inbox } from '@/types/channels/inbox';
 import { ChannelIcon } from '@/components/channels';
 import { getChannelDisplayName } from '@/utils/channelUtils';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export default function ChannelsTable({
   channels,
@@ -19,7 +19,7 @@ export default function ChannelsTable({
   onDelete: (inbox: Inbox) => void;
 }) {
   const { t } = useLanguage('channels');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const columns: TableColumn<Inbox>[] = [
     {

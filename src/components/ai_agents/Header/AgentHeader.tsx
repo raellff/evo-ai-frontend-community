@@ -18,7 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 type AgentPageMode = 'create' | 'edit' | 'view';
 
@@ -48,7 +48,7 @@ const AgentHeader = ({
 }: // onViewMode,
 AgentHeaderProps) => {
   const { t } = useLanguage('aiAgents');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const canSave = isReady && can('ai_agents', mode === 'create' ? 'create' : 'update');
 
   const getPageTitle = () => {

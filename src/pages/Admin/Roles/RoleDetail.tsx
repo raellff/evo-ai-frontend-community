@@ -18,14 +18,14 @@ import { ArrowLeft, Loader2, Pencil, Save, X } from 'lucide-react';
 import BaseHeader from '@/components/base/BaseHeader';
 import { rolesService, type Role } from '@/services/roles/rolesService';
 import { permissionsService } from '@/services/permissions';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { ResourceActionsData } from '@/types/auth/permissions';
 
 export default function RoleDetail() {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage('roles');
   const navigate = useNavigate();
-  const { can } = useUserPermissions();
+  const { can } = usePermissions();
 
   const [role, setRole] = useState<Role | null>(null);
   const [resourceActions, setResourceActions] = useState<ResourceActionsData | null>(null);

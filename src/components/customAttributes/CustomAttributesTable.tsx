@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Edit, Trash2 } from 'lucide-react';
 import BaseTable from '@/components/base/BaseTable';
 import { CustomAttributeDefinition, ATTRIBUTE_TYPE_OPTIONS, AttributeModel } from '@/types/settings';
@@ -31,7 +31,7 @@ export default function CustomAttributesTable({
   sortOrder,
 }: CustomAttributesTableProps) {
   const { t } = useLanguage('customAttributes');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const getAttributeTypeLabel = (type: string) => {
     const option = ATTRIBUTE_TYPE_OPTIONS.find(opt => opt.value === type);

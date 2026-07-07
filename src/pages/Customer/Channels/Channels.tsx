@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
 
 import { useAppDataStore } from '@/store/appDataStore';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import InboxesService from '@/services/channels/inboxesService';
 import { Inbox } from '@/types/channels/inbox';
 import {
@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChannelsTour } from '@/tours';
 
 export default function Channels() {
-  const { can, isReady: permissionsReady, loading: permissionsLoading } = useUserPermissions();
+  const { can, isReady: permissionsReady, loading: permissionsLoading } = usePermissions();
   const { t } = useLanguage('channels');
 
   const { inboxes, isLoadingInboxes, fetchInboxes, removeInbox } = useAppDataStore();

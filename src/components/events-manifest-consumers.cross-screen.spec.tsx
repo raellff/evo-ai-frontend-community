@@ -32,8 +32,8 @@ vi.mock('@/services/campaigns/campaignsService', () => ({
 
 // The campaign filter is permission-gated; grant everything so the parity
 // assertions keep exercising the full filter row.
-vi.mock('@/hooks/useUserPermissions', () => ({
-  useUserPermissions: () => ({ can: () => true, isReady: true, loading: false }),
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({ can: () => true, isReady: true, loading: false }),
 }));
 
 function AutomationWrapper() {

@@ -11,7 +11,7 @@ import {
 import { X } from 'lucide-react';
 import { useId } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { CONTACT_EVENT_CHANNEL_OPTIONS } from '@/constants/contactEventsChannels';
 import { getEventLabel, resolveLegacyEventName, type EvoFlowEventName } from '@/lib/events-manifest';
 import type { ContactEventsQuery, ContactEventType } from '@/types/contacts';
@@ -62,7 +62,7 @@ function isFilterActive(filters: ContactEventsQuery): boolean {
 
 export function ContactEventsFilters({ value, onChange, disabled }: ContactEventsFiltersProps) {
   const { t, currentLanguage } = useLanguage('contacts');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   // The campaign filter reads the campaigns backend — a different resource
   // from the contacts screen that hosts it.
   const canReadCampaigns = isReady && can('campaigns', 'read');

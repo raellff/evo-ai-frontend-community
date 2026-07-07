@@ -4,7 +4,7 @@ import { Badge } from '@evoapi/design-system';
 import BaseTable from '@/components/base/BaseTable';
 import { Segment } from '@/types/analytics';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface SegmentsTableProps {
   segments: Segment[];
@@ -35,7 +35,7 @@ export default function SegmentsTable({
   onSort,
 }: SegmentsTableProps) {
   const { t } = useLanguage('segments');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const [loadingRecompute, setLoadingRecompute] = useState<string | null>(null);
   const canUpdate = () => isReady && can('segments', 'update');
 

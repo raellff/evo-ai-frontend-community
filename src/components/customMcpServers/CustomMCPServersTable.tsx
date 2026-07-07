@@ -3,7 +3,7 @@ import { Badge, Button } from '@evoapi/design-system';
 import { Edit, Trash2, TestTube, Loader2, ExternalLink } from 'lucide-react';
 import { CustomMcpServer } from '@/types/ai';
 import { BaseTable, TableColumn, TableAction } from '@/components/base';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface CustomMCPServersTableProps {
   servers: CustomMcpServer[];
@@ -31,7 +31,7 @@ export default function CustomMCPServersTable({
   testingServerId,
 }: CustomMCPServersTableProps) {
   const { t } = useLanguage('customMcpServers');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const serversList = servers || [];
 
   const columns: TableColumn<CustomMcpServer>[] = [

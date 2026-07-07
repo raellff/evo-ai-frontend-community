@@ -4,7 +4,7 @@ import { Edit, Trash2, Play, Eye, Globe, Lock } from 'lucide-react';
 import { Macro } from '@/types/automation';
 import { BaseTable, TableColumn, TableAction } from '@/components/base';
 import { useDateFormat } from '@/hooks/useDateFormat';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface MacrosTableProps {
   macros: Macro[];
@@ -43,7 +43,7 @@ export default function MacrosTable({
 }: MacrosTableProps) {
   const { t } = useLanguage('macros');
   const { formatDateTime } = useDateFormat();
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const getVisibilityLabel = (visibility: string) => {
     return visibility === 'global' ? t('table.visibility.public') : t('table.visibility.private');

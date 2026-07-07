@@ -3,7 +3,7 @@ import { Users, Edit, Trash2 } from 'lucide-react';
 import { Team } from '@/types/users';
 import { BaseTable, TableColumn, TableAction } from '@/components/base';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface TeamsTableProps {
   teams: Team[];
@@ -37,7 +37,7 @@ export default function TeamsTable({
   getRowKey,
 }: TeamsTableProps) {
   const { t } = useLanguage('teams');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const getInitials = (name: string) =>
     name

@@ -21,7 +21,7 @@ import type { Node, Edge } from '@xyflow/react';
 import { validateJourney } from '@/utils/journeyFlowValidation';
 import JourneyModal from '@/components/journey/JourneyModal';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useLanguage } from '@/hooks/useLanguage';
 
 export default function JourneyPage() {
@@ -35,7 +35,7 @@ export default function JourneyPage() {
   const [journeyToDelete, setJourneyToDelete] = useState<Journey | null>(null);
 
   const navigate = useNavigate();
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const { t } = useLanguage('journey');
 
   const fetchJourneys = async () => {

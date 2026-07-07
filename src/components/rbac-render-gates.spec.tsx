@@ -15,8 +15,8 @@ import { CannedResponse } from '@/types/knowledge';
 // a vacuous pass).
 let allowed = false;
 
-vi.mock('@/hooks/useUserPermissions', () => ({
-  useUserPermissions: () => ({
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({
     can: () => allowed,
     isReady: true,
     loading: false,

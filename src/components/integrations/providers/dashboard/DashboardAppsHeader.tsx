@@ -4,7 +4,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { BaseHeader, HeaderAction } from '@/components/base';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { IntegrationBackButton } from '../../shared';
 
 interface DashboardAppsHeaderProps {
@@ -29,7 +29,7 @@ export default function DashboardAppsHeader({
   onBack,
 }: DashboardAppsHeaderProps) {
   const { t } = useLanguage('integrations');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const primaryAction: HeaderAction | undefined = isReady && can('dashboard_apps', 'create') ? {
     label: t('dashboardApps.header.newApp'),

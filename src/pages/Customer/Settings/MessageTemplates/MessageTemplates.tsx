@@ -18,7 +18,7 @@ import {
 } from '@evoapi/design-system';
 import { Edit, Eye, LayoutTemplate, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useAppDataStore } from '@/store/appDataStore';
 import { DEFAULT_PAGE_SIZE } from '@/constants/pagination';
 import { extractError } from '@/utils/apiHelpers';
@@ -64,7 +64,7 @@ export default function MessageTemplates() {
   // live in the `channels` namespace (same as the form modal).
   const { t: tChannels } = useLanguage('channels');
   const navigate = useNavigate();
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
 
   const inboxes = useAppDataStore(state => state.inboxes);
   const fetchInboxes = useAppDataStore(state => state.fetchInboxes);
@@ -150,10 +150,10 @@ export default function MessageTemplates() {
     }
   }, [can, t, debouncedSearch, page, scope]);
 
-  // Re-fetch only when permissions are ready or page/search/scope actually change.
-  // Depending on `loadTemplates` would re-run on every render: `can` from
-  // useUserPermissions is a fresh closure each render, so `loadTemplates` is never
-  // referentially stable — that is what made the screen fetch in an infinite loop.
+  // Re-fetch only when permissions are ready or page/search/scope actually
+  // change. `can` from usePermissions is memoized, but it still changes
+  // identity when the permission arrays refresh, so gating on primitives
+  // keeps this effect from re-fetching on unrelated renders.
   useEffect(() => {
     if (!permissionsReady) return;
     loadTemplates();

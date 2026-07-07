@@ -48,7 +48,7 @@ import ContactEventsTab from './ContactEventsTab';
 import ContactEventsErrorBoundary from './ContactEventsErrorBoundary';
 import { buildContactDetailsTabs } from './contactDetailsTabs';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface ContactDetailsProps {
   open: boolean;
@@ -72,7 +72,7 @@ export default function ContactDetails({
   onContactUpdated,
 }: ContactDetailsProps) {
   const { t } = useLanguage('contacts');
-  const { can } = useUserPermissions();
+  const { can } = usePermissions();
   const { shouldMask, maskPhone, maskEmail } = useContactPiiMasking();
   const protectedTitle = shouldMask ? t('card.dataProtectedTooltip') : undefined;
   const [activeTab, setActiveTab] = useState('pipeline'); // Changed from 'scheduled-actions' to 'pipeline' (scheduled actions disabled)

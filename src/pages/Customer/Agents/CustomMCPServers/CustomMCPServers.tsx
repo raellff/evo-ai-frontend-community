@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { AgentsCustomMCPsTour } from '@/tours';
 import {
@@ -62,7 +62,7 @@ const INITIAL_STATE: CustomMcpServersState = {
 };
 
 export default function CustomMCPServers() {
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const { t } = useLanguage('customMcpServers');
   const [state, setState] = useState<CustomMcpServersState>(INITIAL_STATE);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');

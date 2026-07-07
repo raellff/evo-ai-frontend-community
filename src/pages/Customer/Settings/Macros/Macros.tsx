@@ -14,7 +14,7 @@ import {
 import { Settings } from 'lucide-react';
 import EmptyState from '@/components/base/EmptyState';
 
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { macrosService } from '@/services/macros';
 import { Macro, MacrosListParams, MacrosState } from '@/types/automation';
 // import { BaseFilter } from '@/types/core';
@@ -49,7 +49,7 @@ const INITIAL_STATE: MacrosState = {
 
 export default function Macros() {
   const { t } = useLanguage('macros');
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const [state, setState] = useState<MacrosState>(INITIAL_STATE);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [macroToDelete, setMacroToDelete] = useState<Macro | null>(null);

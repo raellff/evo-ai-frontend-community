@@ -5,7 +5,7 @@ import { AgentsTable, AgentsHeader, AgentsPagination, AgentCard as AgentCardItem
 import { EmptyState } from '@/components/base';
 import { Bot, Search, Grid3X3, List } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { getAccessibleAgents, deleteAgent } from '@/services/agents';
 import { Agent, AGENT_FILTER_TYPES } from '@/types/agents';
 import { buildAppliedFilterChips } from '@/utils/appliedFilterChips';
@@ -45,7 +45,7 @@ const Agentes = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage('agents');
-  const { can, isReady: permissionsReady, loading: permissionsLoading } = useUserPermissions();
+  const { can, isReady: permissionsReady, loading: permissionsLoading } = usePermissions();
   useDarkMode();
 
   const [state, setState] = useState<AgentsState>(INITIAL_STATE);

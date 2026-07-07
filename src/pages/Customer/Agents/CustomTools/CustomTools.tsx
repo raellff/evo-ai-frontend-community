@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { AgentsCustomToolsTour } from '@/tours';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Button } from '@evoapi/design-system';
@@ -35,7 +35,7 @@ import { DEFAULT_PAGE_SIZE } from '@/constants/pagination';
 const INITIAL_STATE: CustomToolsState = initialCustomToolsState;
 
 export default function CustomTools() {
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const { t } = useLanguage('customTools');
   const location = useLocation();
   const navigate = useNavigate();

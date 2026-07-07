@@ -9,7 +9,7 @@ import {
 import { Copy, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Agent } from '@/types/agents';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface AgentActionsDropdownProps {
   agent: Agent;
@@ -30,7 +30,7 @@ export default function AgentActionsDropdown({
   align = 'end',
 }: AgentActionsDropdownProps) {
   const { t } = useLanguage('agents');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>

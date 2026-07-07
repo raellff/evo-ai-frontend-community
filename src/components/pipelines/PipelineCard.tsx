@@ -12,7 +12,7 @@ import {
 } from '@evoapi/design-system';
 import { Pipeline } from '@/types/analytics';
 import { cn } from '@/lib/utils';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface PipelineCardProps {
   pipeline: Pipeline;
@@ -34,7 +34,7 @@ export default function PipelineCard({
   onSetAsDefault,
 }: PipelineCardProps) {
   const { t } = useLanguage('pipelines');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const canUpdate = isReady && can('pipelines', 'update');
   const canCreate = isReady && can('pipelines', 'create');
   const canDelete = isReady && can('pipelines', 'delete');

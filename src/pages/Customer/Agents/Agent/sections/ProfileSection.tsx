@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, Input, Label, Textarea } from '@evoapi/design-system';
 import { Sparkles, Wand2, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { openaiService } from '@/services/integrations/openaiService';
 import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ interface ProfileSectionProps {
 
 const ProfileSection = ({ formData, onFormDataChange, agentType }: ProfileSectionProps) => {
   const { t } = useLanguage('aiAgents');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const config = useGlobalConfig();
   const [showPromptModal, setShowPromptModal] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);

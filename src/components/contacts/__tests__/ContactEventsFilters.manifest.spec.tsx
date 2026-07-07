@@ -18,6 +18,12 @@ if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => 
 
 // CampaignFilterAutocomplete only fetches when its popover opens; stub the
 // service so a stray mount can never hit the network.
+// Permission-gated components resolve permissions from the context; grant
+// everything so these specs keep exercising the full behavior under test.
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({ can: () => true, isReady: true, loading: false }),
+}));
+
 vi.mock('@/services/campaigns/campaignsService', () => ({
   campaignsService: { list: vi.fn().mockResolvedValue({ data: [] }), get: vi.fn() },
 }));

@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { Edit, Paperclip, Trash2 } from 'lucide-react';
 import BaseTable from '@/components/base/BaseTable';
 import { CannedResponse } from '@/types/knowledge';
@@ -28,7 +28,7 @@ export default function CannedResponsesTable({
   sortOrder,
 }: CannedResponsesTableProps) {
   const { t } = useLanguage('cannedResponses');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const columns = [
     {
