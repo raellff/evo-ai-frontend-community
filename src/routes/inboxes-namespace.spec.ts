@@ -15,6 +15,10 @@ const FORBIDDEN_PATTERNS = [
   /resource\s*=\s*["']channels["']/,
   /resource:\s*['"]channels['"]/,
   /requiredPermission\s*[:=]\s*['"]channels\./,
+  // `bots` never existed in the catalog; its placeholder route was removed.
+  /can\(\s*['"]bots['"]/,
+  /resource\s*=\s*["']bots["']/,
+  /resource:\s*['"]bots['"]/,
 ];
 
 // Dead-code mirror of the auth catalog, kept until the catalog hygiene pass

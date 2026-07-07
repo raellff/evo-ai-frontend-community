@@ -1044,7 +1044,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="integrations" action="read">
+                    <PermissionRoute resource="dashboard_apps" action="read">
                       <DashboardAppPage />
                     </PermissionRoute>
                   </MainLayout>
@@ -1149,25 +1149,6 @@ const AppRouter = () => {
               </PrivateRoute>
             }
           /> */}
-          <Route
-            path="/bots"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="bots" action="read">
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <h2 className="text-2xl font-bold mb-2">🤖 Bots</h2>
-                          <p className="text-muted-foreground">Página em desenvolvimento</p>
-                        </div>
-                      </div>
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
 
           <Route
             path="/channels"

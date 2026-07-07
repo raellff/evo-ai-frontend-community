@@ -31,14 +31,13 @@ export default function DashboardAppsHeader({
   const { t } = useLanguage('integrations');
   const { can, isReady } = useUserPermissions();
 
-  // dashboard_apps resource only has 'read' action — use integrations.update as fallback
-  const primaryAction: HeaderAction | undefined = isReady && can('integrations', 'update') ? {
+  const primaryAction: HeaderAction | undefined = isReady && can('dashboard_apps', 'create') ? {
     label: t('dashboardApps.header.newApp'),
     icon: <Plus className="h-4 w-4" />,
     onClick: onNewApp,
   } : undefined;
 
-  const bulkActions: HeaderAction[] = isReady && can('integrations', 'update') ? [
+  const bulkActions: HeaderAction[] = isReady && can('dashboard_apps', 'delete') ? [
     {
       label: t('dashboardApps.header.delete'),
       icon: <Trash2 className="h-4 w-4" />,
