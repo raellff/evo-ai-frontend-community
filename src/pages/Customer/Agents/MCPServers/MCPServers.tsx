@@ -48,7 +48,7 @@ export default function MCPServers() {
   // Load servers
   const loadServers = useCallback(
     async (params?: Partial<MCPServersListParams>) => {
-      if (!can('ai_mcp_servers', 'read')) {
+      if (!can('ai_custom_mcp_servers', 'read')) {
         toast.error(t('errors.permissionDenied'));
         return;
       }

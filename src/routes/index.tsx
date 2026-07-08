@@ -80,8 +80,6 @@ import HubSpotPage from '../pages/Customer/Settings/Integrations/HubSpotPage';
 import ShopifyPage from '../pages/Customer/Settings/Integrations/ShopifyPage';
 import LinearPage from '../pages/Customer/Settings/Integrations/LinearPage';
 import DashboardAppPage from '../pages/Customer/DashboardApp';
-// import { Overview, Conversations } from '../pages/Customer/Reports';
-// import * as Reports from '../pages/Customer/Reports';
 
 // Páginas admin
 import AdminSettingsLayout from '@/pages/Admin/Settings';
@@ -1092,64 +1090,6 @@ const AppRouter = () => {
             }
           />
 
-          {/* Reports Routes */}
-          {/* <Route
-            path="/reports/overview"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Overview />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports/conversations"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Conversations />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports/users"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Reports.Agents />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports/labels"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Reports.Labels />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          /> */}
-
           <Route
             path="/channels"
             element={
@@ -1203,26 +1143,6 @@ const AppRouter = () => {
                   <MainLayout>
                     <PermissionRoute resource="message_templates" action="create">
                       <EmailTemplateEditor />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/reports"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <h2 className="text-2xl font-bold mb-2">📊 Relatórios</h2>
-                          <p className="text-muted-foreground">Página em desenvolvimento</p>
-                        </div>
-                      </div>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1300,7 +1220,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="ai_mcp_servers" action="read">
+                    <PermissionRoute resource="ai_custom_mcp_servers" action="read">
                       <MCPServers />
                     </PermissionRoute>
                   </MainLayout>
