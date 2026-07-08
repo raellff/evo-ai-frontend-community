@@ -6,9 +6,19 @@ import MacrosTable from '@/components/macros/MacrosTable';
 import MacrosHeader from '@/components/macros/MacrosHeader';
 import PipelinesHeader from '@/components/pipelines/PipelinesHeader';
 import CannedResponsesTable from '@/components/cannedResponses/CannedResponsesTable';
+import PipelineCard from '@/components/pipelines/PipelineCard';
+import PipelinesTable from '@/components/pipelines/PipelinesTable';
+import AgentActionsDropdown from '@/components/agents/AgentActionsDropdown';
+import AgentHeader from '@/components/ai_agents/Header/AgentHeader';
+import IntegrationCard from '@/components/integrations/base/IntegrationCard';
+import ProfileSection from '@/pages/Customer/Agents/Agent/sections/ProfileSection';
+import Step5_Instructions from '@/pages/Customer/Agents/Agent/wizard/Step5_Instructions';
 import { Team } from '@/types/users';
 import { Macro } from '@/types/automation';
 import { CannedResponse } from '@/types/knowledge';
+import { Pipeline } from '@/types/analytics';
+import { Agent } from '@/types/agents';
+import { Integration } from '@/types/integrations';
 
 // Write controls must not render for a user whose can() denies the matching
 // resource.action; they must render when it grants (positive control against
@@ -29,6 +39,21 @@ vi.mock('@/hooks/useLanguage', () => ({
 
 vi.mock('@/hooks/useDateFormat', () => ({
   useDateFormat: () => ({ formatDateTime: () => '2026-01-01' }),
+}));
+
+// The AI-action gates (ProfileSection / Step5) require the provider configured
+// AND the integrations.execute grant; keep the provider on so the permission is
+// the only variable under test.
+vi.mock('@/contexts/GlobalConfigContext', () => ({
+  useGlobalConfig: () => ({ openaiConfigured: true }),
+}));
+
+vi.mock('@/services/integrations/openaiService', () => ({
+  openaiService: { processEvent: vi.fn() },
+}));
+
+vi.mock('@/components/agents/wizard/PromptGeneratorModal', () => ({
+  default: () => null,
 }));
 
 beforeAll(() => {
@@ -60,6 +85,25 @@ const cannedResponse = {
   content: 'Hello',
   created_at: '2026-01-01',
 } as unknown as CannedResponse;
+const pipeline = {
+  id: '1',
+  name: 'Sales',
+  description: 'desc',
+  is_default: false,
+  is_active: true,
+  pipeline_type: 'sales',
+  item_count: 0,
+  stages: [],
+  conversations_count: 0,
+  created_at: '2026-01-01',
+} as unknown as Pipeline;
+const agent = { id: 'a1', name: 'Bot' } as unknown as Agent;
+const integration = {
+  id: 'slack',
+  name: 'Slack',
+  description: 'Slack integration',
+  enabled: false,
+} as unknown as Integration;
 
 const renderTeamsTable = () =>
   render(
@@ -166,5 +210,158 @@ describe('write-control render gates', () => {
       <PipelinesHeader totalCount={0} searchValue="" onSearchChange={noop} onNewPipeline={noop} />,
     );
     expect(screen.getByText('pipelinesHeader.newPipeline')).toBeTruthy();
+  });
+
+  const renderPipelineCard = () =>
+    render(
+      <PipelineCard
+        pipeline={pipeline}
+        onView={noop}
+        onEdit={noop}
+        onDelete={noop}
+        onDuplicate={noop}
+        onToggleStatus={noop}
+        onSetAsDefault={noop}
+      />,
+    );
+
+  it('PipelineCard hides the edit control without pipelines.update', () => {
+    const { unmount } = renderPipelineCard();
+    expect(screen.queryByText('pipelineCard.edit')).toBeNull();
+    unmount();
+
+    allowed = true;
+    renderPipelineCard();
+    expect(screen.getAllByText('pipelineCard.edit').length).toBeGreaterThan(0);
+  });
+
+  const renderPipelinesTable = () =>
+    render(
+      <PipelinesTable
+        pipelines={[pipeline]}
+        loading={false}
+        onView={noop}
+        onEdit={noop}
+        onDelete={noop}
+        onDuplicate={noop}
+        onToggleStatus={noop}
+        sortBy="name"
+        sortOrder="asc"
+        onSort={noop}
+      />,
+    );
+
+  it('PipelinesTable hides the edit row-action without pipelines.update', async () => {
+    renderPipelinesTable();
+    await userEvent.click(document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement);
+    expect(screen.getByText('pipelinesTable.actions.view')).toBeTruthy();
+    expect(screen.queryByText('pipelinesTable.actions.edit')).toBeNull();
+  });
+
+  it('PipelinesTable shows the edit row-action with pipelines.update', async () => {
+    allowed = true;
+    renderPipelinesTable();
+    await userEvent.click(document.querySelector('[data-slot="dropdown-menu-trigger"]') as HTMLElement);
+    expect(screen.getByText('pipelinesTable.actions.edit')).toBeTruthy();
+  });
+
+  const renderAgentActions = () =>
+    render(
+      <AgentActionsDropdown
+        agent={agent}
+        trigger={<button type="button">open</button>}
+        onEdit={noop}
+        onDelete={noop}
+      />,
+    );
+
+  it('AgentActionsDropdown hides edit/delete without ai_agents write permissions', async () => {
+    renderAgentActions();
+    await userEvent.click(screen.getByText('open'));
+    expect(screen.getByText('dropdown.copyId')).toBeTruthy();
+    expect(screen.queryByText('dropdown.edit')).toBeNull();
+    expect(screen.queryByText('dropdown.delete')).toBeNull();
+  });
+
+  it('AgentActionsDropdown shows edit/delete with ai_agents write permissions', async () => {
+    allowed = true;
+    renderAgentActions();
+    await userEvent.click(screen.getByText('open'));
+    expect(screen.getByText('dropdown.edit')).toBeTruthy();
+    expect(screen.getByText('dropdown.delete')).toBeTruthy();
+  });
+
+  const renderAgentHeader = () =>
+    render(
+      <AgentHeader
+        mode="edit"
+        agentName="Bot"
+        isDirty={false}
+        isSaving={false}
+        onBack={noop}
+        onSave={noop}
+        onCancel={noop}
+      />,
+    );
+
+  it('AgentHeader hides the save button without ai_agents.update', () => {
+    // The save label renders twice (responsive show/hide spans).
+    const { unmount } = renderAgentHeader();
+    expect(screen.queryAllByText('actions.save')).toHaveLength(0);
+    unmount();
+
+    allowed = true;
+    renderAgentHeader();
+    expect(screen.getAllByText('actions.save').length).toBeGreaterThan(0);
+  });
+
+  it('IntegrationCard disables the connect toggle when integrations.update is denied', () => {
+    const { unmount } = render(
+      <IntegrationCard integration={integration} onConfigure={noop} onToggle={undefined} />,
+    );
+    expect(screen.getByText('actions.connect').closest('button')).toBeDisabled();
+    unmount();
+
+    render(<IntegrationCard integration={integration} onConfigure={noop} onToggle={noop} />);
+    expect(screen.getByText('actions.connect').closest('button')).not.toBeDisabled();
+  });
+
+  const renderProfileSection = () =>
+    render(
+      <ProfileSection
+        formData={{ name: 'A', description: '', role: '', goal: '', instruction: 'behave well' }}
+        onFormDataChange={noop}
+        agentType="llm"
+      />,
+    );
+
+  it('ProfileSection hides the AI actions without integrations.execute', () => {
+    const { unmount } = renderProfileSection();
+    expect(screen.queryByText('wizard.step5.generateWithAI')).toBeNull();
+    unmount();
+
+    allowed = true;
+    renderProfileSection();
+    expect(screen.getByText('wizard.step5.generateWithAI')).toBeTruthy();
+  });
+
+  const renderStep5 = () =>
+    render(
+      <Step5_Instructions
+        data={{ instruction: 'a sufficiently long instruction' }}
+        onChange={noop}
+        onNext={noop}
+        onBack={noop}
+      />,
+    );
+
+  it('Step5_Instructions disables the AI actions without integrations.execute', () => {
+    const { unmount } = renderStep5();
+    expect(screen.getByText('wizard.step5.generateWithAI').closest('button')).toBeDisabled();
+    unmount();
+
+    allowed = true;
+    renderStep5();
+    expect(screen.getByText('wizard.step5.generateWithAI').closest('button')).not.toBeDisabled();
   });
 });
