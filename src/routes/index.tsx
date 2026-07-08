@@ -1220,7 +1220,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="ai_custom_mcp_servers" action="read">
+                    <PermissionRoute resource="ai_mcp_servers" action="read">
                       <MCPServers />
                     </PermissionRoute>
                   </MainLayout>
