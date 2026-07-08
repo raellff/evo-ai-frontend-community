@@ -651,6 +651,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
                       onFormChange={handleFormChange}
                       onAvatarUpload={handleAvatarUpload}
                       onAvatarDelete={handleAvatarDelete}
+                      canManageAvatar={canUpdate}
                     />
                   </CardContent>
                 </Card>
@@ -698,7 +699,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
                 </Card>
 
                 {/* Sender Name Settings */}
-                {(inboxHook.isAWebWidgetInbox || inboxHook.isAnEmailChannel) && (
+                {canUpdate && (inboxHook.isAWebWidgetInbox || inboxHook.isAnEmailChannel) && (
                   <Card>
                     <CardContent className="p-6">
                       <SenderSettingsForm
@@ -721,7 +722,7 @@ export default function ChannelSettings({ inboxId: inboxIdProp, onExit }: Channe
                 )}
 
                 {/* Email Signature */}
-                {inboxHook.isAnEmailChannel && (
+                {canUpdate && inboxHook.isAnEmailChannel && (
                   <Card>
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
