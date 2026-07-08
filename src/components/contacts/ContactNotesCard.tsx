@@ -9,7 +9,7 @@ import {
 } from '@evoapi/design-system';
 import { Pencil, StickyNote, Trash, X, Check } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { contactsService } from '@/services/contacts';
 import type { ContactNote } from '@/types/contacts';
 
@@ -31,9 +31,9 @@ function formatDateTime(dateString: string): string {
 
 export default function ContactNotesCard({ contactId }: ContactNotesCardProps) {
   const { t } = useLanguage('contacts');
-  const { can } = useUserPermissions();
-  const canUpdate = can('contacts', 'update');
-  const canDelete = can('contacts', 'delete');
+  const { can, isReady } = usePermissions();
+  const canUpdate = isReady && can('contacts', 'update');
+  const canDelete = isReady && can('contacts', 'delete');
 
   const [notes, setNotes] = useState<ContactNote[]>([]);
   const [loading, setLoading] = useState(true);

@@ -29,6 +29,7 @@ import {
 } from '@evoapi/design-system';
 import { Pipeline } from '@/types/analytics';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface PipelinesTableProps {
   pipelines: Pipeline[];
@@ -56,6 +57,7 @@ export default function PipelinesTable({
   onSort,
 }: PipelinesTableProps) {
   const { t } = useLanguage('pipelines');
+  const { can, isReady } = usePermissions();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -182,14 +184,18 @@ export default function PipelinesTable({
                       <Eye className="h-4 w-4 mr-2" />
                       {t('pipelinesTable.actions.view')}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(pipeline)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      {t('pipelinesTable.actions.edit')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onDuplicate(pipeline)}>
-                      <CopyPlus className="h-4 w-4 mr-2" />
-                      {t('pipelinesTable.actions.duplicate')}
-                    </DropdownMenuItem>
+                    {isReady && can('pipelines', 'update') && (
+                      <DropdownMenuItem onClick={() => onEdit(pipeline)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        {t('pipelinesTable.actions.edit')}
+                      </DropdownMenuItem>
+                    )}
+                    {isReady && can('pipelines', 'create') && (
+                      <DropdownMenuItem onClick={() => onDuplicate(pipeline)}>
+                        <CopyPlus className="h-4 w-4 mr-2" />
+                        {t('pipelinesTable.actions.duplicate')}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={async () => {
                         await navigator.clipboard.writeText(String(pipeline.id));
@@ -199,18 +205,24 @@ export default function PipelinesTable({
                       <Copy className="h-4 w-4 mr-2" />
                       {t('pipelinesTable.actions.copyId')}
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onToggleStatus(pipeline)}>
-                      <Power className="h-4 w-4 mr-2" />
-                      {pipeline.is_active ? t('pipelinesTable.actions.deactivate') : t('pipelinesTable.actions.activate')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onDelete(pipeline)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {t('pipelinesTable.actions.delete')}
-                    </DropdownMenuItem>
+                    {isReady && can('pipelines', 'update') && (
+                      <DropdownMenuItem onClick={() => onToggleStatus(pipeline)}>
+                        <Power className="h-4 w-4 mr-2" />
+                        {pipeline.is_active ? t('pipelinesTable.actions.deactivate') : t('pipelinesTable.actions.activate')}
+                      </DropdownMenuItem>
+                    )}
+                    {isReady && can('pipelines', 'delete') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => onDelete(pipeline)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t('pipelinesTable.actions.delete')}
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

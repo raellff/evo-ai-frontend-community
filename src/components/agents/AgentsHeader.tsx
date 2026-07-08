@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { BaseHeader, HeaderAction, HeaderFilter } from '@/components/base';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface AgentsHeaderProps {
   totalCount: number;
@@ -38,7 +38,7 @@ export default function AgentsHeader({
   showFilters = true,
 }: AgentsHeaderProps) {
   const { t } = useLanguage('agents');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const primaryAction: HeaderAction | undefined = isReady && can('ai_agents', 'create') ? {
     label: t('createAgent'),

@@ -37,6 +37,12 @@ vi.mock('@/services/campaigns/campaignsService', () => ({
   campaignsService: { list: vi.fn().mockResolvedValue({ data: [] }), get: vi.fn() },
 }));
 
+// The campaign filter is permission-gated; grant everything so the parity
+// assertions keep exercising the full filter row.
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({ can: () => true, isReady: true, loading: false }),
+}));
+
 function AutomationWrapper() {
   const { control } = useForm<AutomationRuleFormData>({
     defaultValues: { event_name: 'contact_created' },

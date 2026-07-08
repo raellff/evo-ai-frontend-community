@@ -20,7 +20,7 @@ import BasePagination from '@/components/base/BasePagination';
 import EmptyState from '@/components/base/EmptyState';
 import { DEFAULT_PAGE_SIZE } from '@/constants/pagination';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { crmFormsService } from '@/services/crmForms/crmFormsService';
 import { pipelinesService } from '@/services/pipelines/pipelinesService';
 import { customAttributesService } from '@/services/customAttributes/customAttributesService';
@@ -38,7 +38,7 @@ const EMPTY_PAGINATION: PaginationMeta = {
 
 export default function CrmForms() {
   const { t } = useLanguage('crmForms');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
   const canCreate = can('crm_forms', 'create');
   const canUpdate = can('crm_forms', 'update');
   const canDelete = can('crm_forms', 'delete');

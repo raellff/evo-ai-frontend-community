@@ -26,8 +26,8 @@ vi.mock('@/hooks/useLanguage', () => ({
   useLanguage: () => ({ t: (key: string) => key, currentLanguage: 'en', changeLanguage: vi.fn() }),
 }));
 
-vi.mock('@/hooks/useUserPermissions', () => ({
-  useUserPermissions: () => ({ can: () => true, canAny: () => true, canAll: () => true, isReady: true }),
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({ can: () => true, canAny: () => true, canAll: () => true, isReady: true }),
 }));
 
 vi.mock('@/store/appDataStore', () => ({

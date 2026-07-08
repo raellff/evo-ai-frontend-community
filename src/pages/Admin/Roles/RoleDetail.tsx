@@ -18,14 +18,14 @@ import { ArrowLeft, Loader2, Pencil, Save, X } from 'lucide-react';
 import BaseHeader from '@/components/base/BaseHeader';
 import { rolesService, type Role } from '@/services/roles/rolesService';
 import { permissionsService } from '@/services/permissions';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import type { ResourceActionsData } from '@/types/auth/permissions';
 
 export default function RoleDetail() {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage('roles');
   const navigate = useNavigate();
-  const { can } = useUserPermissions();
+  const { can } = usePermissions();
 
   const [role, setRole] = useState<Role | null>(null);
   const [resourceActions, setResourceActions] = useState<ResourceActionsData | null>(null);
@@ -64,8 +64,30 @@ export default function RoleDetail() {
     loadData();
   }, [loadData]);
 
+  // A permission is locked (held regardless of the role, so not a manageable
+  // checkbox) when it is either basic (every user holds it) or operationally
+  // implied by a grant THIS role actually holds. `implied_by` is global catalog
+  // metadata, so the implication only applies when the source permission is in
+  // the role's own selection — otherwise the implied permission is a normal,
+  // editable grant. The decision therefore consults the selection and updates
+  // reactively as the source permission is toggled.
+  const isKeyLocked = useCallback(
+    (key: string, sel: Set<string>): boolean => {
+      const [resource, action] = key.split('.');
+      const cfg = resourceActions?.resources[resource]?.actions?.[action];
+      if (!cfg) return false;
+      if (cfg.basic === true) return true;
+      if (cfg.implied_by) return sel.has(cfg.implied_by);
+      return false;
+    },
+    [resourceActions],
+  );
+
+  // A locked permission is never toggled — it is not a real role grant, so we
+  // neither add it to nor remove it from the selection.
   const togglePermission = (key: string) => {
     setSelected(prev => {
+      if (isKeyLocked(key, prev)) return prev;
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
@@ -74,9 +96,11 @@ export default function RoleDetail() {
 
   const toggleResource = (resource: string) => {
     if (!resourceActions) return;
-    const keys = Object.keys(resourceActions.resources[resource]?.actions ?? {}).map(a => `${resource}.${a}`);
-    const allSelected = keys.every(k => selected.has(k));
     setSelected(prev => {
+      const keys = Object.keys(resourceActions.resources[resource]?.actions ?? {})
+        .map(a => `${resource}.${a}`)
+        .filter(k => !isKeyLocked(k, prev));
+      const allSelected = keys.length > 0 && keys.every(k => prev.has(k));
       const next = new Set(prev);
       allSelected ? keys.forEach(k => next.delete(k)) : keys.forEach(k => next.add(k));
       return next;
@@ -89,7 +113,12 @@ export default function RoleDetail() {
     try {
       const knownKeys = Array.from(selected).filter(key => {
         const [resource, action] = key.split('.');
-        return resourceActions.resources[resource]?.actions?.[action] !== undefined;
+        const cfg = resourceActions.resources[resource]?.actions?.[action];
+        // Persist only real, manageable grants: skip unknown keys and locked
+        // ones. A basic permission is always locked; an implied one is locked
+        // only while its source grant is selected — otherwise it is a genuine,
+        // persistable grant.
+        return cfg !== undefined && !isKeyLocked(key, selected);
       });
       const updated = await rolesService.bulkUpdatePermissions(role.id, knownKeys);
       setRole(updated);
@@ -231,15 +260,20 @@ export default function RoleDetail() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Object.entries(resources).map(([resourceKey, resourceConfig]) => {
               const actions = Object.entries(resourceConfig.actions);
-              const permKeys = actions.map(([a]) => `${resourceKey}.${a}`);
-              const allChecked = permKeys.every(k => selected.has(k));
-              const someChecked = permKeys.some(k => selected.has(k));
+              // The resource-level "select all" only governs the manageable
+              // (non-locked) actions; locked ones are always effectively on.
+              const manageableKeys = actions
+                .filter(([a]) => !isKeyLocked(`${resourceKey}.${a}`, selected))
+                .map(([a]) => `${resourceKey}.${a}`);
+              const allChecked =
+                manageableKeys.length > 0 && manageableKeys.every(k => selected.has(k));
+              const someChecked = manageableKeys.some(k => selected.has(k));
 
               return (
                 <Card key={resourceKey} className="overflow-hidden border-sidebar-border bg-sidebar">
                   <CardHeader className="pb-2 pt-3 px-4 border-b border-sidebar-border bg-sidebar-accent/30">
                     <div className="flex items-center gap-2">
-                      {canEdit && (
+                      {canEdit && manageableKeys.length > 0 && (
                         <Checkbox
                           id={`resource-${resourceKey}`}
                           checked={allChecked}
@@ -256,20 +290,39 @@ export default function RoleDetail() {
                   <CardContent className="px-4 py-2 space-y-1">
                     {actions.map(([actionKey, actionConfig]) => {
                       const key = `${resourceKey}.${actionKey}`;
+                      const locked = isKeyLocked(key, selected);
+                      const lockLabel = locked
+                        ? actionConfig.basic
+                          ? t('detail.lock.basic')
+                          : t('detail.lock.impliedBy', { source: actionConfig.implied_by ?? '' })
+                        : undefined;
                       return (
                         <div key={key} className="flex items-center gap-2 py-0.5">
                           <Checkbox
                             id={key}
-                            checked={selected.has(key)}
-                            onCheckedChange={canEdit ? () => togglePermission(key) : undefined}
-                            disabled={!canEdit}
+                            // Locked perms are always effectively granted, so render
+                            // them checked and never editable.
+                            checked={locked || selected.has(key)}
+                            onCheckedChange={
+                              canEdit && !locked ? () => togglePermission(key) : undefined
+                            }
+                            disabled={!canEdit || locked}
                           />
                           <Label
                             htmlFor={key}
-                            className={`text-sm font-normal text-sidebar-foreground/80 ${canEdit ? 'cursor-pointer' : ''}`}
+                            className={`text-sm font-normal text-sidebar-foreground/80 ${canEdit && !locked ? 'cursor-pointer' : ''}`}
                           >
                             {actionConfig.name}
                           </Label>
+                          {locked && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0 h-4"
+                              title={lockLabel}
+                            >
+                              {actionConfig.basic ? t('detail.lock.basicBadge') : t('detail.lock.impliedBadge')}
+                            </Badge>
+                          )}
                         </div>
                       );
                     })}

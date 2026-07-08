@@ -35,7 +35,13 @@
     "permissionsSelected": "permessi selezionati",
     "selectAll": "Seleziona tutti",
     "deselectAll": "Deseleziona tutti",
-    "noPermissions": "Nessun permesso disponibile."
+    "noPermissions": "Nessun permesso disponibile.",
+    "lock": {
+      "basic": "Concessa a tutti gli utenti autenticati",
+      "impliedBy": "Implicita da {{source}}",
+      "basicBadge": "Base",
+      "impliedBadge": "Implicita"
+    }
   },
   "createModal": {
     "title": "Crea Profilo",

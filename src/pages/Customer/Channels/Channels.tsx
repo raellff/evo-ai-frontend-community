@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
 
 import { useAppDataStore } from '@/store/appDataStore';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import InboxesService from '@/services/channels/inboxesService';
 import { Inbox } from '@/types/channels/inbox';
 import {
@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChannelsTour } from '@/tours';
 
 export default function Channels() {
-  const { can, isReady: permissionsReady, loading: permissionsLoading } = useUserPermissions();
+  const { can, isReady: permissionsReady, loading: permissionsLoading } = usePermissions();
   const { t } = useLanguage('channels');
 
   const { inboxes, isLoadingInboxes, fetchInboxes, removeInbox } = useAppDataStore();
@@ -61,7 +61,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'read')) {
+    if (!can('inboxes', 'read')) {
       toast.error(t('permissions.viewDenied'));
       return;
     }
@@ -108,7 +108,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'create')) {
+    if (!can('inboxes', 'create')) {
       toast.error(t('permissions.createDenied'));
       return;
     }
@@ -132,7 +132,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'create')) {
+    if (!can('inboxes', 'create')) {
       toast.error(t('permissions.createDenied'));
       return;
     }
@@ -145,7 +145,7 @@ export default function Channels() {
       return;
     }
 
-    if (!can('channels', 'delete')) {
+    if (!can('inboxes', 'delete')) {
       toast.error(t('permissions.deleteDenied'));
       return;
     }
@@ -256,7 +256,9 @@ export default function Channels() {
             icon={Layers}
             title={t('emptyState.title')}
             description={t('emptyState.description')}
-            action={{ label: t('emptyState.action'), onClick: handleNewChannel }}
+            action={permissionsReady && can('inboxes', 'create')
+              ? { label: t('emptyState.action'), onClick: handleNewChannel }
+              : undefined}
             className="h-full"
           />
         ) : viewMode === 'cards' ? (

@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ContactEventsFilters } from '../ContactEventsFilters';
 
+// Permission-gated components resolve permissions from the context; grant
+// everything so these specs keep exercising the full behavior under test.
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({ can: () => true, isReady: true, loading: false }),
+}));
+
 vi.mock('@/hooks/useLanguage', () => ({
   useLanguage: () => ({
     t: (key: string) => key,

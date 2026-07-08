@@ -5,6 +5,7 @@ import { Inbox } from '@/types/channels/inbox';
 import { ChannelIcon } from '@/components/channels';
 import { getChannelDisplayName } from '@/utils/channelUtils';
 import { useLanguage } from '@/hooks/useLanguage';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 export default function ChannelsTable({
   channels,
@@ -18,6 +19,7 @@ export default function ChannelsTable({
   onDelete: (inbox: Inbox) => void;
 }) {
   const { t } = useLanguage('channels');
+  const { can, isReady } = usePermissions();
 
   const columns: TableColumn<Inbox>[] = [
     {
@@ -44,8 +46,19 @@ export default function ChannelsTable({
   ];
 
   const actions: TableAction<Inbox>[] = [
-    ...(onSettings ? [{ label: t('actions.configure'), onClick: onSettings, icon: <Settings className="h-4 w-4" /> }] : []),
-    { label: t('actions.delete'), onClick: onDelete, icon: <Trash2 className="h-4 w-4" />, variant: 'destructive' },
+    ...(onSettings ? [{
+      label: t('actions.configure'),
+      onClick: onSettings,
+      icon: <Settings className="h-4 w-4" />,
+      show: () => isReady && can('inboxes', 'update'),
+    }] : []),
+    {
+      label: t('actions.delete'),
+      onClick: onDelete,
+      icon: <Trash2 className="h-4 w-4" />,
+      variant: 'destructive',
+      show: () => isReady && can('inboxes', 'delete'),
+    },
   ] as TableAction<Inbox>[];
 
   return (

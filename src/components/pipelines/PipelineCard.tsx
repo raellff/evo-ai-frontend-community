@@ -12,6 +12,7 @@ import {
 } from '@evoapi/design-system';
 import { Pipeline } from '@/types/analytics';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface PipelineCardProps {
   pipeline: Pipeline;
@@ -33,6 +34,10 @@ export default function PipelineCard({
   onSetAsDefault,
 }: PipelineCardProps) {
   const { t } = useLanguage('pipelines');
+  const { can, isReady } = usePermissions();
+  const canUpdate = isReady && can('pipelines', 'update');
+  const canCreate = isReady && can('pipelines', 'create');
+  const canDelete = isReady && can('pipelines', 'delete');
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -128,24 +133,28 @@ export default function PipelineCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  onEdit(pipeline);
-                }}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                {t('pipelineCard.edit')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  onDuplicate(pipeline);
-                }}
-              >
-                <CopyPlus className="h-4 w-4 mr-2" />
-                {t('pipelineCard.duplicate')}
-              </DropdownMenuItem>
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={e => {
+                    e.stopPropagation();
+                    onEdit(pipeline);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  {t('pipelineCard.edit')}
+                </DropdownMenuItem>
+              )}
+              {canCreate && (
+                <DropdownMenuItem
+                  onClick={e => {
+                    e.stopPropagation();
+                    onDuplicate(pipeline);
+                  }}
+                >
+                  <CopyPlus className="h-4 w-4 mr-2" />
+                  {t('pipelineCard.duplicate')}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={async e => {
                   e.stopPropagation();
@@ -156,16 +165,18 @@ export default function PipelineCard({
                 <Copy className="h-4 w-4 mr-2" />
                 {t('pipelineCard.copyId')}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  onToggleStatus(pipeline);
-                }}
-              >
-                <Power className="h-4 w-4 mr-2" />
-                {pipeline.is_active ? t('pipelineCard.deactivate') : t('pipelineCard.activate')}
-              </DropdownMenuItem>
-              {!pipeline.is_default && (
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={e => {
+                    e.stopPropagation();
+                    onToggleStatus(pipeline);
+                  }}
+                >
+                  <Power className="h-4 w-4 mr-2" />
+                  {pipeline.is_active ? t('pipelineCard.deactivate') : t('pipelineCard.activate')}
+                </DropdownMenuItem>
+              )}
+              {!pipeline.is_default && canUpdate && (
                 <DropdownMenuItem
                   onClick={e => {
                     e.stopPropagation();
@@ -176,17 +187,19 @@ export default function PipelineCard({
                   {t('pipelineCard.setAsDefault')}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={e => {
-                  e.stopPropagation();
-                  onDelete(pipeline);
-                }}
-                className="text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                {t('pipelineCard.delete')}
-              </DropdownMenuItem>
+              {canDelete && <DropdownMenuSeparator />}
+              {canDelete && (
+                <DropdownMenuItem
+                  onClick={e => {
+                    e.stopPropagation();
+                    onDelete(pipeline);
+                  }}
+                  className="text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t('pipelineCard.delete')}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -234,23 +247,31 @@ export default function PipelineCard({
             <Eye className="h-4 w-4 mr-2" />
             {t('pipelineCard.view')}
           </Button>
-          <div className="w-px bg-sidebar-border" />
-          <Button
-            variant="ghost"
-            className="rounded-none h-12 px-4 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40"
-            onClick={() => onEdit(pipeline)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            {t('pipelineCard.edit')}
-          </Button>
-          <div className="w-px bg-sidebar-border" />
-          <Button
-            variant="ghost"
-            className="rounded-none h-12 px-4 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-            onClick={() => onDelete(pipeline)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canUpdate && (
+            <>
+              <div className="w-px bg-sidebar-border" />
+              <Button
+                variant="ghost"
+                className="rounded-none h-12 px-4 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/40"
+                onClick={() => onEdit(pipeline)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                {t('pipelineCard.edit')}
+              </Button>
+            </>
+          )}
+          {canDelete && (
+            <>
+              <div className="w-px bg-sidebar-border" />
+              <Button
+                variant="ghost"
+                className="rounded-none h-12 px-4 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                onClick={() => onDelete(pipeline)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

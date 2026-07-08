@@ -15,7 +15,7 @@ import {
 import { Megaphone } from 'lucide-react';
 import EmptyState from '@/components/base/EmptyState';
 
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { campaignsService } from '@/services/campaigns';
 import { Campaign, CampaignsState, CampaignsListParams } from '@/types/campaigns';
 import { DEFAULT_PAGE_SIZE } from '@/constants/pagination';
@@ -59,7 +59,7 @@ const INITIAL_STATE: CampaignsState = {
 export default function Campaigns() {
   const { t } = useLanguage('campaigns');
   const navigate = useNavigate();
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can, isReady: permissionsReady } = usePermissions();
   const [state, setState] = useState<CampaignsState>(INITIAL_STATE);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null);
