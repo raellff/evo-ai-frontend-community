@@ -13,6 +13,7 @@ import AgentHeader from '@/components/ai_agents/Header/AgentHeader';
 import IntegrationCard from '@/components/integrations/base/IntegrationCard';
 import ProfileSection from '@/pages/Customer/Agents/Agent/sections/ProfileSection';
 import Step5_Instructions from '@/pages/Customer/Agents/Agent/wizard/Step5_Instructions';
+import BasicSettingsForm from '@/components/channels/settings/BasicSettingsForm';
 import { Team } from '@/types/users';
 import { Macro } from '@/types/automation';
 import { CannedResponse } from '@/types/knowledge';
@@ -363,5 +364,41 @@ describe('write-control render gates', () => {
     allowed = true;
     renderStep5();
     expect(screen.getByText('wizard.step5.generateWithAI').closest('button')).not.toBeDisabled();
+  });
+
+  // ChannelSettings gates the avatar upload/remove through canManageAvatar
+  // (= can('inboxes','update')). BasicSettingsForm is the presentational sink,
+  // so the render gate is exercised here via the prop directly.
+  const renderBasicSettings = (canManageAvatar: boolean) =>
+    render(
+      <BasicSettingsForm
+        formData={{
+          name: 'inbox',
+          avatar_url: 'https://example.com/a.png',
+          greeting_enabled: false,
+          greeting_message: '',
+        }}
+        inboxHook={{
+          isAPIInbox: false,
+          isAWebWidgetInbox: false,
+          isAWhatsAppChannel: false,
+          whatsAppAPIProviderName: '',
+        }}
+        onFormChange={noop}
+        onAvatarUpload={noop}
+        onAvatarDelete={noop}
+        canManageAvatar={canManageAvatar}
+      />,
+    );
+
+  it('BasicSettingsForm hides the avatar upload/remove controls without inboxes.update', () => {
+    const { unmount } = renderBasicSettings(false);
+    expect(screen.queryByText('settings.basicSettings.avatar.upload')).toBeNull();
+    expect(screen.queryByText('settings.basicSettings.avatar.remove')).toBeNull();
+    unmount();
+
+    renderBasicSettings(true);
+    expect(screen.getByText('settings.basicSettings.avatar.upload')).toBeTruthy();
+    expect(screen.getByText('settings.basicSettings.avatar.remove')).toBeTruthy();
   });
 });
