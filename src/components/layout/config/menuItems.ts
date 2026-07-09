@@ -26,6 +26,7 @@ import {
   // Megaphone,
   // Route,
   ShieldCheck,
+  Building2,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -182,6 +183,11 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         href: '/settings/account',
         icon: User,
         // Configurações de conta são sempre disponíveis - sem permissão específica
+      },
+      {
+        name: t('menu.settings.accounts'),
+        href: '/settings/accounts',
+        icon: Building2,
       },
       {
         name: t('menu.settings.users'),

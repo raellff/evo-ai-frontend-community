@@ -61,6 +61,7 @@ export interface Account {
   name: string;
   locale: string;
   domain?: string;
+  subdomain?: string;
   support_email?: string;
   auto_resolve_duration?: number;
   features: AccountFeatures;
@@ -90,13 +91,11 @@ export interface Account {
   auto_offline?: boolean;
 }
 
-// Create account
+// Create account (superadmin-only — see POST /api/v1/accounts)
 export interface CreateAccount {
-  account_name: string;
-  user_full_name: string;
-  email: string;
-  support_email: string;
-  password: string;
+  name: string;
+  subdomain?: string;
+  support_email?: string;
   locale?: string;
 }
 

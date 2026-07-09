@@ -105,6 +105,7 @@
     },
     "settings": {
       "account": "Account",
+      "accounts": "Accounts",
       "users": "Team Members",
       "teams": "Teams",
       "labels": "Labels",

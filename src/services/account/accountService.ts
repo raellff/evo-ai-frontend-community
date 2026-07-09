@@ -1,7 +1,7 @@
 import authApi from '@/services/core/apiAuth';
 import api from '@/services/core/api';
 import { extractData } from '@/utils/apiHelpers';
-import type { Account, UpdateAccount, FormDataOptions, AccountUpdateResponse } from '@/types/settings';
+import type { Account, UpdateAccount, CreateAccount, FormDataOptions, AccountUpdateResponse } from '@/types/settings';
 import { extractError } from '@/utils/apiHelpers';
 import { fetchGlobalConfig } from '@/contexts/GlobalConfigContext';
 
@@ -13,6 +13,54 @@ class AccountService {
     } catch (error: any) {
       console.error('Erro ao buscar conta:', error);
       throw new Error(error?.response?.data?.message || 'Erro ao buscar conta');
+    }
+  }
+
+  async createAccount(payload: CreateAccount): Promise<Account> {
+    try {
+      const response = await authApi.post('/accounts', { account: payload });
+      return extractData<Account>(response);
+    } catch (error: any) {
+      console.error('Erro ao criar conta:', error);
+      const errorInfo = extractError(error);
+      throw new Error(errorInfo.message || 'Erro ao criar conta');
+    }
+  }
+
+  // Superadmin-only: list every Account in the installation.
+  async listAccounts(): Promise<Account[]> {
+    try {
+      const response = await authApi.get('/accounts');
+      const data = extractData<{ accounts: Account[] }>(response);
+      return data?.accounts || [];
+    } catch (error: any) {
+      console.error('Erro ao listar contas:', error);
+      const errorInfo = extractError(error);
+      throw new Error(errorInfo.message || 'Erro ao listar contas');
+    }
+  }
+
+  // Superadmin-only: suspend an Account, blocking access for it and its users.
+  async suspendAccount(accountId: string): Promise<Account> {
+    try {
+      const response = await authApi.post(`/accounts/${accountId}/suspend`);
+      return extractData<Account>(response);
+    } catch (error: any) {
+      console.error('Erro ao suspender conta:', error);
+      const errorInfo = extractError(error);
+      throw new Error(errorInfo.message || 'Erro ao suspender conta');
+    }
+  }
+
+  // Superadmin-only: reactivate a previously suspended Account.
+  async activateAccount(accountId: string): Promise<Account> {
+    try {
+      const response = await authApi.post(`/accounts/${accountId}/activate`);
+      return extractData<Account>(response);
+    } catch (error: any) {
+      console.error('Erro ao ativar conta:', error);
+      const errorInfo = extractError(error);
+      throw new Error(errorInfo.message || 'Erro ao ativar conta');
     }
   }
 

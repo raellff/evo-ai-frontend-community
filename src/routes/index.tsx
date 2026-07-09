@@ -46,6 +46,7 @@ import AutomationForm from '../pages/Customer/Automation/AutomationForm';
 import Pipelines from '@/pages/Customer/Pipelines/Pipelines';
 import PipelineKanban from '@/pages/Customer/Pipelines/PipelineKanban';
 import { AccountSettings } from '@/pages/Customer/Settings/Account';
+import Accounts from '@/pages/Customer/Settings/Accounts/Accounts';
 import Teams from '@/pages/Customer/Settings/Teams/Teams';
 import { AddUsers } from '@/pages/Customer/Settings/Teams';
 import Users from '@/pages/Customer/Settings/Users';
@@ -521,6 +522,19 @@ const AppRouter = () => {
                     <PermissionRoute resource="segments" action="read">
                       <Segments />
                     </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/accounts"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <Accounts />
                   </MainLayout>
                 </CustomerRoute>
               </PrivateRoute>

@@ -95,6 +95,9 @@ export interface UserFormData {
   removeAvatar?: boolean;
   password?: string;
   confirmPassword?: string;
+  // Superadmin-only: assign the new user to a specific Account (see
+  // POST /api/v1/users, superadmins may target any account_id).
+  account_id?: string;
 }
 
 export interface UserTableColumn {

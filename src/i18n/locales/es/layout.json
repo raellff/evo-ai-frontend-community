@@ -105,6 +105,7 @@
     },
     "settings": {
       "account": "Cuenta",
+      "accounts": "Cuentas",
       "users": "Usuarios",
       "teams": "Equipos",
       "labels": "Etiquetas",

@@ -105,6 +105,7 @@
     },
     "settings": {
       "account": "Account",
+      "accounts": "Account",
       "users": "Agenti",
       "teams": "Team",
       "labels": "Etichette",
