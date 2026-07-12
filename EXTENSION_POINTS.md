@@ -73,9 +73,9 @@ notice.
 
 | Token                              | Version | Default                                |
 |------------------------------------|---------|----------------------------------------|
-| `--evo-color-primary-500`          | `2.0.0` | `#00ffa7`                              |
-| `--evo-color-primary-foreground`   | `2.0.0` | `#0b0f14`                              |
-| `--evo-color-accent-500`           | `2.0.0` | `#00ffa7`                              |
+| `--evo-color-primary-500`          | `3.0.0` | `#006aff`                              |
+| `--evo-color-primary-foreground`   | `3.0.0` | `#ffffff`                              |
+| `--evo-color-accent-500`           | `3.0.0` | `#006aff`                              |
 | `--evo-color-background`           | `2.0.0` | `#0b0f14`                              |
 | `--evo-color-foreground`           | `2.0.0` | `#e6f1ec`                              |
 | `--evo-font-sans`                  | `2.0.0` | `Inter, system-ui, sans-serif`         |

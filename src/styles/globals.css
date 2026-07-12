@@ -94,6 +94,13 @@
 }
 
 :root {
+  /* WoowCRM brand override — the @evoapi/design-system package ships
+     the Evo green (oklch hue ~159) as --primary. This package loads
+     before globals.css (see main.tsx), so redeclaring the token here
+     wins the cascade without needing to patch node_modules. */
+  --primary: #006aff;
+  --primary-foreground: #ffffff;
+
   /* Flow Builder design tokens — LIGHT mode values (EVO-1253). */
   --flow-node-trigger-bg: oklch(0.95 0.05 150);
   --flow-node-trigger-fg: oklch(0.30 0.12 150);
@@ -146,6 +153,12 @@
 }
 
 .dark {
+  /* WoowCRM brand override — brighter blue for legibility against the
+     dark background (mirrors the package's own light->dark lightness
+     bump for --primary). */
+  --primary: #3d8bff;
+  --primary-foreground: #ffffff;
+
   /* Flow Builder design tokens — DARK mode overrides (EVO-1253). */
   --flow-node-trigger-bg: oklch(0.22 0.05 150);
   --flow-node-trigger-fg: oklch(0.90 0.10 150);
