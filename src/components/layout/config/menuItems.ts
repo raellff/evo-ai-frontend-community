@@ -40,6 +40,9 @@ export interface MenuItem {
   permissions?: string[];
   requireAll?: boolean;
   requiredRoleKey?: string;
+  // Per-Account feature toggle (see specs/account-feature-toggles) - checked
+  // in addition to, not instead of, resource/action permissions.
+  feature?: string;
 }
 
 export interface SubMenuItem {
@@ -51,6 +54,7 @@ export interface SubMenuItem {
   permissions?: string[];
   requireAll?: boolean;
   requiredRoleKey?: string;
+  feature?: string;
 }
 
 export interface ProfileMenuItem {
@@ -105,6 +109,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     icon: SquareKanban,
     resource: 'pipelines',
     action: 'read',
+    feature: 'pipelines',
   },
   {
     name: t('menu.customer.products'),
@@ -119,6 +124,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     icon: Workflow,
     resource: 'automation_rules',
     action: 'read',
+    feature: 'automations',
   },
   // {
   //   name: t('menu.customer.journeys'),
@@ -141,6 +147,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     icon: Bot,
     resource: 'ai_agents',
     action: 'read',
+    feature: 'ai_agents',
     subItems: [
       {
         name: t('menu.agents.list'),
@@ -148,6 +155,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         icon: List,
         resource: 'ai_agents',
         action: 'read',
+        feature: 'ai_agents',
       },
       {
         name: t('menu.agents.customTools'),
@@ -251,6 +259,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         icon: Settings,
         resource: 'integrations',
         action: 'read',
+        feature: 'integrations',
       },
       {
         name: t('menu.settings.accessTokens'),
@@ -304,11 +313,17 @@ export const shouldShowMenuItem = (
   canFunction: (resource: string, action: string) => boolean,
   canAnyFunction: (permissions: string[]) => boolean,
   canAllFunction: (permissions: string[]) => boolean,
-  userRoleKey?: string
+  userRoleKey?: string,
+  featureFunction?: (featureName: string) => boolean
 ): boolean => {
   // Verificar role obrigatória
   if (item.requiredRoleKey) {
     return userRoleKey === item.requiredRoleKey;
+  }
+
+  // Verificar feature habilitada para a conta (independente de permissão)
+  if (item.feature && featureFunction && !featureFunction(item.feature)) {
+    return false;
   }
 
   // Verificar permissões específicas
@@ -333,15 +348,16 @@ export const filterMenuItemsByPermissions = (
   canFunction: (resource: string, action: string) => boolean,
   canAnyFunction: (permissions: string[]) => boolean,
   canAllFunction: (permissions: string[]) => boolean,
-  userRoleKey?: string
+  userRoleKey?: string,
+  featureFunction?: (featureName: string) => boolean
 ): MenuItem[] => {
   return items
-    .filter(item => shouldShowMenuItem(item, canFunction, canAnyFunction, canAllFunction, userRoleKey))
+    .filter(item => shouldShowMenuItem(item, canFunction, canAnyFunction, canAllFunction, userRoleKey, featureFunction))
     .map(item => {
       // Se o item tem subitens, filtrar os subitens também
       if (item.subItems && item.subItems.length > 0) {
         const filteredSubItems = item.subItems.filter(subItem =>
-          shouldShowMenuItem(subItem, canFunction, canAnyFunction, canAllFunction, userRoleKey)
+          shouldShowMenuItem(subItem, canFunction, canAnyFunction, canAllFunction, userRoleKey, featureFunction)
         );
 
         // Se não há subitens visíveis, não mostrar o item pai

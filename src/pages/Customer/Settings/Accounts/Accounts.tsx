@@ -23,15 +23,29 @@ import {
   TableRow,
   Badge,
 } from '@evoapi/design-system';
-import { Building2, UserPlus, Ban, CheckCircle2 } from 'lucide-react';
+import { Building2, UserPlus, Ban, CheckCircle2, SlidersHorizontal } from 'lucide-react';
 import EmptyState from '@/components/base/EmptyState';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { accountService } from '@/services/account/accountService';
 import usersService from '@/services/users/usersService';
+import { FormSwitch } from '@/components/shared/forms/FormSwitch';
 import type { Account, CreateAccount } from '@/types/settings';
 
 const EMPTY_ACCOUNT_FORM: CreateAccount = { name: '', subdomain: '', support_email: '' };
 const EMPTY_USER_FORM = { name: '', email: '', role: 'agent' };
+
+// Toggleable features shown here. Every entry needs a real
+// require_feature/RequireFeature gate on the backend to have any effect -
+// see specs/account-feature-toggles Steps 3/4. Extend this list as more
+// controllers adopt the gate; it intentionally does not mirror the full
+// config/features.yml catalog (many entries there are deprecated or
+// evolution_internal and shouldn't be shown as toggleable at all).
+const TOGGLEABLE_FEATURES: { key: string; label: string; description: string }[] = [
+  { key: 'pipelines', label: 'Pipeline', description: 'Funil de vendas/atendimento (kanban de conversas e contatos).' },
+  { key: 'ai_agents', label: 'Agentes de IA', description: 'Criação e gerenciamento de agentes de IA.' },
+  { key: 'automations', label: 'Automações', description: 'Regras de automação de conversas.' },
+  { key: 'integrations', label: 'Integrações', description: 'Integrações de terceiros (Slack, HubSpot, webhooks, etc.).' },
+];
 
 export default function Accounts() {
   const { can, isReady: permissionsReady } = useUserPermissions();
@@ -52,9 +66,16 @@ export default function Accounts() {
   const [accountToToggle, setAccountToToggle] = useState<Account | null>(null);
   const [togglingStatus, setTogglingStatus] = useState(false);
 
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const [featuresAccount, setFeaturesAccount] = useState<Account | null>(null);
+  const [featuresForm, setFeaturesForm] = useState<Record<string, boolean>>({});
+  const [loadingFeatures, setLoadingFeatures] = useState(false);
+  const [savingFeatures, setSavingFeatures] = useState(false);
+
   const canCreate = can('accounts', 'create');
   const canSuspend = can('accounts', 'suspend');
   const canActivate = can('accounts', 'activate');
+  const canManageFeatures = can('accounts', 'manage_features');
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -169,6 +190,47 @@ export default function Accounts() {
     }
   };
 
+  const handleOpenFeatures = async (account: Account) => {
+    if (!canManageFeatures) {
+      toast.error('Você não tem permissão para gerenciar features desta conta');
+      return;
+    }
+
+    setFeaturesAccount(account);
+    setFeaturesOpen(true);
+    setLoadingFeatures(true);
+    try {
+      const overrides = await accountService.getAccountFeatures(account.id);
+      const form: Record<string, boolean> = {};
+      TOGGLEABLE_FEATURES.forEach(({ key }) => {
+        // Absent override = features.yml installation default (enabled).
+        form[key] = overrides[key] ?? true;
+      });
+      setFeaturesForm(form);
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao carregar features da conta');
+      setFeaturesOpen(false);
+    } finally {
+      setLoadingFeatures(false);
+    }
+  };
+
+  const handleSaveFeatures = async () => {
+    if (!featuresAccount) return;
+
+    setSavingFeatures(true);
+    try {
+      await accountService.updateAccountFeatures(featuresAccount.id, featuresForm);
+      toast.success(`Features de ${featuresAccount.name} atualizadas`);
+      setFeaturesOpen(false);
+      setFeaturesAccount(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao atualizar features da conta');
+    } finally {
+      setSavingFeatures(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col p-4">
       <div className="flex items-center justify-between mb-4">
@@ -208,7 +270,9 @@ export default function Accounts() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Subdomínio</TableHead>
                 <TableHead>Status</TableHead>
-                {(canCreate || canSuspend || canActivate) && <TableHead className="text-right">Ações</TableHead>}
+                {(canCreate || canSuspend || canActivate || canManageFeatures) && (
+                  <TableHead className="text-right">Ações</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,8 +285,14 @@ export default function Accounts() {
                       {account.status}
                     </Badge>
                   </TableCell>
-                  {(canCreate || canSuspend || canActivate) && (
+                  {(canCreate || canSuspend || canActivate || canManageFeatures) && (
                     <TableCell className="text-right space-x-2">
+                      {canManageFeatures && (
+                        <Button variant="outline" size="sm" onClick={() => handleOpenFeatures(account)}>
+                          <SlidersHorizontal className="h-4 w-4 mr-2" />
+                          Features
+                        </Button>
+                      )}
                       {canCreate && (
                         <Button variant="outline" size="sm" onClick={() => handleOpenAssign(account)}>
                           <UserPlus className="h-4 w-4 mr-2" />
@@ -380,6 +450,44 @@ export default function Accounts() {
                 : accountToToggle?.status === 'active'
                   ? 'Suspender'
                   : 'Reativar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Features Dialog */}
+      <Dialog open={featuresOpen} onOpenChange={open => !savingFeatures && setFeaturesOpen(open)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Features de {featuresAccount?.name}</DialogTitle>
+            <DialogDescription>
+              Habilite ou desabilite funcionalidades exclusivamente para esta conta. Não afeta nenhuma outra conta.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {loadingFeatures ? (
+              <div className="text-muted-foreground text-sm">Carregando...</div>
+            ) : (
+              TOGGLEABLE_FEATURES.map(({ key, label, description }) => (
+                <FormSwitch
+                  key={key}
+                  id={`feature-${key}`}
+                  label={label}
+                  description={description}
+                  checked={featuresForm[key] ?? true}
+                  onCheckedChange={checked =>
+                    setFeaturesForm(prev => ({ ...prev, [key]: checked }))
+                  }
+                />
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFeaturesOpen(false)} disabled={savingFeatures}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveFeatures} disabled={savingFeatures || loadingFeatures}>
+              {savingFeatures ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>

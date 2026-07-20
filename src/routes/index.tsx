@@ -6,6 +6,7 @@ import CustomerRoute from './CustomerRoute';
 import SmartRedirect from './SmartRedirect';
 import RouterGuard from '@/guards/RouterGuard';
 import PermissionRoute from './PermissionRoute';
+import FeatureRoute from './FeatureRoute';
 import { PluginRoutes, type PluginRoute as PluginRouteType } from '@/plugin-host';
 
 import MainLayout from '@/components/layout/MainLayout';
@@ -431,7 +432,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="pipelines" action="read">
-                      <Pipelines />
+                      <FeatureRoute feature="pipelines">
+                        <Pipelines />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -446,7 +449,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="pipelines" action="read">
-                      <PipelineKanban />
+                      <FeatureRoute feature="pipelines">
+                        <PipelineKanban />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -461,7 +466,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="automation_rules" action="read">
-                      <Automation />
+                      <FeatureRoute feature="automations">
+                        <Automation />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -476,7 +483,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="automation_rules" action="create">
-                      <AutomationForm mode="create" />
+                      <FeatureRoute feature="automations">
+                        <AutomationForm mode="create" />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -491,7 +500,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="automation_rules" action="update">
-                      <AutomationForm mode="edit" />
+                      <FeatureRoute feature="automations">
+                        <AutomationForm mode="edit" />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -805,7 +816,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <Integrations />
+                      <FeatureRoute feature="integrations">
+                        <Integrations />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -876,7 +889,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <SlackIntegrationPage />
+                      <FeatureRoute feature="integrations">
+                        <SlackIntegrationPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -890,7 +905,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <OpenAIPage />
+                      <FeatureRoute feature="integrations">
+                        <OpenAIPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -904,7 +921,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <BMSPage />
+                      <FeatureRoute feature="integrations">
+                        <BMSPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -918,7 +937,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <LeadSquaredPage />
+                      <FeatureRoute feature="integrations">
+                        <LeadSquaredPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -932,7 +953,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <HubSpotPage />
+                      <FeatureRoute feature="integrations">
+                        <HubSpotPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -946,7 +969,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <ShopifyPage />
+                      <FeatureRoute feature="integrations">
+                        <ShopifyPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -960,7 +985,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <LinearPage />
+                      <FeatureRoute feature="integrations">
+                        <LinearPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -976,7 +1003,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <DashboardAppPage />
+                      <FeatureRoute feature="integrations">
+                        <DashboardAppPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1006,16 +1035,18 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="integrations" action="read">
-                      <div className="p-6">
-                        <div className="h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <h2 className="text-2xl font-bold mb-2">🔧 Configuração</h2>
-                            <p className="text-muted-foreground">
-                              Página de configuração em desenvolvimento
-                            </p>
+                      <FeatureRoute feature="integrations">
+                        <div className="p-6">
+                          <div className="h-full flex items-center justify-center">
+                            <div className="text-center">
+                              <h2 className="text-2xl font-bold mb-2">🔧 Configuração</h2>
+                              <p className="text-muted-foreground">
+                                Página de configuração em desenvolvimento
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1191,7 +1222,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="ai_agents" action="read">
-                      <Agents />
+                      <FeatureRoute feature="ai_agents">
+                        <Agents />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1206,7 +1239,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="ai_agents" action="create">
-                      <Agents />
+                      <FeatureRoute feature="ai_agents">
+                        <Agents />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1221,7 +1256,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="ai_agents" action="update">
-                      <AgentEditPage />
+                      <FeatureRoute feature="ai_agents">
+                        <AgentEditPage />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1236,7 +1273,9 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="ai_agents" action="read">
-                      <Agents />
+                      <FeatureRoute feature="ai_agents">
+                        <Agents />
+                      </FeatureRoute>
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -1348,7 +1387,13 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="roles" action="read">
-                      <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center h-full">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                          </div>
+                        }
+                      >
                         <RolesList />
                       </Suspense>
                     </PermissionRoute>
@@ -1364,7 +1409,13 @@ const AppRouter = () => {
                 <CustomerRoute>
                   <MainLayout>
                     <PermissionRoute resource="roles" action="read">
-                      <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                      <Suspense
+                        fallback={
+                          <div className="flex items-center justify-center h-full">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                          </div>
+                        }
+                      >
                         <RoleDetail />
                       </Suspense>
                     </PermissionRoute>
@@ -1392,7 +1443,13 @@ const AppRouter = () => {
             <Route
               path="email"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <SmtpConfig />
                 </Suspense>
               }
@@ -1400,7 +1457,13 @@ const AppRouter = () => {
             <Route
               path="storage"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <StorageConfig />
                 </Suspense>
               }
@@ -1408,7 +1471,13 @@ const AppRouter = () => {
             <Route
               path="social-login"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <SocialLoginConfig />
                 </Suspense>
               }
@@ -1416,7 +1485,13 @@ const AppRouter = () => {
             <Route
               path="channels"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <ChannelConfig />
                 </Suspense>
               }
@@ -1424,7 +1499,13 @@ const AppRouter = () => {
             <Route
               path="openai"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <OpenAIConfig />
                 </Suspense>
               }
@@ -1432,7 +1513,13 @@ const AppRouter = () => {
             <Route
               path="integrations"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <IntegrationsConfig />
                 </Suspense>
               }
@@ -1440,7 +1527,13 @@ const AppRouter = () => {
             <Route
               path="evolution-hub"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <EvolutionHubConfig />
                 </Suspense>
               }
@@ -1448,7 +1541,13 @@ const AppRouter = () => {
             <Route
               path="inbound-email"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <InboundEmailConfig />
                 </Suspense>
               }
@@ -1456,7 +1555,13 @@ const AppRouter = () => {
             <Route
               path="frontend-runtime"
               element={
-                <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                    </div>
+                  }
+                >
                   <FrontendRuntimeConfig />
                 </Suspense>
               }

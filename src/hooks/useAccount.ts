@@ -27,10 +27,18 @@ export function useAccount(): UseAccountReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // account.features only carries per-Account *overrides* (see
+  // specs/account-feature-toggles) - an absent key means the feature is at
+  // its config/features.yml installation default, which for every feature
+  // except the explicitly-disabled beta ones is `enabled: true`. Treating an
+  // absent key as "disabled" (the previous behavior here) would have hidden
+  // every never-toggled feature for every account the moment the backend
+  // stopped always returning `features: {}`.
   const isFeatureEnabled = (featureName: keyof AccountFeatures): boolean => {
     if (!account?.features) return false;
     if (featureName === 'evolution_v4') return true;
-    return account.features[featureName] || false;
+    const value = account.features[featureName];
+    return value === undefined ? true : value;
   };
 
   const hasAllFeatures = (featureNames: (keyof AccountFeatures)[]): boolean => {
@@ -111,13 +119,15 @@ export function useAccount(): UseAccountReturn {
 
 // Hook for feature checking without loading full account (requires account to be loaded elsewhere)
 export function useFeatures(account: Account | null) {
+  // See the comment on isFeatureEnabled above - same fix, same reason.
   const isFeatureEnabled = (featureName: keyof AccountFeatures): boolean => {
     if (!account?.features) return false;
 
     // Always enable V4 interface by default
     if (featureName === 'evolution_v4') return true;
 
-    return account.features[featureName] || false;
+    const value = account.features[featureName];
+    return value === undefined ? true : value;
   };
 
   const hasAllFeatures = (featureNames: (keyof AccountFeatures)[]): boolean => {

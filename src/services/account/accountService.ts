@@ -64,6 +64,42 @@ class AccountService {
     }
   }
 
+  // Superadmin-only: read an Account's current per-feature overrides. See
+  // specs/account-feature-toggles. Absence of a key means the feature is at
+  // its config/features.yml installation default.
+  async getAccountFeatures(accountId: string): Promise<Record<string, boolean>> {
+    try {
+      const response = await authApi.get(`/accounts/${accountId}/features`);
+      const data = extractData<{ feature_overrides: Record<string, boolean> }>(response);
+      return data?.feature_overrides || {};
+    } catch (error: any) {
+      console.error('Erro ao buscar features da conta:', error);
+      const errorInfo = extractError(error);
+      throw new Error(errorInfo.message || 'Erro ao buscar features da conta');
+    }
+  }
+
+  // Superadmin-only: partially update an Account's feature overrides. Merges
+  // into the existing map - unspecified keys are left untouched; a `null`
+  // value for a key removes the override, reverting to the installation
+  // default.
+  async updateAccountFeatures(
+    accountId: string,
+    overrides: Record<string, boolean | null>
+  ): Promise<Record<string, boolean>> {
+    try {
+      const response = await authApi.patch(`/accounts/${accountId}/features`, {
+        feature_overrides: overrides,
+      });
+      const data = extractData<{ feature_overrides: Record<string, boolean> }>(response);
+      return data?.feature_overrides || {};
+    } catch (error: any) {
+      console.error('Erro ao atualizar features da conta:', error);
+      const errorInfo = extractError(error);
+      throw new Error(errorInfo.message || 'Erro ao atualizar features da conta');
+    }
+  }
+
   async updateAccount(payload: UpdateAccount): Promise<Account> {
     try {
       const response = await authApi.patch<AccountUpdateResponse>('/account', { account: payload });

@@ -27,6 +27,7 @@ export interface AccountFeatures {
   reports?: boolean;
   crm?: boolean;
   pipelines?: boolean;
+  ai_agents?: boolean;
 
   // Technical features
   ip_lookup?: boolean;
