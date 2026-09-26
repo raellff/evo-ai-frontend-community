@@ -82,8 +82,8 @@ export default function Accounts() {
     try {
       const data = await accountService.listAccounts();
       setAccounts(data);
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao carregar contas');
+    } catch (error: unknown) {
+      toast.error((error as { message?: string })?.message || 'Erro ao carregar contas');
     } finally {
       setLoading(false);
     }
@@ -116,8 +116,8 @@ export default function Accounts() {
       toast.success('Conta criada com sucesso');
       setCreateOpen(false);
       loadAccounts();
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao criar conta');
+    } catch (error: unknown) {
+      toast.error((error as { message?: string })?.message || 'Erro ao criar conta');
     } finally {
       setCreating(false);
     }
@@ -148,8 +148,8 @@ export default function Accounts() {
       setStatusConfirmOpen(false);
       setAccountToToggle(null);
       loadAccounts();
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao alterar status da conta');
+    } catch (error: unknown) {
+      toast.error((error as { message?: string })?.message || 'Erro ao alterar status da conta');
     } finally {
       setTogglingStatus(false);
     }
@@ -179,8 +179,8 @@ export default function Accounts() {
       });
       toast.success(`Usuário adicionado à conta ${assignAccount.name}`);
       setAssignOpen(false);
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao adicionar usuário à conta');
+    } catch (error: unknown) {
+      toast.error((error as { message?: string })?.message || 'Erro ao adicionar usuário à conta');
     } finally {
       setAssigning(false);
     }
@@ -203,8 +203,8 @@ export default function Accounts() {
         form[key] = overrides[key] ?? true;
       });
       setFeaturesForm(form);
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao carregar features da conta');
+    } catch (error: unknown) {
+      toast.error((error as { message?: string })?.message || 'Erro ao carregar features da conta');
       setFeaturesOpen(false);
     } finally {
       setLoadingFeatures(false);
@@ -220,8 +220,8 @@ export default function Accounts() {
       toast.success(`Features de ${featuresAccount.name} atualizadas`);
       setFeaturesOpen(false);
       setFeaturesAccount(null);
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao atualizar features da conta');
+    } catch (error: unknown) {
+      toast.error((error as { message?: string })?.message || 'Erro ao atualizar features da conta');
     } finally {
       setSavingFeatures(false);
     }
