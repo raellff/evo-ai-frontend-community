@@ -199,7 +199,7 @@ class AutomationService {
         teams: getResultData(teamsRes),
         labels: getResultData(labelsRes),
         campaigns: [],
-        customAttributes: [], // TODO: Implementar busca de custom attributes se necessário
+        customAttributes: [], // fetched in useAutomationFormData via customAttributesService
       };
     } catch (error: any) {
       console.error('Erro ao buscar dados do formulário:', error);
@@ -390,6 +390,7 @@ class AutomationService {
       'resolve-conversation-node',
       'change-priority-node',
       'change-status-node',
+      'assign-to-pipeline-node',
     ];
 
     return actionNodeTypes.includes(nodeType);
@@ -513,6 +514,12 @@ class AutomationService {
           return {
             action_name: 'change_status',
             action_params: [nodeData.status || null],
+          };
+
+        case 'assign-to-pipeline-node':
+          return {
+            action_name: 'assign_to_pipeline',
+            action_params: [nodeData.pipeline_id || null],
           };
 
         default:

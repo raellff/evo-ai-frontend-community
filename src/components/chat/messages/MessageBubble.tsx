@@ -77,6 +77,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isActivity = message.message_type === MESSAGE_TYPE.ACTIVITY;
   const isPrivate = message.private;
   const isDeleted = message.content_attributes?.deleted === true;
+  const isRevokedByContact = message.content_attributes?.revoked_by_contact === true;
+  const isRevokeCrmOnly = message.content_attributes?.revoke_propagated === false;
 
   // Moderation indicators
   const hasPendingModeration = moderation?.status === 'pending';
@@ -160,9 +162,32 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     );
   };
 
+  // Decide o layout do timestamp: 'tuck' (float dentro do texto, estilo WhatsApp) só faz
+  // sentido pra texto puro — mídia/cards/preview usam 'default' (bloco abaixo do conteúdo),
+  // que é como o protótipo trata a bolha alta (LinkedIn preview).
+  const hasAttachments = Boolean(message.attachments && message.attachments.length > 0);
+  const isPlainTextContent =
+    !hasAttachments &&
+    (message.content_type === 'text' ||
+      message.content_type === 'incoming_email' ||
+      !message.content_type);
+  // Áudio puro (sem legenda) também usa 'tuck': a bolha de áudio é compacta e sem altura
+  // variável (mesmo player em toda mensagem), então o timestamp flutuante cai logo abaixo
+  // do player sem sobrepor nada — evita a inconsistência de tamanho/cor/posição do 'default'
+  // (ver MessageStatus.tsx) entre bolha de texto e bolha de áudio. Áudio com legenda mantém
+  // 'default' (mesma lógica de imagem/vídeo com legenda: bolha mais alta, layout em bloco).
+  const firstAttachmentFileType = hasAttachments
+    ? String(message.attachments[0]?.file_type || message.attachments[0]?.data_url || '').toLowerCase()
+    : '';
+  const isAudioOnly =
+    hasAttachments &&
+    !message.content &&
+    (firstAttachmentFileType === 'audio' || firstAttachmentFileType.includes('audio/'));
+  const timestampVariant: 'default' | 'tuck' =
+    isPlainTextContent || isAudioOnly ? 'tuck' : 'default';
+
   const renderMessageContent = () => {
     // 🎯 CORREÇÃO: Detectar attachments automaticamente
-    const hasAttachments = message.attachments && message.attachments.length > 0;
 
     if (hasAttachments) {
       const firstAttachment = message.attachments[0];
@@ -306,9 +331,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className="mb-1">
           {renderContextMenu(
             <div
-              className={`rounded-lg px-3 py-1.5 ${isDeleted ? 'cursor-default' : 'cursor-pointer'} ${isPrivate
+              className={`rounded-lg px-3 py-1.5 ${isPrivate
                 ? 'bg-orange-50 border border-orange-200 dark:bg-orange-950/20 dark:border-orange-800/50'
-                : 'bg-muted/50 hover:bg-muted/70 border border-border/50'
+                : 'bg-muted/50 border border-border/50'
                 }`}
             >
               {/* Indicador de mensagem privada */}
@@ -344,21 +369,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <ReplyPreview message={replyToMessage} isOwn={false} />
               )}
 
-              {isDeleted ? (
-                <div className="italic text-muted-foreground text-sm opacity-70">
-                  {t('messages.messageBubble.deletedPlaceholder', 'This message was deleted')}
-                </div>
-              ) : (
-                <div>{renderMessageContent()}</div>
+              <div className={timestampVariant === 'tuck' ? 'overflow-hidden' : undefined}>
+                {renderMessageContent()}
+                {(isDeleted || isRevokedByContact) && (
+                  <div className="mt-1 text-xs italic text-muted-foreground opacity-80">
+                    {isRevokedByContact
+                      ? t('messages.messageBubble.revokedByContact', 'Deleted by the contact')
+                      : t('messages.messageBubble.deletedPlaceholder', 'This message was deleted')}
+                    {isDeleted && isRevokeCrmOnly && (
+                      <span className="ml-1">· {t('messages.messageBubble.revokeCrmOnly', 'removed only in the CRM')}</span>
+                    )}
+                  </div>
+                )}
+                {showTimestamp && timestampVariant === 'tuck' && (
+                  <MessageStatus message={message} isOwn={false} onRetry={onRetry} variant="tuck" />
+                )}
+              </div>
+
+              {showTimestamp && timestampVariant === 'default' && (
+                <MessageStatus message={message} isOwn={false} onRetry={onRetry} variant="default" />
               )}
             </div>,
-          )}
-
-          {/* Timestamp estilo Facebook - abaixo do bubble, alinhado à esquerda */}
-          {showTimestamp && (
-            <div className="mt-1 text-xs text-muted-foreground">
-              <MessageStatus message={message} isOwn={false} onRetry={onRetry} />
-            </div>
           )}
         </div>
 
@@ -439,44 +470,32 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
         )}
 
-        {/* 📛 Nome do Agente: mostrar para mensagens de agentes (lado direito) */}
-        {isOwn && isFromAgent && (
-          <div className="text-xs mb-1 flex items-center justify-end gap-1.5 text-muted-foreground">
-            <Badge variant="outline" className="h-4 px-1 text-[10px] font-medium bg-primary/10 text-primary border border-primary/30 dark:bg-primary/20 dark:text-primary dark:border-primary/50">
-              {t('messages.messageBubble.agent.badge')}
-            </Badge>
-            {message.sender?.name || t('messages.messageBubble.agent.fallback')}
-          </div>
-        )}
-
-        {/* 🤖 Nome do Bot: mostrar para mensagens de bot (lado direito) */}
-        {isOwn && isFromBot && (
-          <div className="text-xs mb-1 flex items-center justify-end gap-1.5 text-purple-600 font-medium">
-            <Badge variant="outline" className="h-4 px-1 text-[10px] bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-700">
-              {t('messages.messageBubble.bot.badge')}
-            </Badge>
-            {message.sender?.name || t('messages.messageBubble.bot.fallback')}
-          </div>
-        )}
-
         {renderContextMenu(
           <div
-            className={`rounded-lg px-3 py-2 ${isDeleted ? 'cursor-default' : 'cursor-pointer'} ${isThreadReply
-              ? 'rounded-tl-md' // Canto superior esquerdo mais suave para replies
-              : ''
-              } ${isPrivate
+            className={`rounded-lg px-3 py-2 ${
+              isOwn ? 'rounded-tr-[4px]' : isThreadReply ? 'rounded-tl-md' : ''
+            } ${isPrivate
                 ? 'bg-orange-50 border-2 border-orange-200 border-l-4 border-l-orange-400 dark:bg-orange-950/20 dark:border-orange-800/50 dark:border-l-orange-600'
                 : isFromAgent
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/85'
+                  ? 'bg-primary text-primary-foreground'
                   : isFromBot
                     ? 'bg-purple-600 text-white dark:bg-purple-700'
                     : isOwn
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/85'
+                      ? 'bg-primary text-primary-foreground'
                       : isThreadReply
                         ? 'bg-muted/70 border border-l-2 border-l-primary/40 dark:bg-muted/50' // Estilo mais sutil para replies
                         : 'bg-muted border'
               }`}
           >
+            {/* Nome do remetente DENTRO da bolha (não como badge externo) — estilo do
+                protótipo: nome em destaque no topo, cor clara sobre o fundo colorido. */}
+            {isOwn && (isFromAgent || isFromBot) && (
+              <div className="text-xs font-bold mb-1 opacity-90">
+                {message.sender?.name ||
+                  (isFromBot ? t('messages.messageBubble.bot.fallback') : t('messages.messageBubble.agent.fallback'))}
+              </div>
+            )}
+
             {/* Indicador de mensagem privada */}
             {isPrivate && (
               <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
@@ -511,17 +530,28 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <ReplyPreview message={replyToMessage} isOwn={isOwn} />
             )}
 
-            {isDeleted ? (
-                <div className="italic text-muted-foreground text-sm opacity-70">
-                  {t('messages.messageBubble.deletedPlaceholder', 'This message was deleted')}
+            <div className={timestampVariant === 'tuck' ? 'overflow-hidden' : undefined}>
+              {renderMessageContent()}
+              {(isDeleted || isRevokedByContact) && (
+                <div className="mt-1 text-xs italic text-muted-foreground opacity-80">
+                  {isRevokedByContact
+                    ? t('messages.messageBubble.revokedByContact', 'Deleted by the contact')
+                    : t('messages.messageBubble.deletedPlaceholder', 'This message was deleted')}
+                  {isDeleted && isRevokeCrmOnly && (
+                    <span className="ml-1">· {t('messages.messageBubble.revokeCrmOnly', 'removed only in the CRM')}</span>
+                  )}
                 </div>
-              ) : (
-                <div>{renderMessageContent()}</div>
               )}
+              {showTimestamp && timestampVariant === 'tuck' && (
+                <MessageStatus message={message} isOwn={isOwn} onRetry={onRetry} variant="tuck" />
+              )}
+            </div>
+
+            {showTimestamp && timestampVariant === 'default' && (
+              <MessageStatus message={message} isOwn={isOwn} onRetry={onRetry} variant="default" />
+            )}
           </div>,
         )}
-
-        {showTimestamp && <MessageStatus message={message} isOwn={isOwn} onRetry={onRetry} />}
       </div>
 
       {/* Alert Dialog para confirmação de exclusão */}

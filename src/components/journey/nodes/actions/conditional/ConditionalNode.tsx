@@ -3,6 +3,9 @@ import { BaseFlowNode } from '@/components/base';
 import { Handle, Position, useEdges } from '@xyflow/react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/hooks/useLanguage';
+import { usePipelineStageNames } from '@/hooks/usePipelineStageNames';
+
+export const PIPELINE_STAGE_FIELD = '{{conversation.pipeline_stage_id}}';
 
 export interface Condition {
   id: string;
@@ -10,6 +13,8 @@ export interface Condition {
   field: string;
   operator: string;
   value: any;
+  /** Human-readable label for `value` when it is an opaque id (e.g. a pipeline stage). Display-only. */
+  valueLabel?: string;
   customVariable?: string;
 }
 
@@ -57,6 +62,11 @@ export function ConditionalNode({ selected, data, id }: ConditionalNodeProps) {
   const edges = useEdges();
   const { t } = useLanguage('journey');
 
+  const hasPipelineStageCondition = (data.paths || []).some(path =>
+    (path.conditions || []).some(condition => condition.field === PIPELINE_STAGE_FIELD),
+  );
+  const stageNames = usePipelineStageNames(hasPipelineStageCondition);
+
   // Verificar se um handle está conectado
   const isHandleConnected = (handleId: string) => {
     return edges.some(edge => edge.source === id && edge.sourceHandle === handleId);
@@ -73,6 +83,9 @@ export function ConditionalNode({ selected, data, id }: ConditionalNodeProps) {
       'system.current_time': t('panels.conditional.fieldLabels.systemCurrentTime'),
       'system.current_day': t('panels.conditional.fieldLabels.systemCurrentDay'),
       'system.current_date': t('panels.conditional.fieldLabels.systemCurrentDate'),
+      '{{conversation.pipeline_stage_id}}': t(
+        'panels.conditional.fieldLabels.conversationPipelineStage',
+      ),
     };
     return fieldLabels[field] || field;
   };
@@ -142,6 +155,15 @@ export function ConditionalNode({ selected, data, id }: ConditionalNodeProps) {
   };
 
   const renderPath = (path: ConditionalPath, index: number) => {
+    // The source Handle id is `path-<id>`, the same value React Flow copies into
+    // a new edge's `sourceHandle`. This MUST stay consistent with the edges that
+    // legacy journeys already have saved (`sourceHandle = 'path-<id>'`) so the
+    // handle renders connected (isHandleConnected compares `sourceHandle === handleId`).
+    // Routing is handled at runtime by EVO-1922 (#99): the backend normalizes the
+    // `path-` prefix on BOTH sides of the match (normalizeConditionalPathHandle),
+    // so `path-<id>` here matches the node's raw `path.id` without a double-strip.
+    // Keeping the prefix mirrors the Split node, which also prefixes both sides.
+    // (EVO-1902.)
     const handleId = `path-${path.id}`;
     const isConnected = isHandleConnected(handleId);
     const colors = getPathColor(path.color);
@@ -218,7 +240,13 @@ export function ConditionalNode({ selected, data, id }: ConditionalNodeProps) {
                   {needsValue(condition.operator) && condition.value && (
                     <>
                       {' '}
-                      <span className="text-green-700 dark:text-green-400 font-medium">"{condition.value}"</span>
+                      <span className="text-green-700 dark:text-green-400 font-medium">
+                        "
+                        {stageNames.get(condition.value) ||
+                          condition.valueLabel ||
+                          condition.value}
+                        "
+                      </span>
                     </>
                   )}
                 </div>

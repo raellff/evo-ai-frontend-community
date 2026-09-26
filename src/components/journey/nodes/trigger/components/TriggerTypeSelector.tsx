@@ -18,11 +18,14 @@ export function TriggerTypeSelector({ value, onChange }: TriggerTypeSelectorProp
 
   return (
     <div className="space-y-2">
-      <Label className="text-sidebar-foreground font-medium">
+      <Label htmlFor="trigger-type-select" className="text-sidebar-foreground font-medium">
         {t('triggerComponents.triggerType')}
       </Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
+        <SelectTrigger
+          id="trigger-type-select"
+          className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground"
+        >
           <SelectValue placeholder={t('triggerComponents.selectType')} />
         </SelectTrigger>
         <SelectContent className="bg-sidebar border-sidebar-border">
@@ -49,6 +52,9 @@ export function TriggerTypeSelector({ value, onChange }: TriggerTypeSelectorProp
           </SelectItem>
           <SelectItem value="customAttribute" className="text-sidebar-foreground">
             {t('triggerComponents.types.customAttribute')}
+          </SelectItem>
+          <SelectItem value="pipelineStageChanged" className="text-sidebar-foreground">
+            {t('triggerComponents.types.pipelineStageChanged')}
           </SelectItem>
         </SelectContent>
       </Select>

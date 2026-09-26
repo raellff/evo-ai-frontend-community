@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { Suspense, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useChatContext } from '@/contexts/chat/ChatContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
@@ -14,6 +14,7 @@ import { useAssignmentHandlers } from '@/hooks/chat/useAssignmentHandlers';
 import { useFilterHandlers } from '@/hooks/chat/useFilterHandlers';
 
 import { loadConversationFilters, getDefaultFilter } from '@/utils/storage/filtersStorage';
+import { CONVERSATION_SEGMENTS } from '@/components/chat/chat-sidebar/conversationSegmentsHelpers';
 
 import { toast } from 'sonner';
 import { AxiosError } from 'axios';
@@ -45,7 +46,6 @@ import type { DashboardApp } from '../../../types/integrations';
 import type { AssignmentOption, AssignmentType } from '@/components/chat/assignment';
 import { labelsService } from '@/services/contacts/labelsService';
 import { useAppDataStore } from '@/store/appDataStore';
-import type { Label } from '@/types/settings';
 import chatService from '@/services/chat/chatService';
 
 const ContactSidebar = React.lazy(() => import('@/components/chat/contact-sidebar/ContactSidebar'));
@@ -64,12 +64,32 @@ interface SendMessageOptions {
 const UUID_V4_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Coluna de conversas redimensionável (§3.1) — largura persiste entre sessões
+// (mesmo espírito de collapsed/pinned de outras UIs do produto). Limites
+// evitam extremos inúteis: muito estreito corta nome/prévia, muito largo
+// esmaga a área de chat em telas médias.
+const SIDEBAR_WIDTH_KEY = 'evo_chat_sidebar_width_v1';
+const SIDEBAR_WIDTH_DEFAULT = 384; // md:w-96 original
+const SIDEBAR_WIDTH_MIN = 280;
+const SIDEBAR_WIDTH_MAX = 560;
+
+const clampSidebarWidth = (px: number) =>
+  Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, px));
+
 const Chat = () => {
   const { t } = useLanguage('chat');
   const { can, isReady: permissionsReady } = usePermissions();
   const fetchLabels = useAppDataStore(state => state.fetchLabels);
   const { conversationId } = useParams<{ conversationId?: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Resolved once so both effects below agree: an unknown segment has to fall back
+  // to the saved view, not to no list at all.
+  const segmentParam = searchParams.get('segment');
+  const badgeSegment = useMemo(
+    () => (segmentParam ? CONVERSATION_SEGMENTS.find(s => s.id === segmentParam) ?? null : null),
+    [segmentParam],
+  );
   const chatContext = useChatContext();
   // Explicitly type conversations to ensure TypeScript recognizes it has 'state'
   const conversations = chatContext.conversations;
@@ -102,6 +122,58 @@ const Chat = () => {
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const [isContactSidebarOpen, setIsContactSidebarOpen] = useState(false);
 
+  // Coluna de conversas redimensionável (§3.1) — ver constantes acima.
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const stored = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
+    return Number.isFinite(stored) && stored > 0 ? clampSidebarWidth(stored) : SIDEBAR_WIDTH_DEFAULT;
+  });
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false);
+  const resizeStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const handleResizeMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      resizeStartRef.current = { startX: e.clientX, startWidth: sidebarWidth };
+      setIsResizingSidebar(true);
+    },
+    [sidebarWidth],
+  );
+
+  useEffect(() => {
+    if (!isResizingSidebar) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const start = resizeStartRef.current;
+      if (!start) return;
+      setSidebarWidth(clampSidebarWidth(start.startWidth + (e.clientX - start.startX)));
+    };
+    const handleMouseUp = () => {
+      resizeStartRef.current = null;
+      setIsResizingSidebar(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    // cursor/seleção globais durante o drag — sem isto, soltar o mouse fora da
+    // faixa de 1px do handle interrompe o resize e o usuário seleciona texto
+    // da tela por baixo.
+    const prevCursor = document.body.style.cursor;
+    const prevUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = prevCursor;
+      document.body.style.userSelect = prevUserSelect;
+    };
+  }, [isResizingSidebar]);
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, String(sidebarWidth));
+  }, [sidebarWidth]);
+
   // Modal states
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
@@ -111,7 +183,7 @@ const Chat = () => {
 
   // Bulk selection state
   const [selectedConversationIds, setSelectedConversationIds] = useState<Set<string>>(new Set());
-  const [isBulkResolving, setIsBulkResolving] = useState(false);
+  const [isBulkUpdatingStatus, setIsBulkUpdatingStatus] = useState(false);
 
   // Dashboard Apps state (lazy loaded, not auto-fetched)
   const [dashboardApps] = useState<DashboardApp[]>([]);
@@ -164,6 +236,12 @@ const Chat = () => {
     }
   }, [conversationId, isContactSidebarOpen]);
 
+  useEffect(() => {
+    const selectedId = conversations.state.selectedConversationId;
+    if (!selectedId) return;
+    conversations.markAsRead(selectedId, { silent: true }).catch(() => {});
+  }, [conversations.state.selectedConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Load conversations on mount
   useEffect(() => {
     if (!permissionsReady) {
@@ -172,6 +250,11 @@ const Chat = () => {
 
     if (!can('conversations', 'read')) {
       toast.error(t('messages.noPermissionView'));
+      return;
+    }
+
+    // A recognized ?segment= is applied by the effect below.
+    if (badgeSegment) {
       return;
     }
 
@@ -189,6 +272,36 @@ const Chat = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [permissionsReady]);
+
+  // Keyed on the param, not on mount: /conversations and /conversations/:id are the
+  // same route element, so arriving from the sidebar badge does not remount Chat.
+  useEffect(() => {
+    if (!permissionsReady || !segmentParam) {
+      return;
+    }
+
+    // Only `segment` is stripped, recognized or not; other params survive.
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.delete('segment');
+        return next;
+      },
+      { replace: true },
+    );
+
+    if (!badgeSegment || !can('conversations', 'read')) {
+      return;
+    }
+
+    handleApplyFilters(badgeSegment.preset).catch(error => {
+      const axiosError = error as AxiosError;
+      if (axiosError?.response?.status === 403 || axiosError?.response?.status === 404) {
+        console.error(`Sem permissão. Parando tentativas.`);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsReady, segmentParam]);
 
   const handleClearFilters = useCallback(async () => {
     setSelectedConversationIds(new Set());
@@ -217,35 +330,38 @@ const Chat = () => {
     setSelectedConversationIds(new Set());
   }, []);
 
-  const handleBulkResolve = useCallback(async () => {
-    if (selectedConversationIds.size === 0) return;
-    if (!can('conversations', 'update')) {
-      toast.error(t('chatHeader.actions.bulkResolveNoPermission'));
-      return;
-    }
-    const displayIds = Array.from(selectedConversationIds);
-    setIsBulkResolving(true);
-    try {
-      const result = await chatService.bulkResolve(displayIds);
-      setSelectedConversationIds(new Set());
-      if (result.failed_ids.length === 0) {
-        toast.success(t('chatHeader.actions.bulkResolveSuccess', { count: result.success_ids.length }));
-      } else if (result.success_ids.length > 0) {
-        toast.warning(t('chatHeader.actions.bulkResolvePartialSuccess', {
-          success: result.success_ids.length,
-          failed: result.failed_ids.length,
-        }));
-      } else {
-        toast.error(t('chatHeader.actions.bulkResolveError'));
+  const handleBulkSetStatus = useCallback(
+    async (status: 'open' | 'pending' | 'resolved') => {
+      if (selectedConversationIds.size === 0) return;
+      if (!can('conversations', 'update')) {
+        toast.error(t('chatHeader.actions.bulkStatusNoPermission'));
+        return;
       }
-      await reloadCurrentFilters();
-    } catch (error) {
-      console.error('Bulk resolve error:', error);
-      toast.error(t('chatHeader.actions.bulkResolveError'));
-    } finally {
-      setIsBulkResolving(false);
-    }
-  }, [selectedConversationIds, can, reloadCurrentFilters, t]);
+      const displayIds = Array.from(selectedConversationIds);
+      setIsBulkUpdatingStatus(true);
+      try {
+        const result = await chatService.bulkUpdateStatus(displayIds, status);
+        setSelectedConversationIds(new Set());
+        if (result.failed_ids.length === 0) {
+          toast.success(t('chatHeader.actions.bulkStatusSuccess', { count: result.success_ids.length }));
+        } else if (result.success_ids.length > 0) {
+          toast.warning(t('chatHeader.actions.bulkStatusPartialSuccess', {
+            success: result.success_ids.length,
+            failed: result.failed_ids.length,
+          }));
+        } else {
+          toast.error(t('chatHeader.actions.bulkStatusError'));
+        }
+        await reloadCurrentFilters();
+      } catch (error) {
+        console.error('Bulk status update error:', error);
+        toast.error(t('chatHeader.actions.bulkStatusError'));
+      } finally {
+        setIsBulkUpdatingStatus(false);
+      }
+    },
+    [selectedConversationIds, can, reloadCurrentFilters, t],
+  );
 
   // 🔄 CARREGAMENTO SIMPLES: Apenas carregar mensagens quando conversa muda
   useEffect(() => {
@@ -458,7 +574,7 @@ const Chat = () => {
     async (conversation: Conversation) => {
       const resolvedId = String(conversation.uuid || conversation.id);
       try {
-        await conversationHandlers.handleMarkAsResolved(conversation, reloadCurrentFilters);
+        await conversationHandlers.handleMarkAsResolved(conversation);
         const liveSelected = selectedConvIdRef.current;
         if (liveSelected != null && String(liveSelected) === resolvedId) {
           await clearSelectionAndGoToList();
@@ -467,63 +583,63 @@ const Chat = () => {
         console.error('[handleMarkAsResolved] failed:', err);
       }
     },
-    [conversationHandlers, reloadCurrentFilters, clearSelectionAndGoToList],
+    [conversationHandlers, clearSelectionAndGoToList],
   );
 
   const handlePostpone = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handlePostpone(conversation, reloadCurrentFilters);
+      await conversationHandlers.handlePostpone(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handleMarkAsOpen = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handleMarkAsOpen(conversation, reloadCurrentFilters);
+      await conversationHandlers.handleMarkAsOpen(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handleMarkAsSnoozed = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handleMarkAsSnoozed(conversation, reloadCurrentFilters);
+      await conversationHandlers.handleMarkAsSnoozed(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handleSetPriority = useCallback(
     async (conversation: Conversation, priority: 'low' | 'medium' | 'high' | 'urgent' | null) => {
-      await conversationHandlers.handleSetPriority(conversation, priority, reloadCurrentFilters);
+      await conversationHandlers.handleSetPriority(conversation, priority);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handlePinConversation = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handlePinConversation(conversation, reloadCurrentFilters);
+      await conversationHandlers.handlePinConversation(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handleUnpinConversation = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handleUnpinConversation(conversation, reloadCurrentFilters);
+      await conversationHandlers.handleUnpinConversation(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handleArchiveConversation = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handleArchiveConversation(conversation, reloadCurrentFilters);
+      await conversationHandlers.handleArchiveConversation(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   const handleUnarchiveConversation = useCallback(
     async (conversation: Conversation) => {
-      await conversationHandlers.handleUnarchiveConversation(conversation, reloadCurrentFilters);
+      await conversationHandlers.handleUnarchiveConversation(conversation);
     },
-    [conversationHandlers, reloadCurrentFilters],
+    [conversationHandlers],
   );
 
   // 🎯 ASSIGNMENT HANDLERS: Usar handlers dos hooks customizados
@@ -596,9 +712,7 @@ const Chat = () => {
     show_on_sidebar?: boolean;
   }): Promise<AssignmentOption> => {
     try {
-      // labelsService.createLabel returns the unwrapped Label (extractData unwraps response.data.data)
-      // despite the declared LabelResponse type — service typing is inconsistent across the codebase.
-      const label = (await labelsService.createLabel(data)) as unknown as Label;
+      const label = await labelsService.createLabel(data);
       if (!label?.id || !label?.title) {
         throw new Error('Invalid label payload returned from API');
       }
@@ -649,15 +763,19 @@ const Chat = () => {
   }, [conversations.state.selectedConversationId]);
 
   // Prepare assignment modal data
+  // The three `description` phrases read "conversation with {{name}}", so {{name}}
+  // is always the interlocutor — the contact, never what is being assigned.
   const getAssignmentModalData = () => {
     if (!conversationToAssign) return null;
+
+    const contactName = conversationToAssign.contact?.name;
 
     switch (assignmentType) {
       case 'agent':
         return {
           title: t('assignment.agent.title'),
           description: t('assignment.agent.description', {
-            name: conversationToAssign.assignee?.name || t('assignment.agent.contactFallback'),
+            name: contactName || t('assignment.agent.contactFallback'),
           }),
           options: assignmentHandlers.users.map(
             (user): AssignmentOption => ({
@@ -678,7 +796,7 @@ const Chat = () => {
         return {
           title: t('assignment.team.title'),
           description: t('assignment.team.description', {
-            name: conversationToAssign?.team?.name || t('assignment.team.contactFallback'),
+            name: contactName || t('assignment.team.contactFallback'),
           }),
           options: assignmentHandlers.teams.map(
             (team): AssignmentOption => ({
@@ -696,9 +814,7 @@ const Chat = () => {
         return {
           title: t('assignment.label.title'),
           description: t('assignment.label.description', {
-            name:
-              conversationToAssign?.labels?.map(label => label.title).join(', ') ||
-              t('assignment.label.contactFallback'),
+            name: contactName || t('assignment.label.contactFallback'),
           }),
           options: assignmentHandlers.labels.map(
             (label): AssignmentOption => ({
@@ -765,28 +881,43 @@ const Chat = () => {
           onConversationSelect={handleConversationSelect}
           onFilterApply={handleApplyFilters}
           onFilterClear={handleClearFilters}
-          onMarkAsRead={handleMarkAsRead}
-          onMarkAsUnread={handleMarkAsUnread}
-          onMarkAsOpen={handleMarkAsOpen}
-          onMarkAsResolved={handleMarkAsResolved}
-          onPostpone={handlePostpone}
-          onMarkAsSnoozed={handleMarkAsSnoozed}
-          onSetPriority={handleSetPriority}
           onPinConversation={handlePinConversation}
           onUnpinConversation={handleUnpinConversation}
           onArchiveConversation={handleArchiveConversation}
           onUnarchiveConversation={handleUnarchiveConversation}
-          onAssignAgent={handleAssignAgent}
-          onAssignTeam={handleAssignTeam}
-          onAssignTag={handleAssignTag}
           onDeleteConversation={handleDeleteConversation}
           selectedConversationIds={selectedConversationIds}
           onToggleSelect={handleToggleConversationSelection}
           onClearSelection={handleClearSelection}
-          onBulkResolve={handleBulkResolve}
-          isBulkResolving={isBulkResolving}
-          canBulkResolve={can('conversations', 'update')}
+          onBulkSetStatus={handleBulkSetStatus}
+          isBulkUpdatingStatus={isBulkUpdatingStatus}
+          canBulkUpdateStatus={can('conversations', 'update')}
+          width={sidebarWidth}
         />
+
+        {/* Divisória arrastável entre a lista e o chat (§3.1). Só desktop —
+            no mobile a sidebar ocupa a tela toda, não há o que redimensionar.
+            Faixa de acerto de 5px (bem maior que a linha visual de 1px) para
+            o cursor col-resize não exigir precisão de pixel; o grip só
+            aparece no hover/drag, mantendo a UI limpa em repouso. */}
+        <div
+          onMouseDown={handleResizeMouseDown}
+          className="hidden md:flex relative w-[5px] -mx-[2px] z-10 shrink-0 cursor-col-resize group items-center justify-center"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('chatSidebar.resizeHandle', 'Redimensionar lista de conversas')}
+        >
+          <div
+            className={`w-px h-full transition-colors ${
+              isResizingSidebar ? 'bg-primary' : 'bg-transparent group-hover:bg-primary/40'
+            }`}
+          />
+          <div
+            className={`absolute h-10 w-1 rounded-full bg-border transition-opacity ${
+              isResizingSidebar ? 'opacity-100 bg-primary' : 'opacity-0 group-hover:opacity-100'
+            }`}
+          />
+        </div>
 
         {/* Chat Area */}
         <div
@@ -801,7 +932,7 @@ const Chat = () => {
               {/* Chat Header */}
               <ChatHeader
                 conversation={selectedConversation}
-                onBackClick={() => setMobileView('list')}
+                onBackClick={handleCloseConversation}
                 onCloseConversation={handleCloseConversation}
                 onContactSidebarOpen={() => setIsContactSidebarOpen(true)}
                 onMarkAsRead={handleMarkAsRead}
@@ -841,6 +972,9 @@ const Chat = () => {
                   onLoadMore={handleLoadMore}
                   onRetryMessage={handleRetryMessage}
                   isPendingConversation={selectedConversation?.status === 'pending'}
+                  onOpenConversation={() =>
+                    selectedConversation && handleMarkAsOpen(selectedConversation)
+                  }
                 />
               ) : (
                 // Show Dashboard App iframe when an app tab is active

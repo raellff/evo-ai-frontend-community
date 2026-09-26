@@ -15,12 +15,26 @@ import {
   TabsTrigger,
 } from '@evoapi/design-system';
 import { GitBranch, Plus, Trash2, Copy } from 'lucide-react';
-import { ConditionalNodeData, ConditionalPath, Condition } from './ConditionalNode';
+import {
+  ConditionalNodeData,
+  ConditionalPath,
+  Condition,
+  PIPELINE_STAGE_FIELD,
+} from './ConditionalNode';
 import { NodeConfigModal } from '@/components/journey/shared/NodeConfigModal';
 import { FlowFeedbackBanner } from '@/components/journey/_ui';
 import { VariableInput, VariableSelect } from '@/components/journey/environment-manager';
 import { v4 as uuidv4 } from 'uuid';
 import { useLanguage } from '@/hooks/useLanguage';
+import { pipelinesService } from '@/services/pipelines/pipelinesService';
+import { isBalancedExpression } from '@/utils/templateVariables';
+
+const PIPELINE_STAGE_OPERATORS = ['equals', 'not_equals'];
+
+interface StageOption {
+  id: string;
+  label: string;
+}
 
 interface ConditionalPanelProps {
   nodeId: string;
@@ -67,6 +81,7 @@ export function ConditionalPanel({
   ];
 
   const [activePathId, setActivePathId] = useState<string>('');
+  const [stageOptions, setStageOptions] = useState<StageOption[]>([]);
 
   useEffect(() => {
     setFormData({
@@ -79,7 +94,47 @@ export function ConditionalPanel({
     }
   }, [data]);
 
+  const hasPipelineStageCondition = useMemo(
+    () =>
+      formData.paths.some(path =>
+        path.conditions.some(condition => condition.field === PIPELINE_STAGE_FIELD),
+      ),
+    [formData.paths],
+  );
+
+  useEffect(() => {
+    if (!hasPipelineStageCondition || stageOptions.length > 0) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const pipelinesResponse = await pipelinesService.getPipelines();
+        const pipelines = pipelinesResponse?.data ?? [];
+
+        const stagesByPipeline = await Promise.all(
+          pipelines.map(async pipeline => {
+            const stagesResponse = await pipelinesService.getPipelineStages(pipeline.id);
+            return (stagesResponse?.data ?? []).map(stage => ({
+              id: stage.id,
+              label: `[${pipeline.name}] ${stage.name}`,
+            }));
+          }),
+        );
+
+        if (!cancelled) setStageOptions(stagesByPipeline.flat());
+      } catch {
+        // Stage picker stays empty on failure; reopening the panel retries.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasPipelineStageCondition, stageOptions.length]);
+
   const handleSave = () => {
+    // Save is gated by saveDisabled below; this guard is defense-in-depth.
+    if (hasInvalidExpression) return;
     onUpdate(nodeId, formData);
     onClose();
   };
@@ -185,14 +240,59 @@ export function ConditionalPanel({
     return !['is_empty', 'is_not_empty'].includes(operator);
   };
 
+  // A condition's value is only validated when it actually drives a free-text
+  // expression: skip pipeline-stage (id-only) and operators that take no value.
+  // Non-string / blank values are treated as balanced so a numeric value never
+  // throws at render (the shared util expects a string).
+  const isConditionValueBalanced = (condition: Condition) => {
+    if (condition.field === PIPELINE_STAGE_FIELD) return true;
+    if (!needsValue(condition.operator)) return true;
+    const value = condition.value;
+    if (typeof value !== 'string' || value.trim() === '') return true;
+    return isBalancedExpression(value);
+  };
+
+  // Cheap derived traversal (a handful of conditions) — recompute on each
+  // render rather than memoizing, which would force isConditionValueBalanced
+  // into the dep array and re-run every render anyway.
+  const hasInvalidExpression = formData.paths.some(path =>
+    path.conditions.some(condition => !isConditionValueBalanced(condition)),
+  );
+
   const dirty = useMemo(
     () => JSON.stringify(formData) !== JSON.stringify(originalData),
     [formData, originalData],
   );
 
+  const handleFieldChange = (pathId: string, condition: Condition, field: string) => {
+    // Any field change invalidates a previously denormalized value label.
+    const updates: Partial<Condition> = { field, valueLabel: undefined };
+    const wasPipelineStage = condition.field === PIPELINE_STAGE_FIELD;
+    if (field === PIPELINE_STAGE_FIELD) {
+      // Pipeline-stage conditions only support id equality; reset incompatible
+      // operator/value carried over from a previous field selection.
+      if (!PIPELINE_STAGE_OPERATORS.includes(condition.operator)) {
+        updates.operator = 'equals';
+      }
+      updates.value = '';
+    } else if (wasPipelineStage) {
+      // Leaving the stage field: drop the stale stage id left in the value input.
+      updates.value = '';
+    }
+    updateCondition(pathId, condition.id, updates);
+  };
+
   const renderCondition = (pathId: string, condition: Condition, index: number) => {
     const path = formData.paths.find(p => p.id === pathId);
     if (!path) return null;
+
+    const isPipelineStageField = condition.field === PIPELINE_STAGE_FIELD;
+    const operatorOptions = isPipelineStageField
+      ? OPERATORS.filter(option => PIPELINE_STAGE_OPERATORS.includes(option.value))
+      : OPERATORS;
+
+    const valueBalanced = isConditionValueBalanced(condition);
+    const exprErrorId = `conditional-expr-error-${condition.id}`;
 
     return (
       <div
@@ -211,28 +311,31 @@ export function ConditionalPanel({
 
         <div className="grid grid-cols-12 gap-2 items-end">
           <div className="col-span-4">
-            <Label className="text-xs">{t('panels.conditional.field')}</Label>
+            <Label htmlFor={`conditional-field-${condition.id}`} className="text-xs">{t('panels.conditional.field')}</Label>
             <VariableSelect
+              id={`conditional-field-${condition.id}`}
               value={condition.field || ''}
-              onValueChange={value => updateCondition(pathId, condition.id, { field: value })}
+              onValueChange={value => handleFieldChange(pathId, condition, value)}
               placeholder={t('panels.conditional.placeholders.selectVariable')}
               journeyId={journeyId}
               className="w-full"
               showSystemVariables={true}
+              showContactAttributes={true}
+              triggerTestId="conditional-field-select"
             />
           </div>
 
           <div className="col-span-3">
-            <Label className="text-xs">{t('panels.conditional.operator')}</Label>
+            <Label htmlFor={`conditional-operator-${condition.id}`} className="text-xs">{t('panels.conditional.operator')}</Label>
             <Select
               value={condition.operator}
               onValueChange={value => updateCondition(pathId, condition.id, { operator: value })}
             >
-              <SelectTrigger className="bg-sidebar border-sidebar-border text-sidebar-foreground">
+              <SelectTrigger id={`conditional-operator-${condition.id}`} className="bg-sidebar border-sidebar-border text-sidebar-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-sidebar border-sidebar-border">
-                {OPERATORS.map(option => (
+                {operatorOptions.map(option => (
                   <SelectItem
                     key={option.value}
                     value={option.value}
@@ -246,18 +349,57 @@ export function ConditionalPanel({
           </div>
 
           <div className="col-span-4">
-            <Label className="text-xs">{t('panels.conditional.value')}</Label>
-            {needsValue(condition.operator) ? (
-              <VariableInput
+            <Label htmlFor={`conditional-value-${condition.id}`} className="text-xs">{t('panels.conditional.value')}</Label>
+            {isPipelineStageField ? (
+              <Select
                 value={condition.value || ''}
-                onChange={e => updateCondition(pathId, condition.id, { value: e.target.value })}
-                placeholder={t('panels.conditional.value')}
-                className="bg-sidebar border-sidebar-border text-sidebar-foreground"
-                journeyId={journeyId}
-                onVariableInsert={variable => {
-                  console.log('Variable inserted in condition:', variable);
-                }}
-              />
+                onValueChange={value =>
+                  updateCondition(pathId, condition.id, {
+                    value,
+                    valueLabel: stageOptions.find(option => option.id === value)?.label,
+                  })
+                }
+              >
+                <SelectTrigger id={`conditional-value-${condition.id}`} className="bg-sidebar border-sidebar-border text-sidebar-foreground">
+                  <SelectValue
+                    placeholder={t('panels.conditional.placeholders.selectStage')}
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-sidebar border-sidebar-border">
+                  {stageOptions.map(option => (
+                    <SelectItem
+                      key={option.id}
+                      value={option.id}
+                      className="text-sidebar-foreground"
+                    >
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : needsValue(condition.operator) ? (
+              <>
+                <VariableInput
+                  id={`conditional-value-${condition.id}`}
+                  value={condition.value || ''}
+                  onChange={e =>
+                    updateCondition(pathId, condition.id, {
+                      value: e.target.value,
+                      valueLabel: undefined,
+                    })
+                  }
+                  placeholder={t('panels.conditional.value')}
+                  className="bg-sidebar border-sidebar-border text-sidebar-foreground"
+                  journeyId={journeyId}
+                  aria-invalid={!valueBalanced}
+                  aria-describedby={valueBalanced ? undefined : exprErrorId}
+                />
+                {!valueBalanced && (
+                  <p id={exprErrorId} className="mt-1 text-xs text-flow-feedback-error-fg">
+                    {t('environmentManager.invalidExpression')}
+                  </p>
+                )}
+              </>
             ) : (
               <div className="h-10 flex items-center text-xs text-muted-foreground italic px-3">
                 {t('panels.conditional.notNecessary')}
@@ -342,14 +484,14 @@ export function ConditionalPanel({
         </div>
 
         <div className="flex items-center gap-2">
-          <Label className="text-sm">
+          <Label htmlFor={`conditional-logical-operator-${path.id}`} className="text-sm">
             {t('panels.conditional.logicalOperatorBetweenConditions')}
           </Label>
           <Select
             value={path.logicalOperator}
             onValueChange={(value: 'AND' | 'OR') => updatePath(path.id, { logicalOperator: value })}
           >
-            <SelectTrigger className="w-32 bg-sidebar border-sidebar-border text-sidebar-foreground">
+            <SelectTrigger id={`conditional-logical-operator-${path.id}`} className="w-32 bg-sidebar border-sidebar-border text-sidebar-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-sidebar border-sidebar-border">
@@ -363,7 +505,7 @@ export function ConditionalPanel({
           </Select>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => addCondition(path.id, 'trigger')}>
             <Plus className="w-4 h-4 mr-1" />
             {t('panels.conditional.trigger')}
@@ -409,13 +551,14 @@ export function ConditionalPanel({
       onCancel={onClose}
       onSave={handleSave}
       dirty={dirty}
+      saveDisabled={hasInvalidExpression}
       saveLabel={t('actions.save')}
       cancelLabel={t('actions.cancel')}
       contentClassName="max-w-4xl"
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="text-sidebar-foreground font-medium">
+          <Label id="conditional-paths-label" className="text-sidebar-foreground font-medium">
             {t('panels.conditional.pathsTitle')}
           </Label>
           <Button variant="outline" size="sm" onClick={addPath}>
@@ -426,7 +569,12 @@ export function ConditionalPanel({
 
         {formData.paths.length > 0 ? (
           <>
-            <Tabs value={activePathId} onValueChange={setActivePathId}>
+            <Tabs
+              value={activePathId}
+              onValueChange={setActivePathId}
+              role="group"
+              aria-labelledby="conditional-paths-label"
+            >
               <TabsList
                 className="grid w-full"
                 style={{

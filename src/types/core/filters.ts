@@ -103,6 +103,60 @@ export const CONTACT_FILTER_TYPES: FilterType[] = [
     filterOperators: OPERATOR_TYPES_5,
     attribute_type: 'standard',
   },
+  {
+    attributeKey: 'labels',
+    attributeI18nKey: 'filter.attributes.labels',
+    inputType: 'search_select',
+    dataType: 'text',
+    filterOperators: OPERATOR_TYPES_1,
+    attribute_type: 'standard',
+    options: [], // populated dynamically (labels) in ContactsFilter
+  },
+  {
+    attributeKey: 'country_code',
+    attributeI18nKey: 'filter.attributes.country_code',
+    inputType: 'plain_text',
+    dataType: 'text',
+    filterOperators: OPERATOR_TYPES_1,
+    attribute_type: 'standard',
+  },
+  {
+    attributeKey: 'city',
+    attributeI18nKey: 'filter.attributes.city',
+    inputType: 'plain_text',
+    dataType: 'text',
+    filterOperators: OPERATOR_TYPES_3,
+    attribute_type: 'standard',
+  },
+  {
+    attributeKey: 'company',
+    attributeI18nKey: 'filter.attributes.company',
+    inputType: 'search_select',
+    dataType: 'text',
+    // Mirrors the backend contacts.company operators (filter_keys.yml): is/is-not a
+    // company, plus has-any / has-no company. is_present/is_not_present render
+    // without a value input (BaseFilterRow.needsValueInput).
+    filterOperators: [
+      { key: 'equal_to', label: 'filter.operators.equal_to', value: 'equal_to' },
+      { key: 'not_equal_to', label: 'filter.operators.not_equal_to', value: 'not_equal_to' },
+      { key: 'is_present', label: 'filter.operators.is_present', value: 'is_present' },
+      { key: 'is_not_present', label: 'filter.operators.is_not_present', value: 'is_not_present' },
+    ],
+    attribute_type: 'standard',
+    options: [], // populated dynamically (companies) in ContactsFilter
+  },
+  {
+    attributeKey: 'blocked',
+    attributeI18nKey: 'filter.attributes.blocked',
+    inputType: 'search_select',
+    dataType: 'text',
+    filterOperators: OPERATOR_TYPES_1,
+    attribute_type: 'standard',
+    options: [
+      { label: 'filter.options.blocked.true', value: 'true' },
+      { label: 'filter.options.blocked.false', value: 'false' },
+    ],
+  },
 ];
 
 // Filtro padrão genérico
@@ -226,7 +280,9 @@ export const CUSTOM_MCP_SERVER_FILTER_TYPES: FilterType[] = [
     attributeI18nKey: 'Data de Criação',
     inputType: 'date',
     dataType: 'date',
-    filterOperators: OPERATOR_TYPES_5,
+    // Date column: only equality operators (the Go backend matches by DATE();
+    // substring operators are invalid on a timestamp and would 500).
+    filterOperators: OPERATOR_TYPES_1,
     attribute_type: 'standard',
   },
 ];
@@ -325,7 +381,9 @@ export const CUSTOM_TOOL_FILTER_TYPES: FilterType[] = [
     attributeI18nKey: 'Data de Criação',
     inputType: 'date',
     dataType: 'date',
-    filterOperators: OPERATOR_TYPES_5,
+    // Date column: only equality operators (the Go backend matches by DATE();
+    // substring operators are invalid on a timestamp and would 500).
+    filterOperators: OPERATOR_TYPES_1,
     attribute_type: 'standard',
   },
 ];
@@ -524,9 +582,25 @@ export const CONVERSATION_FILTER_TYPES: FilterType[] = [
   // },
 ];
 
+// Linha-semente do modal avançado (BaseFilter usa quando não há filtros). NÃO
+// pode ser `status` (status é navegação por chip, excluída do modal): senão, na
+// visão padrão (status=all) o modal semeava uma linha-fantasma "Status = Aberta"
+// e só clicar Aplicar jogava a lista pra status=open silenciosamente. Usa um
+// atributo avançado NÃO-chip-nav com valor VAZIO → a linha aparece pronta pra
+// preencher e, se aplicada sem tocar, é descartada (BaseFilter dropa valor vazio).
 export const DEFAULT_CONVERSATION_FILTER: BaseFilter = {
+  ...DEFAULT_BASE_FILTER,
+  attributeKey: 'assignee_type',
+  filterOperator: 'equal_to',
+  values: '',
+};
+
+// "All" = visão padrão da lista (status=all = todos os status). Filtro EXPLÍCITO
+// (nunca []) p/ o matcher de realtime fazer match-all sem vazar e o backend não
+// cair no default implícito status=open. Nenhum chip fica marcado (default).
+export const ALL_CONVERSATION_FILTER: BaseFilter = {
   ...DEFAULT_BASE_FILTER,
   attributeKey: 'status',
   filterOperator: 'equal_to',
-  values: 'open',
+  values: 'all',
 };

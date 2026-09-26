@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 import { usePersistence } from '@/hooks/chat/usePersistence';
+import { useContactUpdatedReconciler } from '@/hooks/chat/useContactUpdatedReconciler';
 import { MessagesProvider, useMessages as useMessagesOriginal } from '@/contexts/chat/MessagesContext';
 import { ConversationsProvider } from '@/contexts/chat/ConversationsContext';
 import { useConversations as useConversationsOriginal } from '@/hooks/chat/useConversations';
@@ -20,76 +21,10 @@ import {
 import { ConversationsContextValue } from '@/types/chat/conversations';
 import { useAppDataStore } from '@/store/appDataStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdminRole } from '@/constants/roles';
 import { playNotificationSound, getAudioSettings } from '@/utils/audioNotificationUtils';
 import { normalizeToUnixSeconds } from '@/utils/time/timeHelpers';
-
-function doesConversationMatchFilters(
-  conversation: Conversation,
-  activeFilters: ConversationFilter[],
-  currentUserId?: string,
-): boolean {
-  if (!activeFilters || activeFilters.length === 0) return true;
-
-  return activeFilters.every(filter => {
-    const { attribute_key, filter_operator, values } = filter;
-    if (!values || values.length === 0) return true;
-    const stringValues = values.map(v => String(v));
-    if (stringValues.some(v => v.toLowerCase() === 'all')) return true;
-
-    let conversationValue: string | null | undefined;
-
-    switch (attribute_key) {
-      case 'status':
-        conversationValue = conversation.status;
-        break;
-      case 'inbox_id':
-        conversationValue = conversation.inbox_id ? String(conversation.inbox_id) : undefined;
-        break;
-      case 'assignee_id': {
-        const val = String(values[0]);
-        if (val === 'me') {
-          const meMatches = currentUserId
-            ? conversation.assignee_id != null && String(conversation.assignee_id) === String(currentUserId)
-            : false;
-          return filter_operator === 'not_equal_to' ? !meMatches : meMatches;
-        }
-        if (val === 'unassigned') {
-          const isUnassigned = !conversation.assignee_id;
-          return filter_operator === 'not_equal_to' ? !isUnassigned : isUnassigned;
-        }
-        if (val === 'assigned') {
-          const isAssigned = !!conversation.assignee_id;
-          return filter_operator === 'not_equal_to' ? !isAssigned : isAssigned;
-        }
-        conversationValue = conversation.assignee_id ? String(conversation.assignee_id) : null;
-        break;
-      }
-      case 'team_id':
-        conversationValue = conversation.team_id ? String(conversation.team_id) : null;
-        break;
-      case 'channel_type':
-        conversationValue = conversation.channel || undefined;
-        break;
-      default:
-        return true;
-    }
-
-    if (filter_operator === 'equal_to') {
-      return conversationValue != null && stringValues.includes(String(conversationValue));
-    }
-    if (filter_operator === 'not_equal_to') {
-      return conversationValue == null || !stringValues.includes(String(conversationValue));
-    }
-    if (filter_operator === 'contains') {
-      return conversationValue != null && stringValues.some(v => String(conversationValue).includes(v));
-    }
-    if (filter_operator === 'does_not_contain') {
-      return conversationValue == null || !stringValues.some(v => String(conversationValue).includes(v));
-    }
-
-    return true;
-  });
-}
+import { doesConversationMatchFilters } from '@/utils/chat/conversationMatch';
 
 interface ChatContextValue {
   // All sub-contexts
@@ -125,6 +60,17 @@ function useChatIntegration() {
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
   const activeFiltersRef = useRef<ConversationFilter[]>(filters.state.activeFilters);
   const attachmentReloadTimersRef = useRef<Record<string, number>>({});
+  const account = useAppDataStore(state => state.account);
+  // A session the server masks too reads the same values from REST as from the
+  // frame. Unknown role refetches: the cost is a request, the risk is the bug.
+  const roleKey = currentUser?.role?.key;
+  const sessionIsMasked = !!roleKey && !isAdminRole(roleKey);
+  const reconcileContactUpdated = useContactUpdatedReconciler({
+    conversations: conversations.state.conversations,
+    selectedConversationData: conversations.state.selectedConversationData,
+    refetchEnabled: account?.settings?.mask_contact_pii === true && !sessionIsMasked,
+    apply: conversations.updateContactInConversations,
+  });
   useEffect(() => {
     activeFiltersRef.current = filters.state.activeFilters;
   }, [filters.state.activeFilters]);
@@ -312,8 +258,9 @@ function useChatIntegration() {
               console.warn('Failed to update read conversation in localStorage:', error);
             }
 
-            // Atualizar estado local para garantir que está marcada como lida
-            conversations.updateUnreadCount(targetConversationId, 0);
+            conversations.markAsRead(targetConversationId, { silent: true }).catch(() => {
+              conversations.updateUnreadCount(targetConversationId, 0);
+            });
           } else if (!isConversationOpen && isIncomingMessage) {
             try {
               const saved = localStorage.getItem('crm-chat-state');
@@ -546,7 +493,9 @@ function useChatIntegration() {
           }
         }
 
-        // Preservar labels existentes quando WS envia dados incompletos (sem título ou cor)
+        // Keep the labels on screen when the WS payload is incomplete (no title or colour).
+        // With labels_data the colour always arrives, so this now only guards against a
+        // backend older than CRM-155. An empty list still passes: a removal has to reflect.
         const existingLabels = existingConversation?.labels || [];
         const incomingLabels = conversation.labels || [];
         const incomingLabelsComplete =
@@ -586,30 +535,63 @@ function useChatIntegration() {
           return;
         }
 
-        conversations.updateConversation({
+        const updatedConversation: Conversation = {
           ...existingConversation,
           status,
           ...(updatedAt ? { updated_at: updatedAt } : {}),
-        });
+        };
+
+        // EVO-1960: uma mudança de status via realtime pode tirar a conversa da
+        // view ativa (ex.: reaberta enquanto vejo "Resolvidas"). Reconcilia como
+        // o onConversationUpdated faz — senão a conversa fica pendurada e, se for
+        // fixada, o sort de pinned a joga pro topo da lista errada.
+        if (!doesConversationMatchFilters(updatedConversation, activeFiltersRef.current, currentUser?.id)) {
+          conversations.addHiddenConversation(updatedConversation);
+          conversations.removeConversation(conversationId);
+          return;
+        }
+
+        conversations.updateConversation(updatedConversation);
       },
 
       onConversationRead: (conversationId: string, unreadCount: number) => {
         conversations.updateUnreadCount(conversationId, unreadCount);
 
         const conversation = conversations.getConversation(conversationId);
-        if (conversation) {
-          conversations.updateConversation({
-            ...conversation,
-            unread_count: unreadCount,
-          });
+        if (!conversation) {
+          return;
         }
+
+        const updatedConversation: Conversation = {
+          ...conversation,
+          unread_count: unreadCount,
+        };
+
+        // EVO-1960: zerar não-lidas pode tirar a conversa da view "Não lidas".
+        // Mesma reconciliação do status — evita o vazamento (inclusive de fixadas).
+        if (!doesConversationMatchFilters(updatedConversation, activeFiltersRef.current, currentUser?.id)) {
+          conversations.addHiddenConversation(updatedConversation);
+          conversations.removeConversation(conversationId);
+          return;
+        }
+
+        conversations.updateConversation(updatedConversation);
       },
 
       onConversationLastActivity: (conversationId: string, lastActivityAt: string) => {
         conversations.updateConversationLastActivity(conversationId, lastActivityAt);
       },
+
+      onContactUpdated: reconcileContactUpdated,
     });
-  }, [websocket, messages, conversations, currentUser, shouldReloadMessageForMissingImageData]);
+  }, [
+    websocket,
+    messages,
+    conversations,
+    currentUser,
+    shouldReloadMessageForMissingImageData,
+    reconcileContactUpdated,
+  ]);
 
   // Integrated actions
   const loadConversationsWithFilters = useCallback(

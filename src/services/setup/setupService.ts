@@ -15,6 +15,9 @@ export interface SetupStatus {
   status: 'active' | 'inactive';
   instance_id: string | null;
   api_key?: string;
+  licensed?: boolean;
+  /** True when a consumer contributes extra setup steps. */
+  extra_setup_steps?: boolean;
 }
 
 export interface BootstrapPayload {
@@ -23,11 +26,19 @@ export interface BootstrapPayload {
   email: string;
   password: string;
   password_confirmation: string;
+  /** Opaque bag forwarded to the server's after_bootstrap hook; populated
+   *  only by a contributed step. */
+  extension_payload?: Record<string, unknown>;
 }
 
 export interface BootstrapResponse {
+  /** 'ok' | 'degraded' (CRM-262) — widened, since the wizard runs pre-login and
+   *  cannot assume which version of the auth service answered it. */
   status: string;
-  message: string;
+  /** Nullable on purpose: this is the server-authored copy the degraded warning
+   *  shows, and a warning with an empty body is the exact failure this card is
+   *  about. The caller falls back to local copy rather than trusting it. */
+  message: string | null;
   survey_token: string | null;
 }
 

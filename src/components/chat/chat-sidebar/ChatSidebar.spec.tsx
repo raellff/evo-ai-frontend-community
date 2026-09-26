@@ -59,7 +59,9 @@ vi.mock('@/utils/chat/mediaLabels', () => ({
 }));
 
 vi.mock('../loading-states', () => ({
-  ConversationSkeleton: () => <div data-testid="skeleton" />,
+  ConversationSkeleton: ({ count }: { count?: number }) => (
+    <div data-testid="skeleton" data-count={count} />
+  ),
 }));
 
 vi.mock('../empty-states', () => ({
@@ -134,6 +136,10 @@ const makeMockContext = () => ({
 
 let overrideContext: ReturnType<typeof makeMockContext> | null = null;
 
+vi.mock('@/contexts/PermissionsContext', () => ({
+  usePermissions: () => ({ can: () => true }),
+}));
+
 vi.mock('@/contexts/chat/ChatContext', () => ({
   useChatContext: () => overrideContext ?? makeMockContext(),
 }));
@@ -163,7 +169,7 @@ const defaultProps = {
   selectedConversationIds: new Set<string>(),
   onToggleSelect: vi.fn(),
   onClearSelection: vi.fn(),
-  onBulkResolve: vi.fn().mockResolvedValue(undefined),
+  onBulkSetStatus: vi.fn().mockResolvedValue(undefined),
 };
 
 beforeEach(() => {
@@ -196,6 +202,32 @@ const openContextMenuPipelineStage = async (
 
   await waitFor(() => screen.getByText(stageName), { timeout: 3000 });
   await user.click(screen.getByText(stageName));
+};
+
+const openContextMenuRemoveFromPipeline = async (
+  user: ReturnType<typeof userEvent.setup>,
+  pipelineName: string,
+) => {
+  const row = screen.getByText('Test Contact').closest('div[class*="p-4"]') as HTMLElement;
+  fireEvent.contextMenu(row);
+
+  const addToTrigger = await screen.findByText('pipeline.addTo', {}, { timeout: 2000 });
+  const addToSubTrigger = (
+    addToTrigger.closest('[data-slot="context-menu-sub-trigger"]') ?? addToTrigger
+  ) as HTMLElement;
+  addToSubTrigger.focus();
+  await user.keyboard('{ArrowRight}');
+
+  await waitFor(() => screen.getByText(pipelineName), { timeout: 2000 });
+  const pipelineEl = screen.getByText(pipelineName);
+  const pipelineSubTrigger = (
+    pipelineEl.closest('[data-slot="context-menu-sub-trigger"]') ?? pipelineEl
+  ) as HTMLElement;
+  pipelineSubTrigger.focus();
+  await user.keyboard('{ArrowRight}');
+
+  await waitFor(() => screen.getByText('pipeline.removeFrom'), { timeout: 3000 });
+  await user.click(screen.getByText('pipeline.removeFrom'));
 };
 
 describe('ChatSidebar pipeline', () => {
@@ -345,6 +377,114 @@ describe('ChatSidebar pipeline', () => {
       });
     });
   });
+
+  const makeNestedPipeline = () => {
+    const item = {
+      id: 'item-99',
+      item_id: '42',
+      stage_id: 'stage-1',
+      pipeline_id: 'p1',
+      type: 'conversation',
+      is_lead: false,
+      created_at: '',
+      updated_at: '',
+    };
+    return {
+      id: 'p1',
+      name: 'Pipeline p1',
+      pipeline_type: 'custom' as const,
+      visibility: 'public' as const,
+      is_active: true,
+      stages: [
+        { id: 'stage-1', name: 'Lead', color: '#000', position: 0, created_at: '', updated_at: '', items: [item] },
+        { id: 'stage-2', name: 'Qualified', color: '#000', position: 1, created_at: '', updated_at: '', items: [] },
+      ],
+      items: [],
+      created_at: '',
+      updated_at: '',
+    };
+  };
+
+  it('moves stage via right-click when items are nested under stage.items (real API shape, EVO-1618)', async () => {
+    const pipeline = makeNestedPipeline();
+    vi.mocked(pipelinesService.getPipelines).mockResolvedValue({ data: [pipeline] } as never);
+    vi.mocked(pipelinesService.getPipelinesByConversation).mockResolvedValue([pipeline] as never);
+    vi.mocked(pipelinesService.moveItem).mockResolvedValue({ success: true, message: '' });
+
+    render(<ChatSidebar {...defaultProps} />);
+    await waitFor(() => expect(pipelinesService.getPipelines).toHaveBeenCalled());
+
+    const user = userEvent.setup();
+    await openContextMenuPipelineStage(user, 'Pipeline p1', 'Qualified');
+
+    await waitFor(() => {
+      expect(pipelinesService.moveItem).toHaveBeenCalledWith({
+        pipeline_id: 'p1',
+        item_id: 'item-99',
+        from_stage_id: 'stage-1',
+        to_stage_id: 'stage-2',
+      });
+      expect(pipelinesService.addItemToPipeline).not.toHaveBeenCalled();
+    });
+  });
+
+  it('re-adds (ADD) when the pipeline is present but has no active item (completed journey), instead of dead-ending on moveError', async () => {
+    // by_conversation não filtra completed_at, então um pipeline cuja jornada foi
+    // concluída volta na lista MAS com stages sem itens ativos. O branch deve ser
+    // decidido por item ATIVO encontrável → cai no ADD (backend permite reentrada),
+    // não em moveError.
+    const pipeline = {
+      ...makeNestedPipeline(),
+      stages: [
+        { id: 'stage-1', name: 'Lead', color: '#000', position: 0, created_at: '', updated_at: '', items: [] },
+        { id: 'stage-2', name: 'Qualified', color: '#000', position: 1, created_at: '', updated_at: '', items: [] },
+      ],
+    };
+    vi.mocked(pipelinesService.getPipelines).mockResolvedValue({ data: [pipeline] } as never);
+    vi.mocked(pipelinesService.getPipelinesByConversation).mockResolvedValue([pipeline] as never);
+    vi.mocked(pipelinesService.addItemToPipeline).mockResolvedValue({} as never);
+    vi.mocked(chatService.getConversation).mockResolvedValue({ data: makeConversation('42') } as never);
+
+    render(<ChatSidebar {...defaultProps} />);
+    await waitFor(() => expect(pipelinesService.getPipelines).toHaveBeenCalled());
+
+    const user = userEvent.setup();
+    await openContextMenuPipelineStage(user, 'Pipeline p1', 'Qualified');
+
+    await waitFor(() => {
+      expect(pipelinesService.addItemToPipeline).toHaveBeenCalledWith('p1', {
+        item_id: '42',
+        type: 'conversation',
+        pipeline_stage_id: 'stage-2',
+      });
+    });
+    expect(pipelinesService.moveItem).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalledWith('pipeline.moveError');
+  });
+
+  it('removes via context menu using the per-conversation item id, even when allPipelines lacks the item', async () => {
+    // allPipelines (getPipelines) = estrutura global SEM o item da conversa; o
+    // item vive só na state por-conversa (getPipelinesByConversation). O handler
+    // de remover deve buscar o item na convPipelineStates, não no pipeline passado
+    // — senão findItemInPipeline volta undefined e dá removeError.
+    const globalPipeline = makePipeline('p1', [{ id: 'stage-1', name: 'Lead' }]);
+    const convPipeline = makePipeline('p1', [{ id: 'stage-1', name: 'Lead' }], [makeItem('item-77', 'p1')]);
+    vi.mocked(pipelinesService.getPipelines).mockResolvedValue({ data: [globalPipeline] } as never);
+    vi.mocked(pipelinesService.getPipelinesByConversation).mockResolvedValue([convPipeline] as never);
+    vi.mocked(pipelinesService.removeItemFromPipeline).mockResolvedValue({ success: true, message: '' });
+    vi.mocked(chatService.getConversation).mockResolvedValue({ data: makeConversation('42') } as never);
+
+    render(<ChatSidebar {...defaultProps} />);
+    await waitFor(() => expect(pipelinesService.getPipelines).toHaveBeenCalled());
+
+    const user = userEvent.setup();
+    await openContextMenuRemoveFromPipeline(user, 'Pipeline p1');
+
+    await waitFor(() => {
+      expect(pipelinesService.removeItemFromPipeline).toHaveBeenCalledWith('p1', 'item-77');
+    });
+    expect(toast.error).not.toHaveBeenCalledWith('pipeline.removeError');
+  });
 });
 
 const makePaginatedContext = (hasNextPage: boolean, loadMoreFn = vi.fn().mockResolvedValue(undefined)) => {
@@ -411,7 +551,24 @@ describe('ChatSidebar scroll pagination (EVO-1407)', () => {
     await screen.findByText('Test Contact');
 
     const scrollEl = document.querySelector('[data-tour="chat-conversations-list"]')!;
-    setScrollDimensions(scrollEl, 800, 600, 680);
+    setScrollDimensions(scrollEl, 5000, 600, 4700);
+
+    await act(async () => { fireEvent.scroll(scrollEl); });
+
+    await waitFor(() => expect(loadMore).toHaveBeenCalledTimes(1));
+  });
+
+  it('prefetches well before reaching the bottom (CA-1b anticipated threshold)', async () => {
+    const loadMore = vi.fn().mockResolvedValue(undefined);
+    overrideContext = makePaginatedContext(true, loadMore);
+    render(<ChatSidebar {...defaultProps} />);
+    await screen.findByText('Test Contact');
+
+    const scrollEl = document.querySelector('[data-tour="chat-conversations-list"]')!;
+    // EVO-1672: clientHeight 600 → threshold = max(1000, 1500) = 1500px.
+    // distanceToBottom = 1400px — beyond the previous 900px threshold, yet
+    // still triggers, pinning the widened lookahead.
+    setScrollDimensions(scrollEl, 5000, 600, 3000);
 
     await act(async () => { fireEvent.scroll(scrollEl); });
 
@@ -425,11 +582,39 @@ describe('ChatSidebar scroll pagination (EVO-1407)', () => {
     await screen.findByText('Test Contact');
 
     const scrollEl = document.querySelector('[data-tour="chat-conversations-list"]')!;
-    setScrollDimensions(scrollEl, 800, 600, 0);
+    // distanceToBottom = 5000 - 0 - 600 = 4400px, well past the 1500px threshold.
+    setScrollDimensions(scrollEl, 5000, 600, 0);
 
     await act(async () => { fireEvent.scroll(scrollEl); });
 
     expect(loadMore).not.toHaveBeenCalled();
+  });
+
+  it('keeps the loaded list visible when conversationsLoading flips with items on screen (EVO-1672)', async () => {
+    // loadMore flips the shared conversationsLoading flag; the full-list
+    // skeleton (count=8) must NOT replace an already-populated list — that
+    // loses the scroll position and reads as the whole list vanishing.
+    overrideContext = makePaginatedContext(true);
+    overrideContext.conversations.state.conversationsLoading = true as never;
+    render(<ChatSidebar {...defaultProps} />);
+
+    expect(await screen.findByText('Test Contact')).toBeInTheDocument();
+    expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
+  });
+
+  it('renders a multi-row loading cushion during load-more (EVO-1672)', async () => {
+    let resolveFn!: () => void;
+    const loadMore = vi.fn().mockReturnValue(new Promise<void>(res => { resolveFn = res; }));
+    overrideContext = makePaginatedContext(true, loadMore);
+    render(<ChatSidebar {...defaultProps} />);
+    const btn = await screen.findByText('Carregar mais');
+
+    act(() => { fireEvent.click(btn); });
+
+    await waitFor(() => expect(screen.getByTestId('skeleton')).toBeInTheDocument());
+    expect(screen.getByTestId('skeleton').dataset.count).toBe('5');
+
+    await act(async () => { resolveFn(); });
   });
 
   it('does not load more after last page (CA-3)', async () => {
@@ -444,5 +629,29 @@ describe('ChatSidebar scroll pagination (EVO-1407)', () => {
     await act(async () => { fireEvent.scroll(scrollEl); });
 
     expect(loadMore).not.toHaveBeenCalled();
+  });
+});
+
+// jsdom does not evaluate media queries, so this locks the mechanism instead:
+// the resize width must never reach the element as a raw inline width, which is
+// what overrode w-full and left the list desktop-sized on mobile (EVO-2234).
+describe('ChatSidebar responsive width (EVO-2234)', () => {
+  it('keeps the resize width desktop-only, as a CSS var instead of an inline width', () => {
+    render(<ChatSidebar {...defaultProps} width={420} />);
+
+    const root = document.querySelector<HTMLElement>('[data-tour="chat-sidebar"]')!;
+    expect(root.style.width).toBe('');
+    expect(root.style.getPropertyValue('--chat-sidebar-width')).toBe('420px');
+    expect(root.className).toContain('w-full');
+    expect(root.className).toContain('md:w-[var(--chat-sidebar-width)]');
+  });
+
+  it('falls back to the fixed desktop width when no resize width is set', () => {
+    render(<ChatSidebar {...defaultProps} />);
+
+    const root = document.querySelector<HTMLElement>('[data-tour="chat-sidebar"]')!;
+    expect(root.style.width).toBe('');
+    expect(root.className).toContain('w-full');
+    expect(root.className).toContain('md:w-96');
   });
 });

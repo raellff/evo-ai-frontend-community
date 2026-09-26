@@ -28,6 +28,7 @@
   "permissions": {
     "viewDenied": "Non hai il permesso di visualizzare i canali",
     "createDenied": "Non hai il permesso di creare canali",
+    "updateDenied": "Non hai il permesso di aggiornare i canali",
     "deleteDenied": "Non hai il permesso di eliminare canali"
   },
   "errors": {
@@ -130,27 +131,27 @@
       },
       "whatsapp": {
         "name": "WhatsApp",
-        "description": "Canale WhatsApp per il servizio clienti"
+        "description": "WhatsApp Business"
       },
       "telegram": {
         "name": "Telegram",
-        "description": "Agente IA Telegram per supporto automatizzato"
+        "description": "Bot di assistenza"
       },
       "instagram": {
         "name": "Instagram",
-        "description": "Messaggi diretti di Instagram"
+        "description": "Profilo professionale"
       },
       "facebook": {
-        "name": "Facebook Messenger",
-        "description": "Chat di Facebook Messenger"
+        "name": "Facebook",
+        "description": "Pagina"
       },
       "sms": {
         "name": "SMS",
-        "description": "Messaggi di testo SMS"
+        "description": "Messaggi di testo"
       },
       "email": {
         "name": "Email",
-        "description": "Supporto via email"
+        "description": "Marketing e assistenza"
       },
       "api": {
         "name": "API",
@@ -184,7 +185,8 @@
       },
       "twilio": {
         "name": "Twilio",
-        "description": "Twilio WhatsApp Business API"
+        "description": "Twilio WhatsApp Business API",
+        "comingSoon": "Prossimamente"
       },
       "twilioSms": {
         "name": "Twilio SMS",
@@ -237,9 +239,22 @@
       "connectDescription": "Connettiti per offrire supporto ai tuoi clienti tramite {{channelName}}",
       "apiProvider": "Provider API",
       "facebookIntegrationDescription": "Collega il tuo account Facebook per compilare automaticamente le informazioni di WhatsApp Business"
+    },
+    "fields": {
+      "displayName": {
+        "label": "Nome visualizzato",
+        "placeholder": "es. Team di Supporto",
+        "helpText": "Nome descrittivo mostrato al tuo team."
+      },
+      "channelName": {
+        "label": "Nome del canale",
+        "placeholder": "generato automaticamente",
+        "helpText": "Generato automaticamente dal nome visualizzato."
+      }
     }
   },
   "settings": {
+    "updateConfig": "Aggiorna Impostazioni",
     "loading": "Caricamento impostazioni...",
     "saving": "Salvataggio...",
     "save": "Salva",
@@ -416,6 +431,16 @@
         "label": "Messaggio di Non Disponibilità",
         "placeholder": "Siamo spiacenti, siamo al di fuori degli orari di lavoro...",
         "help": "Questo messaggio verrà inviato al di fuori degli orari di lavoro"
+      },
+      "useTemplate": {
+        "label": "Usa modello globale",
+        "description": "Invia un modello di messaggio globale invece del testo libero"
+      },
+      "template": {
+        "label": "Modello",
+        "placeholder": "Seleziona un modello globale",
+        "empty": "Nessun modello globale disponibile",
+        "help": "Gestisci i modelli globali in Impostazioni → Modelli di messaggio"
       },
       "timezone": {
         "label": "Fuso Orario",
@@ -615,6 +640,8 @@
         "templateType": "Tipo di Modello",
         "templateTypes": {
           "text": "Testo",
+          "interactive": "Interattivo",
+          "media": "Multimediale",
           "image": "Immagine",
           "video": "Video",
           "document": "Documento",
@@ -642,6 +669,10 @@
         "footerText": "Testo del Piè di Pagina",
         "footerTextPlaceholder": "Inserisci il testo del piè di pagina (facoltativo)",
         "variablesHelp": "Usa la sintassi {{variabile}} per valori dinamici",
+        "variables": "Variabili",
+        "variableLabel": "Etichetta",
+        "variableExample": "Esempio",
+        "variableSource": "Origine, es. contact.name",
         "buttons": "Pulsanti",
         "addButton": "Aggiungi Pulsante",
         "buttonTypes": {
@@ -1047,12 +1078,32 @@
       }
     },
     "preChatForm": {
-      "success": {
-        "updated": "Impostazioni del modulo pre-chat aggiornate con successo!"
+      "title": "Modulo Pre-Chat",
+      "description": "Raccogli informazioni dei visitatori prima di iniziare la conversazione",
+      "totalFields": "Totale Campi",
+      "activeFields": "Campi Attivi",
+      "requiredFields": "Campi Obbligatori",
+      "welcomeMessage": "Messaggio di Benvenuto",
+      "welcomeMessagePlaceholder": "Ciao! Per servirti meglio, completa le informazioni qui sotto:",
+      "welcomeMessageHelp": "Questo messaggio verrà visualizzato in alto nel modulo pre-chat.",
+      "fieldConfiguration": "Configurazione Campi",
+      "hidePreview": "Nascondi Anteprima",
+      "showPreview": "Mostra Anteprima",
+      "formPreview": "Anteprima Modulo",
+      "noActiveFields": "Nessun campo attivo da visualizzare",
+      "howItWorksTitle": "Come funziona il modulo pre-chat",
+      "howItWorks": {
+        "point1": "Il modulo viene visualizzato prima che il cliente inizi la conversazione",
+        "point2": "Le informazioni raccolte vengono allegate al profilo del contatto",
+        "point3": "I campi obbligatori devono essere compilati per continuare",
+        "point4": "Usa la funzione trascina per riordinare i campi"
       },
-      "errors": {
-        "updateError": "Errore durante l'aggiornamento delle impostazioni del modulo pre-chat"
-      }
+      "disabledTitle": "Modulo pre-chat disabilitato",
+      "disabledDescription": "Attiva per raccogliere informazioni dei visitatori prima di iniziare la conversazione.",
+      "saving": "Salvataggio...",
+      "save": "Salva Impostazioni",
+      "success": "Impostazioni modulo pre-chat aggiornate con successo",
+      "error": "Errore nell'aggiornamento delle impostazioni del modulo pre-chat"
     },
     "greeting": {
       "title": "Messaggio di Saluto",
@@ -1064,6 +1115,16 @@
       "message": {
         "label": "Messaggio di Saluto",
         "placeholder": "Inserisci qui il messaggio di benvenuto..."
+      },
+      "useTemplate": {
+        "label": "Usa modello globale",
+        "description": "Invia un modello di messaggio globale invece del testo libero"
+      },
+      "template": {
+        "label": "Modello",
+        "placeholder": "Seleziona un modello globale",
+        "empty": "Nessun modello globale disponibile",
+        "help": "Gestisci i modelli globali in Impostazioni → Modelli di messaggio"
       }
     },
     "webWidgetAdvanced": {
@@ -1539,34 +1600,6 @@
       "success": {
         "channelCreated": "Canale creato con successo"
       }
-    },
-    "preChatForm": {
-      "title": "Modulo Pre-Chat",
-      "description": "Raccogli informazioni dei visitatori prima di iniziare la conversazione",
-      "totalFields": "Totale Campi",
-      "activeFields": "Campi Attivi",
-      "requiredFields": "Campi Obbligatori",
-      "welcomeMessage": "Messaggio di Benvenuto",
-      "welcomeMessagePlaceholder": "Ciao! Per servirti meglio, completa le informazioni qui sotto:",
-      "welcomeMessageHelp": "Questo messaggio verrà visualizzato in alto nel modulo pre-chat.",
-      "fieldConfiguration": "Configurazione Campi",
-      "hidePreview": "Nascondi Anteprima",
-      "showPreview": "Mostra Anteprima",
-      "formPreview": "Anteprima Modulo",
-      "noActiveFields": "Nessun campo attivo da visualizzare",
-      "howItWorksTitle": "Come funziona il modulo pre-chat",
-      "howItWorks": {
-        "point1": "Il modulo viene visualizzato prima che il cliente inizi la conversazione",
-        "point2": "Le informazioni raccolte vengono allegate al profilo del contatto",
-        "point3": "I campi obbligatori devono essere compilati per continuare",
-        "point4": "Usa la funzione trascina per riordinare i campi"
-      },
-      "disabledTitle": "Modulo pre-chat disabilitato",
-      "disabledDescription": "Attiva per raccogliere informazioni dei visitatori prima di iniziare la conversazione.",
-      "saving": "Salvataggio...",
-      "save": "Salva Impostazioni",
-      "success": "Impostazioni modulo pre-chat aggiornate con successo",
-      "error": "Errore nell'aggiornamento delle impostazioni del modulo pre-chat"
     }
   },
   "deleteDialog": {
@@ -1577,5 +1610,51 @@
     "cancel": "Annulla",
     "confirm": "Elimina Canale",
     "deleting": "Eliminazione..."
+  },
+  "overview": {
+    "noIntegrationConfigured": "Nessuna integrazione configurata",
+    "title": "Panoramica dei canali",
+    "subtitle": "Vedi tutti i tipi di canale, il loro stato e come configurarli.",
+    "statusLabel": {
+      "active": "Attivo",
+      "attention": "Richiede attenzione",
+      "error": "Con errore",
+      "unmonitored": "Non monitorato",
+      "available": "Disponibile"
+    },
+    "drawer": {
+      "title": "Connessioni"
+    },
+    "inboxState": {
+      "connected": "Connesso",
+      "disconnected": "Disconnesso",
+      "pending": "In attesa di conferma",
+      "error": "Errore",
+      "unknown": "Sconosciuto",
+      "unmonitored": "Non monitorato",
+      "checking": "Verifica in corso..."
+    },
+    "needsAttention_one": "{{count}} connessione che richiede attenzione",
+    "needsAttention_other": "{{count}} connessioni che richiedono attenzione",
+    "liveCheckFailed": "La verifica in tempo reale non è riuscita — viene mostrato l'ultimo stato noto",
+    "providersCount": "{{count}} provider",
+    "actions": {
+      "manage": "Gestisci",
+      "manageAria": "Gestisci connessioni: {{count}} · {{status}}",
+      "connect": "Connetti",
+      "addConnection": "Aggiungi connessione",
+      "deleteConnection": "Elimina connessione"
+    },
+    "capabilities": {
+      "publishing": "Pubblicazione",
+      "conversations": "Conversazioni",
+      "campaigns": "Campagne"
+    },
+    "statusMeta": {
+      "live": "In diretta",
+      "stored": "Dichiarato",
+      "storedTooltip": "Stato dichiarato dalla configurazione, non verificato in diretta",
+      "lastSync": "Sincronizzato {{time}}"
+    }
   }
 }

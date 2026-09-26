@@ -5,21 +5,16 @@ import {
   CustomMcpServerCreate,
   CustomMcpServerUpdate,
   CustomMcpServerTestResponse,
+  CustomMcpServerTestConnectionResponse,
   ListCustomMcpServersParams,
 } from '@/types/ai';
 
 // List custom MCP servers
 export const listCustomMcpServers = async (
   params?: ListCustomMcpServersParams,
+  filterParams?: Record<string, string>,
 ): Promise<CustomMcpServer[]> => {
-  const queryParams: {
-    skip: number;
-    limit: number;
-    page?: number;
-    pageSize?: number;
-    search?: string;
-    tags?: string;
-  } = {
+  const queryParams: Record<string, unknown> = {
     skip: params?.skip || 0,
     limit: params?.limit || 100,
   };
@@ -35,6 +30,10 @@ export const listCustomMcpServers = async (
   }
   if (params?.tags) {
     queryParams.tags = params.tags;
+  }
+
+  if (filterParams) {
+    Object.assign(queryParams, filterParams);
   }
 
   const response = await evoaiApi.get('/custom-mcp-servers', {
@@ -77,4 +76,13 @@ export const testCustomMcpServer = async (
 ): Promise<CustomMcpServerTestResponse> => {
   const response = await evoaiApi.get(`/custom-mcp-servers/${serverId}/test`);
   return extractData<any>(response);
+};
+
+// EVO-1739: test an UNSAVED server's url/headers (test-before-save in the wizard).
+export const testCustomMcpServerConnection = async (
+  url: string,
+  headers: Record<string, unknown>,
+): Promise<CustomMcpServerTestConnectionResponse> => {
+  const response = await evoaiApi.post('/custom-mcp-servers/test-connection', { url, headers });
+  return extractData<CustomMcpServerTestConnectionResponse>(response);
 };

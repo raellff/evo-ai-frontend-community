@@ -3,12 +3,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@evoapi/design-system';
 import { Copy, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Agent } from '@/types/agents';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface AgentActionsDropdownProps {
   agent: Agent;
@@ -21,6 +21,15 @@ interface AgentActionsDropdownProps {
   align?: 'start' | 'center' | 'end';
 }
 
+/** `h-auto` cancels the design-system item height, which `cn()` would otherwise keep. */
+const MENU_ITEM_CLASS =
+  'h-auto cursor-pointer gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-foreground focus:bg-primary/10 focus:text-primary';
+
+const MENU_ITEM_DANGER_CLASS =
+  'h-auto cursor-pointer gap-2.5 rounded-lg px-3 py-[9px] text-[13.5px] font-medium text-destructive focus:bg-destructive/10 focus:text-destructive';
+
+const MENU_ICON_CLASS = 'size-[15px]';
+
 export default function AgentActionsDropdown({
   agent,
   trigger,
@@ -29,43 +38,36 @@ export default function AgentActionsDropdown({
   align = 'end',
 }: AgentActionsDropdownProps) {
   const { t } = useLanguage('agents');
+  const { can, isReady } = usePermissions();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-48">
-        <DropdownMenuItem onClick={() => onEdit(agent)}>
-          <Edit className="h-4 w-4 mr-2" />
-          {t('dropdown.edit')}
-        </DropdownMenuItem>
+      <DropdownMenuContent
+        align={align}
+        className="min-w-[168px] rounded-xl border-border p-1.5 shadow-[0_8px_28px_rgba(16,24,40,.14)]"
+      >
+        {isReady && can('ai_agents', 'update') && (
+          <DropdownMenuItem onClick={() => onEdit(agent)} className={MENU_ITEM_CLASS}>
+            <Edit className={MENU_ICON_CLASS} />
+            {t('dropdown.edit')}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
+          className={MENU_ITEM_CLASS}
           onClick={async () => {
             await navigator.clipboard.writeText(agent.id);
             toast.success(t('dropdown.idCopied'));
           }}
         >
-          <Copy className="h-4 w-4 mr-2" />
+          <Copy className={MENU_ICON_CLASS} />
           {t('dropdown.copyId')}
         </DropdownMenuItem>
-        {/* {onExportAsJSON && (
-          <DropdownMenuItem onClick={() => onExportAsJSON(agent)}>
-            <Download className="h-4 w-4 mr-2 text-purple-500" />
-            {t('dropdown.exportJSON')}
+        {isReady && can('ai_agents', 'delete') && (
+          <DropdownMenuItem onClick={() => onDelete(agent)} className={MENU_ITEM_DANGER_CLASS}>
+            <Trash2 className={MENU_ICON_CLASS} />
+            {t('dropdown.delete')}
           </DropdownMenuItem>
-        )} */}
-        {/* {onShare && (
-          <DropdownMenuItem onClick={() => onShare(agent)}>
-            <Share2 className="h-4 w-4 mr-2 text-blue-500" />
-            {t('dropdown.share')}
-          </DropdownMenuItem>
-        )} */}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => onDelete(agent)}
-          className="text-red-500 focus:text-red-500"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          {t('dropdown.delete')}
-        </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

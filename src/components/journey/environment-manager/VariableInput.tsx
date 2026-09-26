@@ -15,7 +15,9 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { PhoneInput } from '@/components/shared/PhoneInput';
 
 export interface VariableInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  journeyId: string;
+  // Optional: contexts without a journey (campaigns, automations) omit it, so the
+  // variable autocomplete falls back to system variables only — no journey fetch.
+  journeyId?: string;
   onVariableInsert?: (variable: string) => void;
   showVariableButton?: boolean;
   variableButtonTooltip?: string;
@@ -209,8 +211,13 @@ const VariableInput = forwardRef<HTMLInputElement, VariableInputProps>(
                   variant="ghost"
                   size="sm"
                   className="h-7 w-7 p-0 hover:bg-muted"
+                  aria-label={
+                    variableButtonTooltip ||
+                    t('environmentManager.customVariables.actions.insertVariable')
+                  }
                   title={
-                    variableButtonTooltip || t('environmentManager.customVariables.actions.copy')
+                    variableButtonTooltip ||
+                    t('environmentManager.customVariables.actions.insertVariable')
                   }
                 >
                   <Variable className="h-3 w-3" />

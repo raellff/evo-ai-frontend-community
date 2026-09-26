@@ -2,7 +2,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Edit, Trash2 } from 'lucide-react';
 import BaseTable from '@/components/base/BaseTable';
 import { Label } from '@/types/settings';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 
 interface LabelsTableProps {
   labels: Label[];
@@ -29,7 +29,7 @@ export default function LabelsTable({
   sortOrder,
 }: LabelsTableProps) {
   const { t } = useLanguage('labels');
-  const { can } = useUserPermissions();
+  const { can } = usePermissions();
 
   const columns = [
     {
@@ -75,6 +75,13 @@ export default function LabelsTable({
             {label.show_on_sidebar ? t('table.sidebar.yes') : t('table.sidebar.no')}
           </span>
         </div>
+      ),
+    },
+    {
+      key: 'usage_count',
+      label: t('table.columns.usage'),
+      render: (label: Label) => (
+        <span className="text-sm text-muted-foreground">{label.usage_count ?? 0}</span>
       ),
     },
     {

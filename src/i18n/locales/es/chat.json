@@ -40,7 +40,9 @@
         "cancel": "Cancelar",
         "confirm": "Eliminar mensaje"
       },
-      "deletedPlaceholder": "Este mensaje fue eliminado"
+      "deletedPlaceholder": "Este mensaje fue eliminado",
+      "revokedByContact": "Eliminado por el contacto",
+      "revokeCrmOnly": "eliminada solo en el CRM"
     },
     "moderation": {
       "banner": {
@@ -77,7 +79,8 @@
     "messageList": {
       "loadingConversation": "Cargando conversación...",
       "loadingPrevious": "Cargando mensajes anteriores...",
-      "conversationStart": "Inicio de la conversación"
+      "conversationStart": "Inicio de la conversación",
+      "newMessage": "Mensaje nuevo"
     },
     "messageLocation": {
       "sharedLocation": "Ubicación compartida",
@@ -88,10 +91,11 @@
       "statusUnavailableDescription": "El mensaje fue enviado, pero no pudimos confirmar el estado de entrega.",
       "checkChannelConfig": "Verifique la configuración del canal",
       "webhookIssue": "El webhook puede estar desactualizado o inactivo.",
+      "messageNotSent": "El mensaje no fue enviado",
       "deliveryStatusUnavailable": "Estado de entrega no disponible - Haga clic para más detalles",
       "statusUnavailableText": "Estado no disponible",
-      "retryInDevelopment": "Funcionalidad de reintento en desarrollo",
-      "sendFailed": "Envío fallido - Haga clic para intentar de nuevo",
+      "sendFailedText": "Envío fallido",
+      "sendFailed": "Envío fallido - Haga clic para ver el motivo",
       "tryAgain": "Intentar de nuevo"
     },
     "replyPreview": {
@@ -265,6 +269,10 @@
       "linkText": "Restricciones de ventana de mensajería de 24 horas",
       "zapiDisconnected": "WhatsApp desconectado. Conecta el número para enviar mensajes."
     },
+    "noteBanner": {
+      "title": "Nota de la atención",
+      "hide": "Ocultar"
+    },
     "errors": {
       "loadMessages": "Error al cargar mensajes",
       "tryAgain": "Intentar de nuevo"
@@ -275,7 +283,7 @@
       "markAsRead": "Marcar como leída",
       "markAsUnread": "Marcar como no leída",
       "markAsOpen": "Marcar como abierta",
-      "markAsResolved": "Marcar como resuelta",
+      "markAsResolved": "Marcar como completada",
       "markAsPending": "Marcar como pendiente",
       "pauseConversation": "Pausar conversación",
       "priorityUrgent": "Prioridad Urgente",
@@ -287,19 +295,43 @@
       "assignTeam": "Asignar Equipo",
       "assignTag": "Asignar Etiqueta",
       "deleteConversation": "Eliminar conversación",
-      "bulkResolveSuccess": "{{count}} conversación(es) resuelta(s)",
-      "bulkResolvePartialSuccess": "{{success}} resuelta(s), {{failed}} fallida(s)",
-      "bulkResolveError": "Error al resolver conversaciones",
-      "bulkResolveNoPermission": "No tienes permiso para resolver conversaciones"
+      "bulkStatusSuccess": "{{count}} conversación(es) actualizada(s)",
+      "bulkStatusPartialSuccess": "{{success}} actualizada(s), {{failed}} fallida(s)",
+      "bulkStatusError": "Error al actualizar conversaciones",
+      "bulkStatusNoPermission": "No tienes permiso para actualizar conversaciones"
     },
     "contactNoName": "Contacto sin nombre",
     "status": "Estado:",
+    "statusButton": {
+      "open": "Abrir",
+      "complete": "Completar",
+      "reopen": "Reabrir"
+    },
+    "statusPill": {
+      "open": "Atención en Curso",
+      "resolved": "Atención Completada",
+      "pending": "Pendiente",
+      "snoozed": "Conversación en Pausa"
+    },
     "openConversation": "Abrir Conversación",
     "closeConversation": "Cerrar conversación",
-    "phoneNumber": "Número de teléfono"
+    "backToConversations": "Volver a las conversaciones",
+    "phoneNumber": "Número de teléfono",
+    "openContactPanel": "Abrir detalles del contacto",
+    "closeContactPanel": "Cerrar detalles del contacto"
   },
   "chatSidebar": {
+    "segments": {
+      "ariaLabel": "Vistas de conversaciones",
+      "open": "Abiertas",
+      "pending": "Pendientes",
+      "resolved": "Completadas",
+      "unread": "No leídas",
+      "unanswered": "Sin responder",
+      "groups": "Grupos"
+    },
     "searchPlaceholder": "Buscar conversaciones...",
+    "resizeHandle": "Redimensionar lista de conversaciones",
     "conversation": "conversación",
     "conversations": "conversaciones",
     "selectedCount_one": "{{count}} conversación seleccionada",
@@ -308,6 +340,15 @@
     "filter": "filtro",
     "filters": "filtros",
     "filtersButton": "Filtros",
+    "select": "Seleccionar",
+    "doneSelection": "Listo",
+    "bulkActions": "Acciones en lote",
+    "bulkDeleteDescription": "¿Seguro que deseas eliminar {{count}} conversación(es)? Esta acción no se puede deshacer.",
+    "undo": "Deshacer",
+    "bulkApplied": "Aplicado a {{count}} conversación(es)",
+    "bulkDeleted": "{{count}} conversación(es) eliminada(s)",
+    "bulkFailed": "{{count}} conversación(es) fallaron",
+    "advancedFiltersCleared": "Filtros avanzados eliminados — No leídas/Grupos no se combinan con ellos",
     "view": {
       "active": "Activas",
       "archived": "Archivadas"
@@ -376,6 +417,7 @@
       "offline": "Desconectado"
     },
     "contactDetails": {
+      "noContact": "Ningún contacto cargado.",
       "actions": {
         "edit": "Editar",
         "updateSuccess": "Contacto actualizado con éxito",
@@ -397,13 +439,22 @@
         "lastActivity": "Última actividad"
       },
       "notInformed": "No informado",
-      "copiedToClipboard": "Copiado al portapapeles"
+      "copiedToClipboard": "Copiado al portapapeles",
+      "maskedValueCopied": "Valor enmascarado copiado — pide acceso al admin si necesitas el dato completo",
+      "dataProtectedTooltip": "Datos protegidos por la política de la cuenta"
     },
     "customAttributes": {
-      "noAttributes": "No hay atributos personalizados configurados",
+      "noAttributes": "Ningún atributo registrado.",
       "updateSuccess": "Atributos actualizados correctamente",
       "updateError": "Error al actualizar atributos",
       "refreshError": "Atributos guardados, pero falló la recarga de datos del contacto",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "conversationAttributes": {
+      "noAttributes": "Ningún atributo registrado.",
+      "updateSuccess": "Atributos de la conversación actualizados",
+      "updateError": "Error al actualizar atributos de la conversación",
       "yes": "Sí",
       "no": "No"
     },
@@ -411,7 +462,7 @@
       "status": {
         "title": "Estado de la Conversación",
         "open": "Abierta",
-        "resolved": "Resuelta",
+        "resolved": "Completada",
         "pending": "Pendiente",
         "snoozed": "Pausada",
         "changed": "Estado cambiado a: {{status}}",
@@ -491,7 +542,7 @@
           "all": "Todas",
           "open": "Abiertas",
           "pending": "Pendientes",
-          "resolved": "Resueltas",
+          "resolved": "Completadas",
           "snoozed": "Pausadas"
         },
         "clearFilters": "Limpiar filtros"
@@ -544,11 +595,12 @@
         "loadConversation": "Error al cargar conversación",
         "conversationNotFound": "Conversación no encontrada",
         "updateStatus": "Error al actualizar estado de la conversación",
+        "returnToBot": "Error al devolver la conversación al bot",
         "updatePriority": "Error al actualizar prioridad de la conversación",
         "deleteConversation": "Error al eliminar conversación",
         "markAsRead": "Error al marcar como leída",
         "markAsUnread": "Error al marcar como no leída",
-        "markAsResolved": "Error al marcar como resuelta",
+        "markAsResolved": "Error al marcar como completada",
         "markAsPending": "Error al marcar como pendiente",
         "assignAgent": "Error al asignar Agente",
         "assignTeam": "Error al asignar equipo",
@@ -556,11 +608,12 @@
       },
       "success": {
         "statusChanged": "Estado cambiado a: {{status}}",
+        "returnedToBot": "Conversación devuelta al bot",
         "priorityChanged": "Prioridad cambiada a: {{priority}}",
         "deleted": "Conversación eliminada con éxito",
         "markedAsRead": "Conversación marcada como leída",
         "markedAsUnread": "Conversación marcada como no leída",
-        "markedAsResolved": "Conversación marcada como resuelta",
+        "markedAsResolved": "Conversación marcada como completada",
         "markedAsPending": "Conversación marcada como pendiente",
         "agentAssigned": "Agente asignado con éxito",
         "agentRemoved": "Agente removido con éxito",
@@ -570,7 +623,7 @@
       },
       "statusNames": {
         "open": "Abierta",
-        "resolved": "Resuelta",
+        "resolved": "Completada",
         "pending": "Pendiente",
         "snoozed": "Pausada"
       },
@@ -615,9 +668,21 @@
     }
   },
   "messageInput": {
-    "pendingPlaceholder": "Esta conversación está pendiente. Solo se pueden enviar notas privadas.",
+    "cannedResponse": {
+      "manualAttachmentsRemoved": "Los adjuntos manuales se eliminaron: la respuesta rápida ya incluye contenido multimedia.",
+      "mediaBanner": "Esta respuesta rápida incluye {{count}} archivo(s) multimedia. Se enviarán junto con el mensaje.",
+      "mediaBlocksManualUpload": "Esta respuesta rápida ya incluye contenido multimedia; elimínalo para adjuntar otro archivo.",
+      "removeMediaAriaLabel": "Eliminar el contenido multimedia de la respuesta rápida"
+    },
+    "pendingPlaceholder": "Haz clic en Abrir para responder",
     "restrictedPlaceholder": "No se pueden enviar mensajes debido a la ventana de mensajería de 24 horas",
     "defaultPlaceholder": "Escribe tu mensaje...",
+    "noteComposer": {
+      "helper": "Guarda notas importantes en la conversación para que otros usuarios puedan verlas después.",
+      "placeholder": "Agregar una nota a la conversación...",
+      "save": "Guardar",
+      "saving": "Guardando..."
+    },
     "emojiPicker": {
       "searchPlaceholder": "Buscar emojis..."
     },
@@ -655,7 +720,8 @@
       "sendError": "Error al enviar audio",
       "converting": "Convirtiendo audio...",
       "conversionWarning": "Advertencia de conversión",
-      "conversionWarningDescription": "No se pudo convertir el audio a OGG/Opus. Enviando en formato original."
+      "conversionWarningDescription": "No se pudo convertir el audio a OGG/Opus. Enviando en formato original.",
+      "recordTooltip": "Grabar audio"
     },
     "templates": {
       "inDevelopment": "Plantillas de mensaje en desarrollo 📝"
@@ -678,8 +744,38 @@
     },
     "placeholders": {
       "default": "Escribe tu mensaje... (escribe / para respuestas rápidas)",
-      "pendingNote": "Escribe tu nota privada (conversación pendiente)...",
+      "pendingNote": "Haz clic en Abrir para responder",
       "privateNote": "Escribe tu nota privada... (escribe / para respuestas rápidas)"
+    },
+    "composerMenu": {
+      "tooltip": "Más opciones",
+      "quickReplies": "Respuestas Rápidas",
+      "documents": "Documentos",
+      "media": "Fotos y Vídeos",
+      "conversationNote": "Notas de la Conversación",
+      "schedule": "Programar Mensaje",
+      "scheduleDisabledHint": "Escribe un mensaje para poder programarlo"
+    },
+    "macros": {
+      "tooltip": "Macros",
+      "subtitle": "Ejecutar automatizaciones"
+    },
+    "schedule": {
+      "title": "Programar mensaje",
+      "messagePreview": "Mensaje",
+      "emptyMessage": "Ningún mensaje escrito para programar.",
+      "dateTime": "Fecha y hora",
+      "note": "Observación",
+      "notePlaceholder": "Observación interna (opcional)",
+      "cancel": "Cancelar",
+      "save": "Programar",
+      "success": "Mensaje programado con éxito",
+      "error": "Error al programar el mensaje",
+      "errors": {
+        "dateTimeRequired": "La fecha y la hora son obligatorias",
+        "dateTimeFuture": "La fecha y la hora deben ser en el futuro",
+        "messageRequired": "Escribe un mensaje antes de programar"
+      }
     }
   },
   "conversationsFilter": {
@@ -708,13 +804,18 @@
       "created_at": "Fecha de Creación",
       "last_activity_at": "Última Actividad",
       "priority": "Prioridad",
-      "pipeline_id": "Pipeline"
+      "pipeline_id": "Pipeline",
+      "assignee_id": "Usuarios"
+    },
+    "popover": {
+      "clearAll": "Limpiar todo",
+      "noOptions": "No hay opciones disponibles"
     },
     "options": {
       "status": {
         "all": "Todos",
         "open": "Abierto",
-        "resolved": "Resuelto",
+        "resolved": "Completado",
         "pending": "Pendiente",
         "snoozed": "Pausado"
       },
@@ -755,7 +856,7 @@
       "description": "Esperando respuesta del cliente"
     },
     "resolved": {
-      "label": "Resuelta",
+      "label": "Completada",
       "description": "Conversación completada con éxito"
     },
     "snoozed": {
@@ -779,8 +880,9 @@
     "markAsUnread": "Marcar como no leída",
     "status": "Estado",
     "markAsOpen": "Marcar como abierta",
-    "markAsResolved": "Marcar como resuelta",
+    "markAsResolved": "Marcar como completada",
     "markAsPending": "Marcar como pendiente",
+    "returnToBot": "Devolver al bot",
     "pauseConversation": "Pausar conversación",
     "priority": "Prioridad",
     "priorityLabels": {
@@ -903,5 +1005,13 @@
     "addError": "Error al agregar al pipeline",
     "moveError": "Error al mover a la etapa",
     "removeError": "Error al quitar del pipeline"
+  },
+  "unansweredBadge": {
+    "menuAriaLabel_one": "{{count}} conversación esperando tu respuesta",
+    "menuAriaLabel_other": "{{count}} conversaciones esperando tu respuesta"
+  },
+  "unreadBadge": {
+    "ariaLabel_one": "{{count}} mensaje no leído",
+    "ariaLabel_other": "{{count}} mensajes no leídos"
   }
 }

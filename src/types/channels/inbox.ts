@@ -6,6 +6,15 @@ import type { PaginatedResponse, PaginationMeta, StandardResponse } from '@/type
 // Inbox Types
 // ============================================
 
+/** Live connection state exposed by /inboxes (EVO-1674). */
+export type InboxConnectionState = 'connected' | 'disconnected' | 'pending' | 'error' | 'unknown';
+
+/**
+ * How trustworthy the connection state is: event-fed by the provider,
+ * assumed from stored configuration, or unsupported by the channel type.
+ */
+export type InboxHealthSource = 'provider_event' | 'stored_flag' | 'none';
+
 export interface Channel {
   id: string;
   phone_number: string;
@@ -40,12 +49,21 @@ export interface Inbox {
   // Communication settings
   greeting_enabled?: boolean;
   greeting_message?: string;
+  greeting_message_template_id?: string | null;
   enable_email_collect?: boolean;
   allow_messages_after_resolved?: boolean;
   continuity_via_email?: boolean;
   lock_to_single_conversation?: boolean;
   // Auth/status
   reauthorization_required?: boolean;
+  // EVO-1680 — true when an AgentBot is connected and its AgentBotInbox.status
+  // is :active. Gates the "Devolver ao bot" UI control in ConversationActionsDropdown.
+  agent_bot_active?: boolean;
+  // Live channel health (EVO-1674)
+  connection_state?: InboxConnectionState;
+  health_source?: InboxHealthSource;
+  /** Epoch seconds of the last known connectivity change. */
+  last_sync?: number | null;
   // Sender settings
   sender_name_type?: string;
   business_name?: string;
@@ -65,6 +83,7 @@ export interface Inbox {
   // Business hours
   working_hours_enabled?: boolean;
   out_of_office_message?: string;
+  out_of_office_message_template_id?: string | null;
   working_hours?: unknown[];
   timezone?: string;
   // CSAT
@@ -176,6 +195,7 @@ export interface WhatsappCloudPayload {
     provider_config: {
       api_key: string;
       phone_number_id: string;
+      business_account_id: string;
       waba_id: string;
     };
   };
@@ -737,7 +757,7 @@ export interface TemplateFormData {
   language: string;
   category?: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION' | 'TRANSACTIONAL';
   template_type?: 'text' | 'interactive' | 'media' | 'location';
-  headerFormat?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT';
+  headerFormat?: 'NONE' | 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT';
   headerText?: string;
   bodyText?: string;
   footerText?: string;

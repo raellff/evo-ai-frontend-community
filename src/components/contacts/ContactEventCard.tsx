@@ -15,6 +15,7 @@ import { useRelativeTime } from '@/lib/useRelativeTime';
 import { formatRelativeTime } from '@/lib/relativeTime';
 import { redactReplacer } from '@/lib/redactKeys';
 import { slugifyEventName } from '@/lib/slugifyEventName';
+import { getEvent, getEventLabel } from '@/lib/events-manifest';
 import type { ContactEvent, ContactEventType } from '@/types/contacts';
 
 interface ContactEventCardProps {
@@ -48,12 +49,25 @@ function ContactEventCardImpl({ event }: ContactEventCardProps) {
     : event.occurredAt;
 
   const Icon = ICON_BY_TYPE[event.eventType] ?? Activity;
-  const title = t(`events.names.${slugifyEventName(event.eventName)}`, {
-    defaultValue: event.eventName,
-  });
+  // Single source of truth for event labels (EVO-1263 AC2): for a canonical
+  // event use the manifest label so the timeline card matches the filter
+  // dropdown exactly. Non-canonical events (custom / behavioral) keep the
+  // existing i18n slug lookup, then fall back to the raw name.
+  const canonicalEntry = event.eventName !== 'custom' ? getEvent(event.eventName) : undefined;
+  const title = canonicalEntry
+    ? getEventLabel(event.eventName, currentLanguage)
+    : t(`events.names.${slugifyEventName(event.eventName)}`, { defaultValue: event.eventName });
   const propertiesId = `event-card-${event.id}-props`;
 
   const enriched = event.enriched;
+
+  // Identify events (e.g. contact.updated) carry their payload in `traits`,
+  // not `properties` (which is `{}`). Track/page events use `properties`.
+  // Render whichever has data so no event shows up empty.
+  const hasKeys = (o?: Record<string, unknown>): boolean =>
+    !!o && typeof o === 'object' && Object.keys(o).length > 0;
+  const hasProps = hasKeys(event.properties);
+  const hasTraits = hasKeys(event.traits);
 
   return (
     <Card className="border border-border bg-card transition-colors hover:bg-accent/30">
@@ -108,12 +122,35 @@ function ContactEventCardImpl({ event }: ContactEventCardProps) {
             </Button>
 
             {expanded && (
-              <pre
-                id={propertiesId}
-                className="mt-2 max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-xs"
-              >
-                {JSON.stringify(event.properties, redactReplacer, 2)}
-              </pre>
+              <div id={propertiesId} className="mt-2 space-y-2">
+                {hasProps && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
+                      {t('events.card.properties', { defaultValue: 'Properties' })}
+                    </p>
+                    <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-xs">
+                      {JSON.stringify(event.properties, redactReplacer, 2)}
+                    </pre>
+                  </div>
+                )}
+                {hasTraits && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
+                      {t('events.card.traits', { defaultValue: 'Traits' })}
+                    </p>
+                    <pre className="max-h-64 overflow-auto rounded-md bg-muted/40 p-3 text-xs">
+                      {JSON.stringify(event.traits, redactReplacer, 2)}
+                    </pre>
+                  </div>
+                )}
+                {!hasProps && !hasTraits && (
+                  <p className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+                    {t('events.card.noData', {
+                      defaultValue: 'No additional data for this event',
+                    })}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>

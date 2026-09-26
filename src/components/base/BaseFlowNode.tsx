@@ -1,9 +1,10 @@
-import { Handle, Position, useEdges } from "@xyflow/react";
+import { Handle, Position, useEdges, useNodeId } from "@xyflow/react";
 import React from "react";
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from "@/lib/utils";
 import { useDnD } from "@/contexts/DnDContext";
 import { ArrowRight } from "lucide-react";
+import { NodeValidationBadge } from '@/components/journey/_ui/NodeValidationBadge';
 
 // Tipos para configuração do node - COMPATÍVEL COM BaseNode ATUAL
 export interface BaseFlowNodeProps {
@@ -178,6 +179,10 @@ export function BaseFlowNode({
   const { t } = useLanguage('common');
   const { pointerEvents } = useDnD();
   const edges = useEdges();
+  // EVO-1744: resolve the node id (explicit prop or the React Flow context) so
+  // the validation badge can look up its issues without each node forwarding it.
+  const hookNodeId = useNodeId();
+  const resolvedNodeId = nodeId ?? hookNodeId;
 
   // Verificar se o source handle está conectado - compatível com BaseNode atual
   const isHandleConnected = (handleId: string) => {
@@ -216,6 +221,9 @@ export function BaseFlowNode({
       }}
       data-is-executing={isExecuting ? "true" : "false"}
     >
+      {/* EVO-1744: pre-activation validation marker (error/warning) */}
+      <NodeValidationBadge nodeId={resolvedNodeId} />
+
       {/* Target Handle - mantém comportamento exato do BaseNode atual */}
       {hasTarget && (
         <Handle
@@ -274,74 +282,3 @@ export function BaseFlowNode({
   );
 }
 
-// Componente para header padrão de nodes
-export interface NodeHeaderProps {
-  icon: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  iconColor?: string;
-  iconBg?: string;
-  className?: string;
-}
-
-export function NodeHeader({
-  icon,
-  title,
-  subtitle,
-  iconColor = "text-white",
-  iconBg = "bg-blue-500",
-  className
-}: NodeHeaderProps) {
-  return (
-    <div className={cn("flex items-center gap-3 mb-3", className)}>
-      <div className={cn(
-        "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-        iconBg
-      )}>
-        <div className={iconColor}>
-          {icon}
-        </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-foreground truncate">
-          {title}
-        </h3>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground truncate">
-            {subtitle}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Componente para conteúdo padrão de nodes
-export interface NodeContentProps {
-  children: React.ReactNode;
-  bgColor?: string;
-  borderColor?: string;
-  textColor?: string;
-  className?: string;
-}
-
-export function NodeContent({
-  children,
-  bgColor = "bg-blue-50 dark:bg-blue-950/20",
-  borderColor = "border-blue-200 dark:border-blue-800/30",
-  textColor = "text-blue-800 dark:text-blue-200",
-  className
-}: NodeContentProps) {
-  return (
-    <div className={cn(
-      "p-3 rounded-lg border transition-all duration-200",
-      bgColor,
-      borderColor,
-      className
-    )}>
-      <div className={cn("text-xs leading-relaxed", textColor)}>
-        {children}
-      </div>
-    </div>
-  );
-}

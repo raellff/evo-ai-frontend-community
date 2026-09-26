@@ -64,6 +64,7 @@
       },
       "conditions": {
         "label": "Condições",
+        "optional": "opcional",
         "addRow": "Adicionar condição",
         "empty": "Sem condições — esta regra dispara em todo evento."
       },
@@ -89,7 +90,8 @@
         "send_email_transcript": "Enviar transcrição por email",
         "assign_to_pipeline": "Atribuir ao pipeline",
         "update_pipeline_stage": "Atualizar estágio do pipeline",
-        "create_pipeline_task": "Criar tarefa do pipeline"
+        "create_pipeline_task": "Criar tarefa do pipeline",
+        "update_custom_attribute": "Atualizar atributo personalizado"
       },
       "conditionRow": {
         "attribute": "Atributo",
@@ -124,6 +126,8 @@
           "assign_to_pipeline": "Escolha um pipeline",
           "update_pipeline_stage": "Escolha um estágio",
           "send_email_to_team": "Corpo do email",
+          "send_email_to_team_teams": "Times",
+          "send_email_to_team_no_teams": "Nenhum time disponível",
           "create_pipeline_task": "Título da tarefa",
           "create_pipeline_task_description": "Descrição (opcional)",
           "create_pipeline_task_type": "Tipo (opcional)",
@@ -131,8 +135,15 @@
           "create_pipeline_task_assignee": "ID do responsável (opcional)",
           "create_pipeline_task_due_in": "Vencimento (ex.: 2d, 1w)",
           "send_attachment_ids": "IDs dos anexos separados por vírgula",
-          "send_attachment_inbox": "ID do canal (opcional)"
+          "send_attachment_inbox": "ID do canal (opcional)",
+          "update_custom_attribute": "Escolha um atributo personalizado",
+          "update_custom_attribute_value": "Valor"
         }
+      },
+      "customAttributeModels": {
+        "conversation_attribute": "Conversa",
+        "contact_attribute": "Contato",
+        "pipeline_item_attribute": "Item de pipeline"
       },
       "operators": {
         "equal_to": "Igual a",

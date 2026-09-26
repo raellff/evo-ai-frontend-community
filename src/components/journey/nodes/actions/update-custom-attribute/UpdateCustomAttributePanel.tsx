@@ -89,7 +89,12 @@ export function UpdateCustomAttributePanel({
     setFormData(prev => ({
       ...prev,
       attributeId,
-      attributeName: selectedAttribute?.attribute_display_name || '',
+      // attributeName MUST be the attribute_key (slug) — it is what the
+      // evo-flow Update node persists as the CRM custom_attributes key, and
+      // what a downstream Conditional reads via
+      // {{contact.customAttributes.<attribute_key>}} (EVO-1850 / EVO-1837).
+      attributeName: selectedAttribute?.attribute_key || '',
+      attributeDisplayName: selectedAttribute?.attribute_display_name || '',
       attributeDisplayType: selectedAttribute?.attribute_display_type || '',
       newValue: '',
     }));
@@ -150,7 +155,7 @@ export function UpdateCustomAttributePanel({
       case 'list':
         return (
           <Select value={formData.newValue || ''} onValueChange={handleValueChange}>
-            <SelectTrigger className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
+            <SelectTrigger id="update-custom-attribute-value" className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
               <SelectValue placeholder={t('panels.updateCustomAttribute.listPlaceholder')} />
             </SelectTrigger>
             <SelectContent className="bg-sidebar border-sidebar-border">
@@ -167,6 +172,7 @@ export function UpdateCustomAttributePanel({
         return (
           <VariableInput
             type="date"
+            id="update-custom-attribute-value"
             value={formData.newValue || ''}
             onChange={e => handleValueChange(e.target.value)}
             className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground"
@@ -178,6 +184,7 @@ export function UpdateCustomAttributePanel({
         return (
           <VariableInput
             type="datetime-local"
+            id="update-custom-attribute-value"
             value={normalizeDateTimeLocalValue(formData.newValue || '')}
             onChange={e => handleValueChange(e.target.value)}
             className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground"
@@ -191,6 +198,7 @@ export function UpdateCustomAttributePanel({
         return (
           <VariableInput
             type="number"
+            id="update-custom-attribute-value"
             step={selectedAttribute.attribute_display_type === 'currency' ? '0.01' : '1'}
             placeholder={
               selectedAttribute.attribute_display_type === 'percent'
@@ -210,6 +218,7 @@ export function UpdateCustomAttributePanel({
         return (
           <VariableInput
             type="url"
+            id="update-custom-attribute-value"
             placeholder={t('panels.updateCustomAttribute.placeholders.link')}
             value={formData.newValue || ''}
             onChange={e => handleValueChange(e.target.value)}
@@ -222,6 +231,7 @@ export function UpdateCustomAttributePanel({
         return (
           <VariableInput
             type="text"
+            id="update-custom-attribute-value"
             placeholder={t('panels.updateCustomAttribute.placeholders.text')}
             value={formData.newValue || ''}
             onChange={e => handleValueChange(e.target.value)}
@@ -260,7 +270,7 @@ export function UpdateCustomAttributePanel({
         )}
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">
+          <Label htmlFor="update-custom-attribute-select" className="text-sm font-medium">
             {t('panels.updateCustomAttribute.customAttribute')}
           </Label>
           <Select
@@ -268,7 +278,7 @@ export function UpdateCustomAttributePanel({
             onValueChange={handleAttributeChange}
             disabled={loading}
           >
-            <SelectTrigger className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
+            <SelectTrigger id="update-custom-attribute-select" className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
               <SelectValue
                 placeholder={
                   loading
@@ -311,7 +321,7 @@ export function UpdateCustomAttributePanel({
 
         {selectedAttribute && (
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
+            <Label htmlFor="update-custom-attribute-value" className="text-sm font-medium">
               {t('panels.updateCustomAttribute.newValue')}
             </Label>
             {renderValueInput()}
@@ -332,7 +342,10 @@ export function UpdateCustomAttributePanel({
               <span className="text-sm">
                 {ATTRIBUTE_TYPE_ICONS[selectedAttribute?.attribute_display_type || ''] || '⚙️'}
               </span>
-              <span className="font-medium">{formData.attributeName}</span>
+              <span className="font-medium">
+                {formData.attributeDisplayName ||
+                  selectedAttribute?.attribute_display_name}
+              </span>
               <span>→</span>
               <span className="font-medium">
                 {selectedAttribute?.attribute_display_type === 'checkbox'

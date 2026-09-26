@@ -14,13 +14,21 @@ export interface JourneyTriggerNodeData {
     | 'contactCreated'
     | 'contactUpdated'
     | 'label'
-    | 'customAttribute';
+    | 'customAttribute'
+    | 'pipelineStageChanged';
   // Configurações de evento
   eventName?: string;
   eventProperties?: Array<{
     path: string;
-    operator: { type: string; value?: any };
+    operator: { type: string; value?: unknown };
   }>;
+  // Configurações de pipeline stage changed (EVO-1266)
+  pipelineId?: string;
+  pipelineName?: string;
+  fromStageId?: string;
+  fromStageName?: string;
+  toStageId?: string;
+  toStageName?: string;
   // Configurações de segmento
   segmentId?: string;
   segmentName?: string;
@@ -29,7 +37,7 @@ export interface JourneyTriggerNodeData {
   contactFields?: Array<{
     field: string;
     operator: string;
-    value?: any;
+    value?: unknown;
   }>;
   // Configurações de etiqueta
   labelId?: string;
@@ -52,7 +60,7 @@ export interface JourneyTriggerNodeData {
   conditions?: Array<{
     field?: string;
     operator?: string;
-    value?: any;
+    value?: unknown;
     eventName?: string;
     segmentId?: string;
   }>;
@@ -94,6 +102,8 @@ export function JourneyTriggerNode({ selected, data, id }: JourneyTriggerNodePro
         return t('flowEditor.nodes.trigger.types.label');
       case 'customAttribute':
         return t('flowEditor.nodes.trigger.types.customAttribute');
+      case 'pipelineStageChanged':
+        return t('flowEditor.nodes.trigger.types.pipelineStageChanged');
       default:
         return t('flowEditor.nodes.trigger.label');
     }
@@ -113,13 +123,13 @@ export function JourneyTriggerNode({ selected, data, id }: JourneyTriggerNodePro
       case 'segment':
         if (data.segmentId && data.segmentName) {
           const action =
-            data.segmentAction === 'entered'
+            data.segmentAction !== 'exited'
               ? t('flowEditor.nodes.trigger.descriptions.segmentEnters')
               : t('flowEditor.nodes.trigger.descriptions.segmentExits');
           return `Quando ${action} "${data.segmentName}"`;
         } else if (data.segmentId) {
           const action =
-            data.segmentAction === 'entered'
+            data.segmentAction !== 'exited'
               ? t('flowEditor.nodes.trigger.descriptions.whenEnters')
               : t('flowEditor.nodes.trigger.descriptions.whenExits');
           return `${action} ${t('flowEditor.nodes.trigger.descriptions.segment')}`;
@@ -153,13 +163,13 @@ export function JourneyTriggerNode({ selected, data, id }: JourneyTriggerNodePro
       case 'label':
         if (data.labelId && data.labelName) {
           const action =
-            data.labelAction === 'applied'
+            data.labelAction !== 'removed'
               ? t('flowEditor.nodes.trigger.descriptions.applied')
               : t('flowEditor.nodes.trigger.descriptions.removed');
           return `"${data.labelName}" ${action}`;
         } else if (data.labelId) {
           const action =
-            data.labelAction === 'applied'
+            data.labelAction !== 'removed'
               ? t('flowEditor.nodes.trigger.descriptions.applied')
               : t('flowEditor.nodes.trigger.descriptions.removed');
           return `${t('flowEditor.nodes.trigger.types.label')} ${action}`;
@@ -183,6 +193,25 @@ export function JourneyTriggerNode({ selected, data, id }: JourneyTriggerNodePro
           });
         }
         return t('flowEditor.nodes.trigger.descriptions.configureWebhook');
+
+      case 'pipelineStageChanged': {
+        const pipelineLabel = data.pipelineName || data.pipelineId;
+        if (!pipelineLabel) {
+          return t('flowEditor.nodes.trigger.descriptions.anyStageTransition');
+        }
+        const fromLabel = data.fromStageName || data.fromStageId;
+        const toLabel = data.toStageName || data.toStageId;
+        if (fromLabel && toLabel) {
+          return `${pipelineLabel}: ${fromLabel} → ${toLabel}`;
+        }
+        if (toLabel) {
+          return `${pipelineLabel} → ${toLabel}`;
+        }
+        if (fromLabel) {
+          return `${pipelineLabel}: ${fromLabel} →`;
+        }
+        return pipelineLabel;
+      }
 
       default:
         return t('flowEditor.nodes.trigger.descriptions.configureTrigger');

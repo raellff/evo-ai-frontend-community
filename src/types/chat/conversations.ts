@@ -1,4 +1,4 @@
-import { Conversation, ConversationListParams, Contact } from './api';
+import { Conversation, ConversationListParams, Contact, ConversationsQuery } from './api';
 import { PaginationMeta } from '@/types/core';
 
 export interface ConversationsState {
@@ -55,12 +55,20 @@ export interface ConversationsContextValue {
   // Conversation actions
   loadConversations: (params?: ConversationListParams) => Promise<void>;
   loadMoreConversations: () => Promise<void>;
-  setConversations: (conversations: Conversation[], pagination: PaginationMeta) => void;
+  setConversations: (
+    conversations: Conversation[],
+    pagination: PaginationMeta,
+    query?: ConversationsQuery,
+  ) => void;
   loadSpecificConversation: (conversationId: string) => Promise<Conversation | null>;
   selectConversation: (conversationId: string | null) => void;
   updateConversationStatus: (
     conversationId: string,
     status: 'open' | 'resolved' | 'pending' | 'snoozed',
+    onFilterReload?: () => Promise<void>,
+  ) => Promise<Conversation>;
+  returnConversationToBot: (
+    conversationId: string,
     onFilterReload?: () => Promise<void>,
   ) => Promise<Conversation>;
   updateConversationPriority: (
@@ -79,10 +87,12 @@ export interface ConversationsContextValue {
   archiveConversation: (
     conversationId: string,
     onFilterReload?: () => Promise<void>,
+    options?: { silent?: boolean },
   ) => Promise<Conversation>;
   unarchiveConversation: (
     conversationId: string,
     onFilterReload?: () => Promise<void>,
+    options?: { silent?: boolean },
   ) => Promise<Conversation>;
 
   // Direct state manipulation (for WebSocket integration)
@@ -103,9 +113,9 @@ export interface ConversationsContextValue {
   getUnreadCount: (conversationId: string) => number;
 
   // Context menu actions
-  deleteConversation: (conversationId: string) => Promise<void>;
-  markAsRead: (conversationId: string) => Promise<void>;
-  markAsUnread: (conversationId: string) => Promise<void>;
+  deleteConversation: (conversationId: string, options?: { silent?: boolean }) => Promise<void>;
+  markAsRead: (conversationId: string, options?: { silent?: boolean }) => Promise<void>;
+  markAsUnread: (conversationId: string, options?: { silent?: boolean }) => Promise<void>;
   markAsResolved: (conversationId: string) => Promise<void>;
   markAsPending: (conversationId: string) => Promise<void>;
   assignAgent: (conversationId: string, assigneeId: string | null) => Promise<void>;

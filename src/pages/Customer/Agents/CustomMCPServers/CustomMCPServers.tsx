@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionGatedLoad } from '@/hooks/rbac/usePermissionGatedLoad';
 import { useLanguage } from '@/hooks/useLanguage';
 import { AgentsCustomMCPsTour } from '@/tours';
 import {
@@ -20,17 +22,20 @@ import {
   ListCustomMcpServersParams,
   CustomMcpServerFormData,
 } from '@/types/ai';
-import { BaseFilter, AppliedFilter } from '@/types/core';
+import { BaseFilter, AppliedFilter, CUSTOM_MCP_SERVER_FILTER_TYPES } from '@/types/core';
+import { buildAppliedFilterChips } from '@/utils/appliedFilterChips';
+import { AgentsTabsLayout } from '@/components/agents';
 import { CustomMCPServerCard } from '@/components/customMcpServers';
 
 import CustomMCPServersHeader from '@/components/customMcpServers/CustomMCPServersHeader';
 import CustomMCPServersTable from '@/components/customMcpServers/CustomMCPServersTable';
 import CustomMCPServersPagination from '@/components/customMcpServers/CustomMCPServersPagination';
-import CustomMCPServerModal from '@/components/customMcpServers/CustomMCPServerModal';
+import { CustomMCPServerWizardModal } from '@/components/customMcpServers';
 import CustomMCPServerDetails from '@/components/customMcpServers/CustomMCPServerDetails';
 import CustomMCPServersFilter from '@/components/customMcpServers/CustomMCPServersFilter';
 import {
   listCustomMcpServers,
+  getCustomMcpServer,
   createCustomMcpServer,
   updateCustomMcpServer,
   deleteCustomMcpServer,
@@ -61,28 +66,47 @@ const INITIAL_STATE: CustomMcpServersState = {
 };
 
 export default function CustomMCPServers() {
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can } = usePermissions();
   const { t } = useLanguage('customMcpServers');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { id: editServerId } = useParams<{ id: string }>();
+  const isWizardCreate = location.pathname === '/agents/custom-mcp-servers/new';
+  const isWizardEdit = !!editServerId && location.pathname.endsWith('/edit');
+  const isWizardOpen = isWizardCreate || isWizardEdit;
   const [state, setState] = useState<CustomMcpServersState>(INITIAL_STATE);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [serverToDelete, setServerToDelete] = useState<CustomMcpServer | null>(null);
 
-  const [serverModalOpen, setServerModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<CustomMcpServer | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsServer, setDetailsServer] = useState<CustomMcpServer | null>(null);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<BaseFilter[]>([]);
+  // EVO-1953: ref synced to activeFilters so the applied-chip "x" removes against
+  // the current list, not the stale snapshot captured when the chips were built.
+  const activeFiltersRef = useRef<BaseFilter[]>([]);
+  activeFiltersRef.current = activeFilters;
   const [appliedFilters, setAppliedFilters] = useState<AppliedFilter[]>([]);
   const [testingServer, setTestingServer] = useState<string | null>(null);
-  const hasLoaded = useRef(false);
+  // EVO-1953: debounce the server-side search so typing fires one request after
+  // it settles, not one per keystroke.
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    },
+    [],
+  );
 
   // Load servers
   const loadServers = useCallback(
-    async (params?: Partial<ListCustomMcpServersParams>) => {
+    async (params?: Partial<ListCustomMcpServersParams>, filtersOverride?: BaseFilter[]) => {
+      // No toast: `AgentsTabsLayout` is already redirecting whoever lacks `read`.
       if (!can('ai_custom_mcp_servers', 'read')) {
-        toast.error(t('permissions.viewDenied'));
         return;
       }
       setState(prev => ({ ...prev, loading: { ...prev.loading, list: true } }));
@@ -94,7 +118,21 @@ export default function CustomMCPServers() {
           ...params,
         };
 
-        const response = await listCustomMcpServers(requestParams);
+        const effectiveFilters = filtersOverride ?? activeFilters;
+        const filterParams = effectiveFilters.reduce((acc, filter, index) => {
+          const prefix = `filters[${index}]`;
+          acc[`${prefix}[attribute_key]`] = filter.attributeKey;
+          acc[`${prefix}[filter_operator]`] = filter.filterOperator;
+          acc[`${prefix}[values]`] = Array.isArray(filter.values)
+            ? filter.values.join(',')
+            : String(filter.values);
+          if (index > 0) {
+            acc[`${prefix}[query_operator]`] = filter.queryOperator;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+
+        const response = await listCustomMcpServers(requestParams, filterParams);
 
         setState(prev => ({
           ...prev,
@@ -115,20 +153,13 @@ export default function CustomMCPServers() {
         setState(prev => ({ ...prev, loading: { ...prev.loading, list: false } }));
       }
     },
-    [can, t],
+    [can, t, activeFilters],
   );
 
-  // Initial load
-  useEffect(() => {
-    if (!permissionsReady) {
-      return;
-    }
-
-    if (!hasLoaded.current) {
-      hasLoaded.current = true;
-      loadServers();
-    }
-  }, [permissionsReady, loadServers]);
+  usePermissionGatedLoad({
+    resource: 'ai_custom_mcp_servers',
+    load: loadServers,
+  });
 
   // Handlers
   const handleSearchChange = (query: string) => {
@@ -138,22 +169,16 @@ export default function CustomMCPServers() {
       meta: { ...prev.meta, pagination: { ...prev.meta.pagination, page: 1 } },
     }));
 
-    // TODO: Implement search functionality
-    loadServers({ skip: 0, search: query });
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      loadServers({ skip: 0, search: query });
+    }, 500);
   };
 
-  const convertFiltersToApplied = (filters: BaseFilter[]): AppliedFilter[] => {
-    return filters.map((filter, index) => ({
-      id: `filter-${index}`,
-      label: `${filter.attributeKey}: ${
-        Array.isArray(filter.values) ? filter.values.join(',') : filter.values
-      }`,
-      value: Array.isArray(filter.values)
-        ? String(filter.values.join(','))
-        : (filter.values as string | number),
-      onRemove: () => handleRemoveFilter(index),
-    }));
-  };
+  const convertFiltersToApplied = (filters: BaseFilter[]): AppliedFilter[] =>
+    buildAppliedFilterChips(filters, CUSTOM_MCP_SERVER_FILTER_TYPES, t, handleRemoveFilter);
 
   const handleOpenFilter = () => {
     setFilterModalOpen(true);
@@ -170,7 +195,7 @@ export default function CustomMCPServers() {
     }));
 
     try {
-      await loadServers({ skip: 0 });
+      await loadServers({ skip: 0, search: state.searchQuery }, filters);
     } catch (error) {
       console.error('Error applying filters:', error);
       toast.error(t('errors.applyFiltersError'));
@@ -180,11 +205,11 @@ export default function CustomMCPServers() {
   const handleClearFilters = () => {
     setActiveFilters([]);
     setAppliedFilters([]);
-    loadServers({ skip: 0 });
+    loadServers({ skip: 0, search: state.searchQuery }, []);
   };
 
   const handleRemoveFilter = (index: number) => {
-    const newFilters = activeFilters.filter((_, i) => i !== index);
+    const newFilters = activeFiltersRef.current.filter((_, i) => i !== index);
     if (newFilters.length === 0) {
       handleClearFilters();
     } else {
@@ -223,7 +248,7 @@ export default function CustomMCPServers() {
       return;
     }
     setEditingServer(null);
-    setServerModalOpen(true);
+    navigate('/agents/custom-mcp-servers/new');
   };
 
   const handleEditServer = (server: CustomMcpServer) => {
@@ -232,8 +257,33 @@ export default function CustomMCPServers() {
       return;
     }
     setEditingServer(server);
-    setServerModalOpen(true);
+    navigate(`/agents/custom-mcp-servers/${server.id}/edit`);
   };
+
+  // Prefill the wizard on deep-link/refresh into an edit URL: use the cached
+  // server from the current list if present, else fetch it by id.
+  useEffect(() => {
+    if (!isWizardEdit || !editServerId) return;
+    if (editingServer?.id === editServerId) return;
+    const cached = state.servers.find(server => server.id === editServerId);
+    if (cached) {
+      setEditingServer(cached);
+      return;
+    }
+    let cancelled = false;
+    getCustomMcpServer(editServerId)
+      .then(fetched => {
+        if (!cancelled && fetched) setEditingServer(fetched);
+      })
+      .catch(err => {
+        console.error('Failed to load Custom MCP server for edit:', err);
+        toast.error(t('errors.loadError'));
+        navigate('/agents/custom-mcp-servers');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isWizardEdit, editServerId, state.servers, editingServer?.id, navigate, t]);
 
   const handleDeleteServer = (server: CustomMcpServer) => {
     if (!can('ai_custom_mcp_servers', 'delete')) {
@@ -251,7 +301,13 @@ export default function CustomMCPServers() {
     try {
       const result = await testCustomMcpServer(server.id);
       if (result.test_result.success) {
-        toast.success(t('success.testSuccess', { count: result.server.tools.length || 0 }));
+        // EVO-2139: prioriza `tools_count` do próprio test (número descoberto
+        // agora no handshake MCP) sobre `server.tools.length` (DB, que fica
+        // stale se o Create original não conseguiu popular). Optional-chaining
+        // no fallback evita o crash silencioso quando o server tem tools=null.
+        const count =
+          result.test_result.tools_count ?? result.server.tools?.length ?? 0;
+        toast.success(t('success.testSuccess', { count }));
         // Update server with latest tools
         setState(prev => ({
           ...prev,
@@ -325,9 +381,11 @@ export default function CustomMCPServers() {
         loadServers();
       }
 
-      // Close modal and clear editing state
-      setServerModalOpen(false);
+      // Clear editing state; the wizard page navigates back below.
       setEditingServer(null);
+      if (isWizardCreate || isWizardEdit) {
+        navigate('/agents/custom-mcp-servers');
+      }
     } catch (error) {
       console.error('Error saving Custom MCP server:', error);
       toast.error(editingServer ? t('errors.updateError') : t('errors.saveError'));
@@ -339,14 +397,6 @@ export default function CustomMCPServers() {
     }
   };
 
-  // Handle modal close
-  const handleServerModalClose = (open: boolean) => {
-    if (!open) {
-      setServerModalOpen(false);
-      setEditingServer(null);
-    }
-  };
-
   const handleDetailsModalClose = (open: boolean) => {
     if (!open) {
       setDetailsModalOpen(false);
@@ -354,11 +404,32 @@ export default function CustomMCPServers() {
     }
   };
 
+  if (isWizardOpen) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex-1 min-h-0 animate-slideInFromRight">
+          <CustomMCPServerWizardModal
+            embedded
+            open={isWizardOpen}
+            loading={state.loading.create || state.loading.update}
+            server={isWizardEdit ? editingServer || undefined : undefined}
+            onOpenChange={open => {
+              if (!open) navigate('/agents/custom-mcp-servers');
+            }}
+            onSubmit={handleServerFormSubmit}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full flex flex-col p-4" data-tour="agents-custom-mcps-page">
+    <AgentsTabsLayout tab="customMcpServers">
+    <div className="flex h-full flex-col px-[34px] pb-5" data-tour="agents-custom-mcps-page">
       <AgentsCustomMCPsTour />
-      <div data-tour="agents-custom-mcps-header">
+      <div className="mt-6" data-tour="agents-custom-mcps-header">
         <CustomMCPServersHeader
+          hideTitle
           totalCount={state.meta.pagination.total}
           selectedCount={state.selectedServerIds.length}
           searchValue={state.searchQuery}
@@ -394,7 +465,7 @@ export default function CustomMCPServers() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto" data-tour="agents-custom-mcps-content">
+      <div className="mt-5 flex-1 overflow-auto" data-tour="agents-custom-mcps-content">
         {state.loading.list ? (
           <div className="flex items-center justify-center py-16">
             <div className="text-muted-foreground">{t('loading.servers')}</div>
@@ -488,16 +559,6 @@ export default function CustomMCPServers() {
         </DialogContent>
       </Dialog>
 
-      {/* Server Modal */}
-      <CustomMCPServerModal
-        open={serverModalOpen}
-        onOpenChange={handleServerModalClose}
-        server={editingServer || undefined}
-        mode={!editingServer ? 'create' : 'edit'}
-        loading={state.loading.create || state.loading.update}
-        onSubmit={handleServerFormSubmit}
-      />
-
       {/* Server Details Modal */}
       <CustomMCPServerDetails
         open={detailsModalOpen}
@@ -505,8 +566,7 @@ export default function CustomMCPServers() {
         server={detailsServer}
         onEdit={server => {
           setDetailsModalOpen(false);
-          setEditingServer(server);
-          setServerModalOpen(true);
+          handleEditServer(server);
         }}
         onTest={handleTestServer}
         isTestLoading={testingServer === detailsServer?.id}
@@ -522,5 +582,6 @@ export default function CustomMCPServers() {
         onClearFilters={handleClearFilters}
       />
     </div>
+    </AgentsTabsLayout>
   );
 }

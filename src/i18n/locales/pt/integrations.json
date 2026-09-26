@@ -1,8 +1,8 @@
 {
-  "title": "Integrações",
+  "title": "Integrações da Conta",
   "subtitle": "Conecte ferramentas e serviços para expandir as funcionalidades do sistema",
   "header": {
-    "title": "Integrações",
+    "title": "Integrações da Conta",
     "subtitle": "Conecte ferramentas e serviços para expandir as funcionalidades"
   },
   "search": {
@@ -663,7 +663,9 @@
         "configure": "Configurar Integração",
         "update": "Atualizar Integração",
         "saving": "Salvando..."
-      }
+      },
+      "credentialMoved": "A chave agora é cadastrada em Configurações > Credenciais de IA. Aqui ficam só os interruptores das funções.",
+      "goToCredentials": "Ir para Credenciais de IA"
     },
     "settings": {
       "loading": "Carregando configuração...",
@@ -686,7 +688,8 @@
         "actions": {
           "edit": "Editar",
           "remove": "Remover"
-        }
+        },
+        "managedElsewhere": "Gerenciada em Credenciais de IA"
       },
       "features": {
         "title": "Recursos Disponíveis",

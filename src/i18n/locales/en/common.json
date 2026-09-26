@@ -1,4 +1,14 @@
 {
+  "filter": {
+    "operators": {
+      "equal_to": "Equal to",
+      "not_equal_to": "Not equal to",
+      "contains": "Contains",
+      "does_not_contain": "Does not contain",
+      "is_present": "Present",
+      "is_not_present": "Not present"
+    }
+  },
   "loading": "Loading...",
   "error": "Error",
   "success": "Success",
@@ -16,6 +26,11 @@
   },
   "noResultsFound": "No results found",
   "base": {
+    "noResults": {
+      "title": "No results found",
+      "description": "No items match your search.",
+      "clearSearch": "Clear search"
+    },
     "pagination": {
       "itemsPerPage": "Items per page:",
       "showing": "Showing {{start}} to {{end}} of {{total}} items",
@@ -145,5 +160,21 @@
   },
   "validation": {
     "required": "This field is required"
+  },
+  "permissions": {
+    "loadFailed": {
+      "title": "Could not load your permissions",
+      "description": "This does not mean you lack access — the permission check failed. Try again.",
+      "retry": "Try again",
+      "retrying": "Trying again…",
+      "signOut": "Sign out"
+    }
+  },
+  "customAttributes": {
+    "loadFailed": {
+      "title": "Could not load the custom attributes",
+      "description": "This does not mean there are none — loading the definitions failed. Try again.",
+      "retry": "Try again"
+    }
   }
 }

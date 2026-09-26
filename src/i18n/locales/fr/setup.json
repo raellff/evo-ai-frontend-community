@@ -45,12 +45,21 @@
     },
     "submit": {
       "idle": "Créer un compte et continuer",
-      "loading": "Configuration en cours..."
+      "loading": "Configuration en cours...",
+      "continue": "Continuer"
     }
+  },
+  "extension": {
+    "unavailable": "Cette étape de configuration n'est pas disponible. Revenez en arrière pour terminer.",
+    "back": "Retour"
   },
   "success": {
     "title": "Configuration terminée !",
     "description": "Vous pouvez maintenant vous connecter avec vos identifiants."
+  },
+  "degraded": {
+    "title": "Configuration terminée, avec un point en attente",
+    "description": "L'installation est terminée, mais le provisionnement du compte n'a pas abouti. Il est relancé automatiquement sous ~10 minutes."
   },
   "error": {
     "generic": "Une erreur s'est produite lors de la configuration. Veuillez réessayer.",

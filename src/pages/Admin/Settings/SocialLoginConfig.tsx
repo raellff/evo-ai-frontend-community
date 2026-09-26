@@ -17,6 +17,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { adminConfigService } from '@/services/admin/adminConfigService';
 import { extractError } from '@/utils/apiHelpers';
 import type { AdminConfigData } from '@/types/admin/adminConfig';
+import CopyCallbackUrl from '@/components/common/CopyCallbackUrl';
 
 // --- Schema factories with i18n ---
 
@@ -24,7 +25,6 @@ function createGoogleOauthSchema(t: (key: string) => string) {
   return z.object({
     GOOGLE_OAUTH_CLIENT_ID: z.string().min(1, t('socialLogin.validation.clientIdRequired')),
     GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional().nullable(),
-    GOOGLE_OAUTH_CALLBACK_URL: z.string().url(t('socialLogin.validation.callbackUrlInvalid')).or(z.literal('')),
   });
 }
 
@@ -44,7 +44,6 @@ type MicrosoftFieldKey = keyof MicrosoftFormData;
 const GOOGLE_DEFAULTS: GoogleOauthFormData = {
   GOOGLE_OAUTH_CLIENT_ID: '',
   GOOGLE_OAUTH_CLIENT_SECRET: null,
-  GOOGLE_OAUTH_CALLBACK_URL: '',
 };
 
 const MICROSOFT_DEFAULTS: MicrosoftFormData = {
@@ -209,7 +208,7 @@ export default function SocialLoginConfig() {
       googleForm.reset(buildGoogleFormValues(googleData));
       updateMicrosoftSecretStatus(microsoftData);
       microsoftForm.reset(buildMicrosoftFormValues(microsoftData));
-    } catch (error) {
+    } catch {
       toast.error(t('socialLogin.messages.loadError'));
     } finally {
       setLoading(false);
@@ -299,9 +298,9 @@ export default function SocialLoginConfig() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <section>
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-sidebar-foreground">{t('socialLogin.title')}</h2>
+        <h3 className="text-lg font-semibold text-sidebar-foreground">{t('socialLogin.title')}</h3>
         <p className="text-sm text-sidebar-foreground/70 mt-1">{t('socialLogin.description')}</p>
       </div>
 
@@ -337,17 +336,13 @@ export default function SocialLoginConfig() {
               t={t}
             />
 
-            <div className="space-y-2">
-              <Label htmlFor="GOOGLE_OAUTH_CALLBACK_URL">{t('socialLogin.google.fields.callbackUrl')}</Label>
-              <Input
-                id="GOOGLE_OAUTH_CALLBACK_URL"
-                placeholder={t('socialLogin.google.placeholders.callbackUrl')}
-                {...googleForm.register('GOOGLE_OAUTH_CALLBACK_URL')}
-              />
-              {googleForm.formState.errors.GOOGLE_OAUTH_CALLBACK_URL && (
-                <p className="text-xs text-destructive">{googleForm.formState.errors.GOOGLE_OAUTH_CALLBACK_URL.message}</p>
-              )}
-            </div>
+            <CopyCallbackUrl
+              url={`${window.location.origin}/google/callback`}
+              label={t('socialLogin.callbackUrl.label')}
+              hint={t('socialLogin.callbackUrl.hint')}
+              copyLabel={t('socialLogin.callbackUrl.copy')}
+              copiedMessage={t('socialLogin.callbackUrl.copied')}
+            />
 
             <div className="pt-2">
               <Button type="submit" disabled={savingGoogle}>
@@ -391,6 +386,14 @@ export default function SocialLoginConfig() {
               t={t}
             />
 
+            <CopyCallbackUrl
+              url={`${window.location.origin}/microsoft/callback`}
+              label={t('socialLogin.callbackUrl.label')}
+              hint={t('socialLogin.callbackUrl.hint')}
+              copyLabel={t('socialLogin.callbackUrl.copy')}
+              copiedMessage={t('socialLogin.callbackUrl.copied')}
+            />
+
             <div className="pt-2">
               <Button type="submit" disabled={savingMicrosoft}>
                 {savingMicrosoft && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -400,6 +403,6 @@ export default function SocialLoginConfig() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </section>
   );
 }

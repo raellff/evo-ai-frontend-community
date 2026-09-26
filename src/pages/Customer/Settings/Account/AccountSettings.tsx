@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
+import { type Locale } from '@/i18n/config';
 import {
   Input,
   Label,
@@ -13,9 +14,12 @@ import {
   Switch,
 } from '@evoapi/design-system';
 import { toast } from 'sonner';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { useCurrentUser } from '@/utils/auth';
+import { isAdminRole } from '@/constants/roles';
 import BaseHeader from '@/components/base/BaseHeader';
 import { accountService } from '@/services/account/accountService';
+import { useAppDataStore } from '@/store/appDataStore';
 import type { Account, FormDataOptions } from '@/types/settings';
 import { Copy } from 'lucide-react';
 
@@ -52,8 +56,10 @@ function SectionLayout({
 }
 
 export default function AccountSettings() {
-  const { t } = useLanguage('accountSettings');
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { t, changeLanguage } = useLanguage('accountSettings');
+  const { can, isReady: permissionsReady } = usePermissions();
+  const currentUser = useCurrentUser();
+  const isAdmin = !!currentUser?.role?.key && isAdminRole(currentUser.role.key);
   const normalizeAccountLocale = (locale?: string | null): string => {
     if (!locale) return 'pt-BR';
     const normalized = locale.replace('_', '-');
@@ -75,6 +81,7 @@ export default function AccountSettings() {
     autoResolveLabel: 'none',
     audioTranscriptions: false,
     autoResolveEnabled: false,
+    maskContactPii: false,
   });
   const [formDataOptions, setFormDataOptions] = useState<FormDataOptions>({
     inboxes: [],
@@ -138,6 +145,7 @@ export default function AccountSettings() {
         autoResolveLabel: settings.auto_resolve_label || 'none',
         audioTranscriptions: settings.audio_transcriptions || false,
         autoResolveEnabled: !!settings.auto_resolve_after,
+        maskContactPii: settings.mask_contact_pii || false,
       });
     } catch (error) {
       console.error('Erro ao carregar dados da conta:', error);
@@ -192,12 +200,15 @@ export default function AccountSettings() {
 
     setSaving(true);
     try {
+      const normalizedLocale = normalizeAccountLocale(formData.locale);
       await accountService.updateAccount({
         name: formData.name,
-        locale: normalizeAccountLocale(formData.locale),
+        locale: normalizedLocale,
         domain: formData.domain,
         support_email: formData.supportEmail,
       });
+
+      changeLanguage(normalizedLocale as Locale);
 
       toast.success(t('messages.success.generalUpdated'));
       await loadAccountData(); // Recarregar dados
@@ -254,10 +265,19 @@ export default function AccountSettings() {
 
   const handleAudioTranscriptionToggle = async (enabled: boolean) => {
     try {
-      await accountService.updateAccount({
-        audio_transcriptions: enabled,
+      const updated = await accountService.updateAccount({
+        settings: {
+          ...(account?.settings ?? {}),
+          audio_transcriptions: enabled,
+        },
       });
+      setAccount(updated);
       setFormData(prev => ({ ...prev, audioTranscriptions: enabled }));
+      try {
+        await useAppDataStore.getState().fetchAccount(true);
+      } catch (cacheError) {
+        console.warn('Failed to refresh appDataStore.account cache:', cacheError);
+      }
       toast.success(
         enabled
           ? t('messages.success.audioTranscriptionEnabled')
@@ -265,6 +285,31 @@ export default function AccountSettings() {
       );
     } catch (error: unknown) {
       toast.error((error as Error).message || t('messages.error.audioTranscriptionFailed'));
+    }
+  };
+
+  const handleMaskContactPiiToggle = async (enabled: boolean) => {
+    try {
+      const updated = await accountService.updateAccount({
+        settings: {
+          ...(account?.settings ?? {}),
+          mask_contact_pii: enabled,
+        },
+      });
+      setAccount(updated);
+      setFormData(prev => ({ ...prev, maskContactPii: enabled }));
+      try {
+        await useAppDataStore.getState().fetchAccount(true);
+      } catch (cacheError) {
+        console.warn('Failed to refresh appDataStore.account cache:', cacheError);
+      }
+      toast.success(
+        enabled
+          ? t('messages.success.maskPiiEnabled')
+          : t('messages.success.maskPiiDisabled'),
+      );
+    } catch (error: unknown) {
+      toast.error((error as Error).message || t('messages.error.maskPiiFailed'));
     }
   };
 
@@ -503,6 +548,23 @@ export default function AccountSettings() {
                 <Switch
                   checked={formData.audioTranscriptions}
                   onCheckedChange={handleAudioTranscriptionToggle}
+                />
+              }
+            >
+              <></>
+            </SectionLayout>
+          )}
+
+          {/* Mascaramento de PII dos Contatos — admin tiers only (super_admin / account_owner / administrator). */}
+          {isAdmin && (
+            <SectionLayout
+              title={t('sections.maskContactPii.title')}
+              description={t('sections.maskContactPii.description')}
+              withBorder
+              headerActions={
+                <Switch
+                  checked={formData.maskContactPii}
+                  onCheckedChange={handleMaskContactPiiToggle}
                 />
               }
             >

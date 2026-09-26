@@ -13,7 +13,9 @@ import {
   Clock,
   Code,
   MessageCircle,
+  LayoutTemplate,
   Key,
+  KeyRound,
   Tags,
   TestTube,
   Wand,
@@ -22,11 +24,12 @@ import {
   List,
   Shield,
   Package,
-  // Filter,
-  // Megaphone,
-  // Route,
+  Filter,
+  Megaphone,
+  Route,
   ShieldCheck,
   Building2,
+  FileText,
 } from 'lucide-react';
 
 export interface MenuItem {
@@ -43,6 +46,12 @@ export interface MenuItem {
   // Per-Account feature toggle (see specs/account-feature-toggles) - checked
   // in addition to, not instead of, resource/action permissions.
   feature?: string;
+  badge?: number;
+  /**
+   * Click target when the item has a badge. Separate from `href`, which
+   * useMenuState#isMenuItemActive compares and which never matches a querystring.
+   */
+  badgeHref?: string;
 }
 
 export interface SubMenuItem {
@@ -66,11 +75,14 @@ export interface ProfileMenuItem {
 
 export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => [
   {
+    // `dashboard.read` is not a catalog resource — it lives in the auth
+    // BASIC_READ_PERMISSIONS (every authenticated user holds it, it is the
+    // landing page). Gating on it made `can()` deny for everyone (a key outside
+    // the catalog is invalid), hiding the Dashboard from all users. No gate:
+    // always visible to authenticated users (EVO-2071 AC7).
     name: t('menu.customer.dashboard'),
     href: '/dashboard',
     icon: PieChart,
-    resource: 'dashboard',
-    action: 'read',
   },
   {
     name: t('menu.customer.conversations'),
@@ -126,20 +138,20 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     action: 'read',
     feature: 'automations',
   },
-  // {
-  //   name: t('menu.customer.journeys'),
-  //   href: '/journeys',
-  //   icon: Route,
-  //   resource: 'journeys',
-  //   action: 'read',
-  // },
-  // {
-  //   name: t('menu.customer.campaigns'),
-  //   href: '/campaigns',
-  //   icon: Megaphone,
-  //   resource: 'campaigns',
-  //   action: 'read',
-  // },
+  {
+    name: t('menu.customer.journeys'),
+    href: '/journeys',
+    icon: Route,
+    resource: 'journeys',
+    action: 'read',
+  },
+  {
+    name: t('menu.customer.campaigns'),
+    href: '/campaigns',
+    icon: Megaphone,
+    resource: 'campaigns',
+    action: 'read',
+  },
   {
     id: 'customer-agents',
     name: t('menu.customer.agents'),
@@ -177,7 +189,7 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
     name: t('menu.customer.channels'),
     href: '/channels',
     icon: Layers,
-    resource: 'channels',
+    resource: 'inboxes',
     action: 'read',
   },
   {
@@ -190,7 +202,11 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         name: t('menu.settings.account'),
         href: '/settings/account',
         icon: User,
-        // Configurações de conta são sempre disponíveis - sem permissão específica
+        // Mirrors the /settings/account route gate; accounts.read is a basic
+        // grant every role holds, so the item stays visible — but menu and
+        // route now agree instead of the menu linking into Não Autorizado.
+        resource: 'accounts',
+        action: 'read',
       },
       {
         name: t('menu.settings.accounts'),
@@ -202,14 +218,19 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         href: '/settings/users',
         icon: Users2,
         resource: 'users',
-        action: 'read',
+        // EVO-1938: gate the Users (Atendentes) screen on the administrative
+        // users.manage. The earlier revert to users.read predated users.manage
+        // being registered in the auth ResourceActionsConfig; it now is, so the
+        // manage gate resolves for admins (who hold it) and hides the screen from
+        // the default agent (who holds only the operational users.read).
+        action: 'manage',
       },
       {
         name: t('menu.settings.teams'),
         href: '/settings/teams',
         icon: Clock,
         resource: 'teams',
-        action: 'read',
+        action: 'manage',
       },
       {
         name: t('menu.settings.labels'),
@@ -222,16 +243,21 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         name: t('menu.settings.customAttributes'),
         href: '/settings/attributes',
         icon: Code,
-        resource: 'custom_attribute_definitions',
+        // CRM-166: administrative gate, not `read` — the agent holds the read to
+        // render a contact's attributes and must not reach this Settings screen.
+        permissions: [
+          'custom_attribute_definitions.create',
+          'custom_attribute_definitions.update',
+          'custom_attribute_definitions.delete',
+        ],
+      },
+      {
+        name: t('menu.settings.segments'),
+        href: '/settings/segments',
+        icon: Filter,
+        resource: 'segments',
         action: 'read',
       },
-      // {
-      //   name: t('menu.settings.segments'),
-      //   href: '/settings/segments',
-      //   icon: Filter,
-      //   resource: 'segments',
-      //   action: 'read',
-      // },
       {
         name: t('menu.settings.cannedResponses'),
         href: '/settings/canned-responses',
@@ -240,10 +266,45 @@ export const getCustomerMenuItems = (t: (key: string) => string): MenuItem[] => 
         action: 'read',
       },
       {
+        name: t('menu.settings.aiCredentials'),
+        href: '/settings/ai-credentials',
+        icon: KeyRound,
+        resource: 'ai_api_keys',
+        action: 'read',
+      },
+      {
+        name: t('menu.settings.integrationCredentials'),
+        href: '/settings/integration-credentials',
+        icon: Key,
+        resource: 'ai_integration_credentials',
+        action: 'read',
+      },
+      {
+        name: t('menu.settings.messageTemplates'),
+        href: '/settings/message-templates',
+        icon: LayoutTemplate,
+        resource: 'message_templates',
+        action: 'manage',
+      },
+      {
         name: t('menu.settings.macros'),
         href: '/settings/macros',
         icon: Settings,
         resource: 'macros',
+        action: 'manage',
+      },
+      {
+        name: t('menu.settings.crmForms'),
+        href: '/settings/crm-forms',
+        icon: FileText,
+        resource: 'crm_forms',
+        action: 'read',
+      },
+      {
+        name: t('menu.settings.chatPages'),
+        href: '/settings/chat-pages',
+        icon: MessageSquare,
+        resource: 'chat_pages',
         action: 'read',
       },
       {

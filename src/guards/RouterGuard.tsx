@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePermissions } from '@/contexts/PermissionsContext';
 import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
+import PermissionsLoadFailure from '@/components/permissions/PermissionsLoadFailure';
 import { markBootstrapPhaseEnd, markBootstrapPhaseStart } from '@/utils/requestMonitor';
 
 interface RouterGuardProps {
@@ -11,9 +12,15 @@ interface RouterGuardProps {
 }
 
 const SPECIAL_ROUTES = {
-  PUBLIC_ROUTES: ['/auth', '/login', '/register', '/widget', '/setup'],
-  // Routes that bypass the "redirect authenticated users to /conversations" rule
-  AUTH_EXEMPT_ROUTES: ['/setup/onboarding'],
+  // Anonymous public pages: auth, widget, setup and the lead-capture form
+  // (/f/:slug) + public chat page (/chat/:slug). The latter two must be
+  // reachable by logged-out visitors — they bypass the protected-route auth
+  // check below.
+  PUBLIC_ROUTES: ['/auth', '/login', '/register', '/widget', '/setup', '/f/', '/chat/'],
+  // Routes that bypass the "redirect authenticated users to /conversations" rule.
+  // /f/ and /chat/ are public-facing pages an authenticated user may legitimately
+  // open (e.g. to preview their own form/chat page) without being bounced away.
+  AUTH_EXEMPT_ROUTES: ['/setup/onboarding', '/f/', '/chat/'],
 };
 
 const RouterGuard: React.FC<RouterGuardProps> = ({ children }) => {
@@ -21,7 +28,7 @@ const RouterGuard: React.FC<RouterGuardProps> = ({ children }) => {
   const location = useLocation();
   const { isLoading } = useAuthStore();
   const { user, isAuthenticated, logout } = useAuth();
-  const { isReady: permissionsReady } = usePermissions();
+  const { isReady: permissionsReady, loadFailed: permissionsLoadFailed } = usePermissions();
   const { setupRequired, setupLoading } = useGlobalConfig();
 
   useEffect(() => {
@@ -125,6 +132,13 @@ const RouterGuard: React.FC<RouterGuardProps> = ({ children }) => {
   const isCurrentPathPublic = SPECIAL_ROUTES.PUBLIC_ROUTES.some(route =>
     location.pathname.startsWith(route)
   );
+
+  // A failed fetch leaves `permissionsReady` false forever, so the spinner
+  // below would never end (CRM-164). Public paths are excluded here because
+  // this guard is the only host of the panel that knows which ones they are.
+  if (!isLoading && !isCurrentPathPublic && isAuthenticated && permissionsLoadFailed) {
+    return <PermissionsLoadFailure className="min-h-screen" />;
+  }
 
   if (isLoading || (!isCurrentPathPublic && isAuthenticated && !permissionsReady)) {
     return (

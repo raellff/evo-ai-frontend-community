@@ -64,16 +64,6 @@ export function AssignTeamPanel({ nodeId, data, onUpdate, onClose }: AssignTeamP
     onClose();
   };
 
-  useEffect(() => {
-    if (formDataOptions.teams.length > 0) {
-      const updatedData: AssignTeamNodeData = {
-        ...data,
-        formDataOptions,
-      };
-      onUpdate(nodeId, updatedData);
-    }
-  }, [formDataOptions, data, nodeId, onUpdate]);
-
   const dirty = useMemo(() => teamId !== originalTeamId, [teamId, originalTeamId]);
   const isValid = Boolean(teamId);
 
@@ -92,11 +82,11 @@ export function AssignTeamPanel({ nodeId, data, onUpdate, onClose }: AssignTeamP
     >
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-sidebar-foreground font-medium">
+          <Label htmlFor="assign-team-select" className="text-sidebar-foreground font-medium">
             {t('panels.assignTeam.team')}
           </Label>
           <Select value={teamId} onValueChange={setTeamId} disabled={loading}>
-            <SelectTrigger className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
+            <SelectTrigger id="assign-team-select" className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
               <SelectValue
                 placeholder={
                   loading ? t('panels.assignTeam.loadingTeams') : t('panels.assignTeam.selectTeam')

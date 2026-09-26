@@ -86,7 +86,12 @@ function SchemaDrivenFields({
   className?: string;
   t: (key: string) => string;
 }) {
-  const [shownOptional, setShownOptional] = useState<string[]>([]);
+  // EVO-1275: seed from any optional fields that already carry a value, so a
+  // reopened node (or values preserved across an event switch) renders them
+  // instead of hiding persisted data behind the "+ Add field" picker.
+  const [shownOptional, setShownOptional] = useState<string[]>(
+    () => Object.keys(value).filter((field) => field in optionalFields),
+  );
 
   // F1 fix: when eventName changes upstream, optionalFields changes synchronously
   // but shownOptional state lingers. Compute the filtered set at render time
@@ -97,9 +102,20 @@ function SchemaDrivenFields({
     [shownOptional, optionalFields],
   );
 
+  // Prune entries that no longer belong to the current schema AND surface any
+  // optional field that has a value (e.g. preserved across an event switch).
+  // Returns the previous array unchanged when nothing differs, so a fresh
+  // `value` object reference with identical content can't cause a render loop.
   useEffect(() => {
-    setShownOptional((prev) => prev.filter((field) => field in optionalFields));
-  }, [optionalFields]);
+    setShownOptional((prev) => {
+      const pruned = prev.filter((field) => field in optionalFields);
+      const withValues = Object.keys(value).filter(
+        (field) => field in optionalFields && !pruned.includes(field),
+      );
+      if (withValues.length === 0 && pruned.length === prev.length) return prev;
+      return [...pruned, ...withValues];
+    });
+  }, [optionalFields, value]);
 
   const optionalKeysAvailable = useMemo(
     () => Object.keys(optionalFields).filter((k) => !visibleOptional.includes(k)),
@@ -171,12 +187,15 @@ function SchemaDrivenFields({
 }
 
 function FieldSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const labelId = useId();
   return (
     <div className="space-y-3">
-      <Label className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+      <Label id={labelId} className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
         {title}
       </Label>
-      <div className="space-y-2">{children}</div>
+      <div className="space-y-2" role="group" aria-labelledby={labelId}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -376,6 +395,7 @@ function CustomKeyValueEditor({
   className?: string;
   t: (key: string) => string;
 }) {
+  const labelId = useId();
   const [pairs, setPairs] = useState<Pair[]>(() => pairsFromValue(value));
 
   // F5 fix: resync pairs when the value's KEY SET changes upstream (e.g.,
@@ -420,41 +440,46 @@ function CustomKeyValueEditor({
         <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
         <span>{t('propertiesForm.customWarning')}</span>
       </div>
-      <Label className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+      <Label
+        id={labelId}
+        className="text-sm font-medium uppercase tracking-wide text-muted-foreground"
+      >
         {t('propertiesForm.customSectionLabel')}
       </Label>
-      {pairs.map((pair, index) => (
-        <div key={index} className="flex gap-2">
-          <Input
-            placeholder={t('propertiesForm.customKeyPlaceholder')}
-            aria-label={t('propertiesForm.customKeyPlaceholder')}
-            value={pair.key}
-            onChange={(e) => update(index, { key: e.target.value })}
-            disabled={disabled}
-          />
-          <Input
-            placeholder={t('propertiesForm.customValuePlaceholder')}
-            aria-label={t('propertiesForm.customValuePlaceholder')}
-            value={pair.value}
-            onChange={(e) => update(index, { value: e.target.value })}
-            disabled={disabled}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => remove(index)}
-            disabled={disabled}
-            aria-label={t('propertiesForm.customRemoveAriaLabel')}
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </div>
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={add} disabled={disabled}>
-        <Plus className="mr-1 h-3 w-3" aria-hidden="true" />
-        {t('propertiesForm.customAddLabel')}
-      </Button>
+      <div className="space-y-3" role="group" aria-labelledby={labelId}>
+        {pairs.map((pair, index) => (
+          <div key={index} className="flex gap-2">
+            <Input
+              placeholder={t('propertiesForm.customKeyPlaceholder')}
+              aria-label={t('propertiesForm.customKeyPlaceholder')}
+              value={pair.key}
+              onChange={(e) => update(index, { key: e.target.value })}
+              disabled={disabled}
+            />
+            <Input
+              placeholder={t('propertiesForm.customValuePlaceholder')}
+              aria-label={t('propertiesForm.customValuePlaceholder')}
+              value={pair.value}
+              onChange={(e) => update(index, { value: e.target.value })}
+              disabled={disabled}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => remove(index)}
+              disabled={disabled}
+              aria-label={t('propertiesForm.customRemoveAriaLabel')}
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={add} disabled={disabled}>
+          <Plus className="mr-1 h-3 w-3" aria-hidden="true" />
+          {t('propertiesForm.customAddLabel')}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -111,13 +111,18 @@
       "labels": "Etiquetas",
       "customAttributes": "Atributos Personalizados",
       "cannedResponses": "Respostas Rápidas",
+      "aiCredentials": "Credenciais de IA",
+      "integrationCredentials": "Credenciais de integração",
+      "messageTemplates": "Modelos de Mensagem",
       "macros": "Macros",
       "templates": "Templates",
       "integrations": "Integrações",
       "accessTokens": "Tokens de Acesso",
       "roles": "Perfis e Permissões",
       "admin": "Configurações Admin",
-      "segments": "Segmentos"
+      "segments": "Segmentos",
+      "crmForms": "Formulários de captura",
+      "chatPages": "Páginas de chat"
     }
   }
 }

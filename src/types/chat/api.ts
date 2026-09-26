@@ -51,6 +51,9 @@ export interface Conversation {
   snoozed_until: string | null;
   timestamp: number;
   unread_count: number;
+  /** True quando o contato é um grupo (contact.type === 'group'). Usado pelo
+   *  matcher de realtime da aba "Grupos". */
+  is_group?: boolean;
   waiting_since: number;
   meta: ConversationMeta;
   contact: Contact;
@@ -198,6 +201,7 @@ export interface MessageContentAttributes extends Record<string, unknown> {
   is_unsupported?: boolean;
   deleted?: boolean;
   external_created_at?: number;
+  external_error?: string;
 }
 
 // ===== MESSAGE =====
@@ -304,6 +308,7 @@ export interface CreateConversationRequest {
     content: string;
     private?: boolean;
     template_params?: {
+      id?: string;
       name: string;
       category: string;
       language: string;
@@ -335,6 +340,7 @@ export interface SendMessageRequest {
   attachments?: File[];
   message_type: MessageTypeValue;
   template_params?: {
+    id?: string;
     name: string;
     category: string;
     language: string;
@@ -365,7 +371,7 @@ export interface ConversationListParams {
   page_size?: number;
   pageSize?: number;
   status?: 'open' | 'resolved' | 'pending' | 'snoozed' | 'all';
-  assignee_type?: 'me' | 'unassigned' | 'all';
+  assignee_type?: 'me' | 'unassigned' | 'assigned' | 'all';
   assignee_id?: string;
   inbox_id?: string;
   team_id?: string;
@@ -373,12 +379,23 @@ export interface ConversationListParams {
   q?: string;
   sort_by?: 'last_activity_at' | 'created_at' | 'priority';
   conversation_type?: 'mention' | 'unattended' | 'participating';
+  unread?: boolean;
+  unanswered?: boolean; // EVO-1963: open + awaiting agent reply (waiting_since present)
+  is_group?: boolean;
+  archived?: boolean;
 }
 
 export interface MessageListParams {
   before?: string;
   after?: string;
 }
+
+// Describes the query that produced the current conversation list, so pagination
+// (load-more) can replay the SAME request for the next page instead of falling
+// back to an unfiltered GET.
+export type ConversationsQuery =
+  | { kind: 'list'; params: ConversationListParams }
+  | { kind: 'filter'; request: FilterRequest };
 
 // Aliases para compatibilidade com código legado
 export type ConversationParams = ConversationListParams;

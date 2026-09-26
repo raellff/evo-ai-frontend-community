@@ -64,16 +64,6 @@ export function AssignAgentPanel({ nodeId, data, onUpdate, onClose }: AssignAgen
     onClose();
   };
 
-  useEffect(() => {
-    if (formDataOptions.agents.length > 0) {
-      const updatedData: AssignAgentNodeData = {
-        ...data,
-        formDataOptions,
-      };
-      onUpdate(nodeId, updatedData);
-    }
-  }, [formDataOptions, data, nodeId, onUpdate]);
-
   const dirty = useMemo(() => agentId !== originalAgentId, [agentId, originalAgentId]);
   const isValid = Boolean(agentId);
 
@@ -92,11 +82,11 @@ export function AssignAgentPanel({ nodeId, data, onUpdate, onClose }: AssignAgen
     >
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-sidebar-foreground font-medium">
+          <Label htmlFor="assign-agent-select" className="text-sidebar-foreground font-medium">
             {t('panels.assignAgent.user')}
           </Label>
           <Select value={agentId} onValueChange={setAgentId} disabled={loading}>
-            <SelectTrigger className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
+            <SelectTrigger id="assign-agent-select" className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground">
               <SelectValue
                 placeholder={
                   loading ? t('panels.assignAgent.loadingUsers') : t('panels.assignAgent.selectUser')

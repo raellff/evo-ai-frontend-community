@@ -7,7 +7,8 @@
       "viewDetails": "Ver detalles",
       "edit": "Editar contacto",
       "delete": "Eliminar contacto"
-    }
+    },
+    "dataProtectedTooltip": "Datos protegidos por la política de la cuenta"
   },
   "details": {
     "title": "Detalles del Contacto",
@@ -35,7 +36,8 @@
       "location": "Ubicación",
       "description": "Descripción",
       "timeline": "Línea de Tiempo",
-      "linkedCompanies": "Empresas Vinculadas"
+      "linkedCompanies": "Empresas Vinculadas",
+      "socialProfiles": "Redes Sociales"
     },
     "fields": {
       "name": "Nombre",
@@ -59,7 +61,15 @@
     "errors": {
       "invalidDate": "Fecha inválida"
     },
-    "na": "N/A"
+    "na": "N/A",
+    "page": {
+      "back": "Volver",
+      "close": "Cerrar",
+      "notFound": {
+        "title": "Contacto no encontrado",
+        "description": "No pudimos encontrar este contacto. Puede haber sido eliminado."
+      }
+    }
   },
   "export": {
     "title": "Exportar Contactos",
@@ -348,6 +358,12 @@
     "description": "Configure los filtros para encontrar los contactos que busca",
     "apply": "Aplicar Filtros",
     "clear": "Limpiar Filtros",
+    "popover": {
+      "trigger": "Filtros",
+      "title": "Filtrar Contactos",
+      "clearAll": "Limpiar todo",
+      "noOptions": "No hay opciones disponibles"
+    },
     "attribute": "Atributo",
     "operator": "Operador",
     "value": "Valor",
@@ -377,7 +393,18 @@
       "identifier": "Identificador",
       "created_at": "Fecha de Creación",
       "last_activity_at": "Última Actividad",
-      "type": "Tipo de Contacto"
+      "type": "Tipo de Contacto",
+      "labels": "Etiquetas",
+      "country_code": "País (código ISO)",
+      "city": "Ciudad",
+      "company": "Empresa",
+      "blocked": "Estado"
+    },
+    "options": {
+      "blocked": {
+        "true": "Bloqueado",
+        "false": "No bloqueado"
+      }
     }
   },
   "import": {
@@ -422,9 +449,11 @@
   },
   "table": {
     "columns": {
-      "contact": "Contacto",
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
       "type": "Tipo",
-      "tags": "Etiquetas",
+      "labels": "Etiquetas",
       "status": "Estado",
       "pipelines": "Pipelines"
     },
@@ -648,7 +677,14 @@
       "occurredAfter": "Desde",
       "occurredBefore": "Hasta",
       "clear": "Limpiar filtros",
-      "allEventNames": "Todos los nombres"
+      "allEventNames": "Todos los nombres",
+      "period": "Período",
+      "periodPresets": {
+        "today": "Hoy",
+        "7d": "Últimos 7 días",
+        "30d": "Últimos 30 días",
+        "all": "Todo el período"
+      }
     },
     "types": {
       "_comment": "Los valores de términos del protocolo (Identify/Track/Page/Screen/Segment) se mantienen sin traducir intencionalmente en todos los locales.",
@@ -677,6 +713,8 @@
       "expand": "Ver detalles",
       "collapse": "Ocultar detalles",
       "properties": "Propiedades del evento",
+      "traits": "Atributos del evento",
+      "noData": "Sin datos adicionales para este evento",
       "justNow": "ahora",
       "enriched": {
         "campaign": "Campaña: {{name}}",
@@ -699,6 +737,28 @@
       "pipeline_conversation_created": "Conversación creada en el pipeline",
       "pipeline_conversation_updated": "Conversación actualizada en el pipeline",
       "pipeline_stage_changed": "Etapa del pipeline cambiada"
+    }
+  },
+  "notes": {
+    "title": "Notas",
+    "addPlaceholder": "Escribe una nota sobre este contacto...",
+    "empty": "Todavía no hay notas.",
+    "actions": {
+      "add": "Añadir nota",
+      "adding": "Añadiendo...",
+      "edit": "Editar nota",
+      "delete": "Eliminar nota",
+      "cancel": "Cancelar",
+      "save": "Guardar"
+    },
+    "messages": {
+      "loadError": "Error al cargar las notas",
+      "createSuccess": "Nota añadida",
+      "createError": "Error al añadir la nota",
+      "updateSuccess": "Nota actualizada",
+      "updateError": "Error al actualizar la nota",
+      "deleteSuccess": "Nota eliminada",
+      "deleteError": "Error al eliminar la nota"
     }
   }
 }

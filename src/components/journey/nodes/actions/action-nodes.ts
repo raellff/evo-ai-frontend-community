@@ -27,6 +27,7 @@ export * from './update-custom-attribute';
 
 // Messaging
 export * from './send-message';
+export * from './send-canned-response';
 export * from './send-transcript';
 export * from './send-email-team';
 
@@ -37,6 +38,9 @@ export * from './set-variable';
 export * from './assign-agent';
 export * from './assign-team';
 export * from './assign-bot';
+export * from './assign-to-pipeline';
+export * from './move-to-pipeline-stage';
+export * from './create-pipeline-task';
 
 // Conversation Management
 export * from './mute-conversation';

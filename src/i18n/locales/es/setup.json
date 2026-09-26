@@ -45,12 +45,21 @@
     },
     "submit": {
       "idle": "Crear cuenta y continuar",
-      "loading": "Configurando..."
+      "loading": "Configurando...",
+      "continue": "Continuar"
     }
+  },
+  "extension": {
+    "unavailable": "Este paso de configuración no está disponible. Vuelve para completar la configuración.",
+    "back": "Volver"
   },
   "success": {
     "title": "¡Configuración completa!",
     "description": "Ahora puede iniciar sesión con sus credenciales."
+  },
+  "degraded": {
+    "title": "Configuración completada, con un pendiente",
+    "description": "La instalación terminó, pero el aprovisionamiento de la cuenta no se completó. Se reintenta automáticamente en ~10 minutos."
   },
   "error": {
     "generic": "Ocurrió un error durante la configuración. Por favor, inténtelo de nuevo.",

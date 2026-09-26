@@ -1,5 +1,6 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { Edit, Trash2 } from 'lucide-react';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { Edit, Paperclip, Trash2 } from 'lucide-react';
 import BaseTable from '@/components/base/BaseTable';
 import { CannedResponse } from '@/types/knowledge';
 
@@ -27,6 +28,7 @@ export default function CannedResponsesTable({
   sortOrder,
 }: CannedResponsesTableProps) {
   const { t } = useLanguage('cannedResponses');
+  const { can, isReady } = usePermissions();
 
   const columns = [
     {
@@ -34,8 +36,16 @@ export default function CannedResponsesTable({
       label: t('table.columns.shortCode'),
       sortable: true,
       render: (cannedResponse: CannedResponse) => (
-        <div className="font-mono font-medium text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border inline-block">
-          {cannedResponse.short_code}
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-medium text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border inline-block">
+            {cannedResponse.short_code}
+          </span>
+          {!!cannedResponse.attachments?.length && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Paperclip className="h-3 w-3" />
+              {cannedResponse.attachments.length}
+            </span>
+          )}
         </div>
       ),
     },
@@ -65,12 +75,14 @@ export default function CannedResponsesTable({
       label: t('actions.edit'),
       icon: <Edit className="h-4 w-4" />,
       onClick: onEditCannedResponse,
+      show: () => isReady && can('canned_responses', 'update'),
     },
     {
       label: t('actions.delete'),
       icon: <Trash2 className="h-4 w-4" />,
       onClick: onDeleteCannedResponse,
       variant: 'destructive' as const,
+      show: () => isReady && can('canned_responses', 'delete'),
     },
   ];
 

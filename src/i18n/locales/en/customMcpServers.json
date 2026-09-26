@@ -151,6 +151,68 @@
       "update": "Save Changes"
     }
   },
+  "wizard": {
+    "progress": {
+      "identity": "Identity",
+      "connection": "Connection",
+      "advanced": "Advanced",
+      "finish": "Finish"
+    },
+    "step1": {
+      "title": "Let's identify your MCP server",
+      "subtitle": "Give it a name, description and tags so your team can find it later."
+    },
+    "step2": {
+      "title": "How does it connect?",
+      "subtitle": "Set the server URL and any HTTP headers sent on every request."
+    },
+    "step3": {
+      "title": "Advanced settings",
+      "subtitle": "Optional. Adjust the request timeout and how many times to retry."
+    },
+    "step4": {
+      "title": "Finishing touches",
+      "subtitle": "Review the settings before saving your MCP server.",
+      "reviewHint": "Check the details below. You can go back to change anything."
+    },
+    "actions": {
+      "continue": "Continue",
+      "back": "Back",
+      "create": "Create MCP server",
+      "save": "Save changes",
+      "cancel": "Cancel"
+    },
+    "mode": {
+      "label": "Edit mode",
+      "form": "Form",
+      "json": "Advanced JSON"
+    },
+    "advanced": {
+      "title": "Advanced config (JSON)",
+      "subtitle": "Edit the whole server config as raw JSON.",
+      "hint": "Fields: name, description, url, headers, timeout, retry_count, tags.",
+      "errors": {
+        "nameRequired": "\"name\" is required and cannot be empty.",
+        "nameType": "\"name\" must be text.",
+        "descriptionType": "\"description\" must be text.",
+        "urlRequired": "\"url\" is required and cannot be empty.",
+        "urlType": "\"url\" must be text.",
+        "urlInvalid": "\"url\" is not a valid URL (e.g. https://my-server.com/mcp).",
+        "headersType": "\"headers\" must be an object.",
+        "headerValueType": "Header values must be text: {{keys}}.",
+        "timeoutRange": "\"timeout\" must be a whole number between {{min}} and {{max}}.",
+        "retryRange": "\"retry_count\" must be a whole number between {{min}} and {{max}}.",
+        "tagsType": "\"tags\" must be a list of text values."
+      }
+    },
+    "test": {
+      "button": "Test connection",
+      "testing": "Testing…",
+      "ok_one": "Connected — {{count}} tool discovered",
+      "ok_other": "Connected — {{count}} tools discovered",
+      "fail": "Connection failed"
+    }
+  },
   "modal": {
     "title": {
       "create": "Create New Custom MCP Server",

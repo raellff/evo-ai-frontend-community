@@ -9,6 +9,7 @@ import {
   Input,
   Textarea,
   Button,
+  Checkbox,
 } from '@evoapi/design-system';
 import { Trash2 } from 'lucide-react';
 import {
@@ -19,6 +20,16 @@ import {
 import type { AutomationFormData } from '@/hooks/automation/useAutomationFormData';
 import type { AutomationActionType } from '@/types/automation';
 import type { MessageTemplateVariable } from '@/hooks/automation/useAutomationFormData';
+import CustomAttributeValueInput from './CustomAttributeValueInput';
+
+// Custom attribute models that map to a concrete record in automation scope and
+// can therefore be written by the update_custom_attribute action (EVO-1751).
+// pipeline / pipeline_stage attributes are config-level (no per-run record).
+const UPDATABLE_ATTRIBUTE_MODELS: string[] = [
+  'conversation_attribute',
+  'contact_attribute',
+  'pipeline_item_attribute',
+];
 
 interface Props {
   control: Control<AutomationRuleFormData>;
@@ -313,15 +324,47 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
               team_ids: [],
               message: '',
             };
+            const selectedIds = ((current.team_ids as Array<string | number>) ?? []).map(String);
+            const toggleTeam = (id: string) => {
+              const next = selectedIds.includes(id)
+                ? selectedIds.filter((t) => t !== id)
+                : [...selectedIds, id];
+              field.onChange([{ ...current, team_ids: next, message: current.message ?? '' }]);
+            };
             return (
-              <Textarea
-                value={(current.message as string) ?? ''}
-                onChange={(e) =>
-                  field.onChange([{ ...current, message: e.target.value }])
-                }
-                placeholder={t('form.fields.actionRow.params.send_email_to_team')}
-                rows={2}
-              />
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('form.fields.actionRow.params.send_email_to_team_teams')}
+                </label>
+                <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border p-2">
+                  {formData.teams.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      {t('form.fields.actionRow.params.send_email_to_team_no_teams')}
+                    </p>
+                  ) : (
+                    formData.teams.map((team) => {
+                      const id = String(team.id);
+                      return (
+                        <label key={id} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox
+                            checked={selectedIds.includes(id)}
+                            onCheckedChange={() => toggleTeam(id)}
+                          />
+                          {team.name}
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                <Textarea
+                  value={(current.message as string) ?? ''}
+                  onChange={(e) =>
+                    field.onChange([{ ...current, message: e.target.value }])
+                  }
+                  placeholder={t('form.fields.actionRow.params.send_email_to_team')}
+                  rows={2}
+                />
+              </div>
             );
           }}
         />
@@ -365,16 +408,15 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Input
-                    type="number"
                     value={
                       current.assigned_to_id != null && current.assigned_to_id !== ''
                         ? String(current.assigned_to_id)
                         : ''
                     }
                     onChange={(e) => {
-                      const raw = e.target.value;
-                      const num = raw === '' ? undefined : Number(raw);
-                      setField('assigned_to_id', Number.isNaN(num) ? undefined : num);
+                      // user ids are UUID strings — keep the raw value, don't coerce to Number
+                      const raw = e.target.value.trim();
+                      setField('assigned_to_id', raw === '' ? undefined : raw);
                     }}
                     placeholder={t('form.fields.actionRow.params.create_pipeline_task_assignee')}
                   />
@@ -417,19 +459,14 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
               field.onChange([{ ...current, attachment_ids: parsed }]);
             };
             const setInbox = (raw: string) => {
-              if (raw === '') {
+              const trimmed = raw.trim();
+              if (trimmed === '') {
                 const next = { ...current };
                 delete (next as Record<string, unknown>).inbox_id;
                 field.onChange([{ ...next, attachment_ids: ids }]);
               } else {
-                const num = Number(raw);
-                field.onChange([
-                  {
-                    ...current,
-                    attachment_ids: ids,
-                    inbox_id: Number.isNaN(num) ? undefined : num,
-                  },
-                ]);
+                // inbox ids are UUID strings — keep the raw value
+                field.onChange([{ ...current, attachment_ids: ids, inbox_id: trimmed }]);
               }
             };
             return (
@@ -440,7 +477,6 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
                   placeholder={t('form.fields.actionRow.params.send_attachment_ids')}
                 />
                 <Input
-                  type="number"
                   value={inboxId != null ? String(inboxId) : ''}
                   onChange={(e) => setInbox(e.target.value)}
                   placeholder={t('form.fields.actionRow.params.send_attachment_inbox')}
@@ -450,6 +486,9 @@ function ActionParamsRenderer({ control, index, actionName, formData, t }: Param
           }}
         />
       );
+
+    case 'update_custom_attribute':
+      return <CustomAttributeParam control={control} index={index} formData={formData} t={t} />;
 
     default:
       return null;
@@ -512,6 +551,83 @@ function SelectParam({ control, index, options, placeholder, coerce = 'single' }
               ))}
             </SelectContent>
           </Select>
+        );
+      }}
+    />
+  );
+}
+
+function CustomAttributeParam({
+  control,
+  index,
+  formData,
+  t,
+}: {
+  control: Control<AutomationRuleFormData>;
+  index: number;
+  formData: AutomationFormData;
+  t: (key: string) => string;
+}) {
+  const options = formData.customAttributes.filter((attr) =>
+    UPDATABLE_ATTRIBUTE_MODELS.includes(attr.attribute_model),
+  );
+
+  return (
+    <Controller
+      control={control}
+      name={`actions.${index}.action_params`}
+      render={({ field }) => {
+        const current = (Array.isArray(field.value) ? field.value[0] : undefined) as
+          | { custom_attribute_key?: string; custom_attribute_model?: string; custom_attribute_value?: string }
+          | undefined;
+        const selectedKey = current?.custom_attribute_key ?? '';
+        const selectedModel = current?.custom_attribute_model ?? '';
+        const selectedAttribute = options.find(
+          (attr) => attr.attribute_key === selectedKey && attr.attribute_model === selectedModel,
+        );
+        const composite = selectedAttribute
+          ? `${selectedAttribute.attribute_model}::${selectedAttribute.attribute_key}`
+          : '';
+
+        const pickAttribute = (value: string) => {
+          const sep = value.indexOf('::');
+          if (sep === -1) return;
+          const model = value.slice(0, sep);
+          const key = value.slice(sep + 2);
+          field.onChange([{ custom_attribute_key: key, custom_attribute_model: model, custom_attribute_value: '' }]);
+        };
+        const setValue = (value: string) => {
+          field.onChange([
+            { custom_attribute_key: selectedKey, custom_attribute_model: selectedModel, custom_attribute_value: value },
+          ]);
+        };
+
+        return (
+          <div className="space-y-2">
+            <Select value={composite} onValueChange={pickAttribute}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('form.fields.actionRow.params.update_custom_attribute')} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((attr) => (
+                  <SelectItem
+                    key={`${attr.attribute_model}::${attr.attribute_key}`}
+                    value={`${attr.attribute_model}::${attr.attribute_key}`}
+                  >
+                    {`${attr.attribute_display_name} · ${t(`form.fields.customAttributeModels.${attr.attribute_model}`)}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedAttribute && (
+              <CustomAttributeValueInput
+                attribute={selectedAttribute}
+                value={current?.custom_attribute_value ?? ''}
+                onChange={setValue}
+                placeholder={t('form.fields.actionRow.params.update_custom_attribute_value')}
+              />
+            )}
+          </div>
         );
       }}
     />

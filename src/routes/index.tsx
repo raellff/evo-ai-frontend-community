@@ -27,10 +27,13 @@ import MondayCallback from '@/pages/MondayCallback';
 import AtlassianCallback from '@/pages/AtlassianCallback';
 import MicrosoftCallback from '@/pages/MicrosoftCallback';
 import SurveyResponse from '@/pages/Public/Survey/SurveyResponse';
+import PublicChatPage from '@/pages/Public/Chat/ChatPage';
+import FormPage from '@/pages/Public/Form/FormPage';
 
 // Páginas customer
 import Dashboard from '@/pages/Customer/Dashboard';
 import Agents from '@/pages/Customer/Agents';
+import AgentsIndexRedirect from '@/components/agents/AgentsIndexRedirect';
 import AgentEditPage from '@/pages/Customer/Agents/Agent/AgentEditPage';
 import MCPServers from '@/pages/Customer/Agents/MCPServers';
 import CustomMCPServers from '@/pages/Customer/Agents/CustomMCPServers';
@@ -46,6 +49,7 @@ import AutomationForm from '../pages/Customer/Automation/AutomationForm';
 // import AutomationFlowEditor from '../pages/Customer/Automation/AutomationFlowEditor';
 import Pipelines from '@/pages/Customer/Pipelines/Pipelines';
 import PipelineKanban from '@/pages/Customer/Pipelines/PipelineKanban';
+import PipelineFormPage from '@/pages/Customer/Pipelines/PipelineFormPage';
 import { AccountSettings } from '@/pages/Customer/Settings/Account';
 import Accounts from '@/pages/Customer/Settings/Accounts/Accounts';
 import Teams from '@/pages/Customer/Settings/Teams/Teams';
@@ -60,8 +64,13 @@ import JourneyFlowEditor from '@/pages/Customer/Journey/JourneyFlowEditor';
 import Campaigns from '@/pages/Customer/Campaigns/Campaigns';
 import NewCampaign from '@/pages/Customer/Campaigns/NewCampaign/NewCampaign';
 import CannedResponses from '@/pages/Customer/Settings/CannedResponses';
+import AiCredentials from '@/pages/Customer/Settings/AiCredentials';
+import IntegrationCredentials from '@/pages/Customer/Settings/IntegrationCredentials';
+import MessageTemplates from '@/pages/Customer/Settings/MessageTemplates';
 import { Macros } from '@/pages/Customer/Settings/Macros';
-import Products from '@/pages/Customer/Settings/Products';
+import Products, { ProductsImport } from '@/pages/Customer/Settings/Products';
+import CrmForms from '@/pages/Customer/Settings/CrmForms';
+import ChatPages from '@/pages/Customer/Settings/ChatPages';
 import Templates from '@/pages/Customer/Settings/Templates/Templates';
 import { Integrations } from '@/pages/Customer/Settings/Integrations';
 import EmailTemplateEditor from '@/pages/Customer/Settings/EmailTemplateEditor';
@@ -77,8 +86,6 @@ import HubSpotPage from '../pages/Customer/Settings/Integrations/HubSpotPage';
 import ShopifyPage from '../pages/Customer/Settings/Integrations/ShopifyPage';
 import LinearPage from '../pages/Customer/Settings/Integrations/LinearPage';
 import DashboardAppPage from '../pages/Customer/DashboardApp';
-// import { Overview, Conversations } from '../pages/Customer/Reports';
-// import * as Reports from '../pages/Customer/Reports';
 
 // Páginas admin
 import AdminSettingsLayout from '@/pages/Admin/Settings';
@@ -86,13 +93,10 @@ const RolesList = React.lazy(() => import('@/pages/Admin/Roles/RolesList'));
 const RoleDetail = React.lazy(() => import('@/pages/Admin/Roles/RoleDetail'));
 const SmtpConfig = React.lazy(() => import('@/pages/Admin/Settings/SmtpConfig'));
 const StorageConfig = React.lazy(() => import('@/pages/Admin/Settings/StorageConfig'));
-const SocialLoginConfig = React.lazy(() => import('@/pages/Admin/Settings/SocialLoginConfig'));
 const ChannelConfig = React.lazy(() => import('@/pages/Admin/Settings/ChannelConfig'));
 const OpenAIConfig = React.lazy(() => import('@/pages/Admin/Settings/OpenAIConfig'));
 const IntegrationsConfig = React.lazy(() => import('@/pages/Admin/Settings/IntegrationsConfig'));
 const EvolutionHubConfig = React.lazy(() => import('@/pages/Admin/Settings/EvolutionHubConfig'));
-const InboundEmailConfig = React.lazy(() => import('@/pages/Admin/Settings/InboundEmailConfig'));
-const FrontendRuntimeConfig = React.lazy(() => import('@/pages/Admin/Settings/FrontendRuntimeConfig'));
 
 // Página de tutoriais
 import Tutorials from '@/pages/Customer/Tutorials';
@@ -376,6 +380,26 @@ const AppRouter = () => {
             }
           />
 
+          {/* Public lead-capture form route (B14.02) */}
+          <Route
+            path="/f/:slug"
+            element={
+              <PublicRoute>
+                <FormPage />
+              </PublicRoute>
+            }
+          />
+
+          {/* Public chat page route (B14.03) */}
+          <Route
+            path="/chat/:slug"
+            element={
+              <PublicRoute>
+                <PublicChatPage />
+              </PublicRoute>
+            }
+          />
+
           {/* Rota de Setup Inicial */}
           <Route path="/setup" element={<Setup />} />
           <Route path="/setup/onboarding" element={<OnboardingPage />} />
@@ -435,6 +459,21 @@ const AppRouter = () => {
                       <FeatureRoute feature="pipelines">
                         <Pipelines />
                       </FeatureRoute>
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/pipelines/new"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="pipelines" action="create">
+                      <PipelineFormPage />
                     </PermissionRoute>
                   </MainLayout>
                 </CustomerRoute>
@@ -680,7 +719,8 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="users" action="read">
+                    {/* EVO-1938: users.manage (admin) — agents hold users.read but not manage */}
+                    <PermissionRoute resource="users" action="manage">
                       <Users />
                     </PermissionRoute>
                   </MainLayout>
@@ -695,7 +735,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="teams" action="read">
+                    <PermissionRoute resource="teams" action="manage">
                       <Teams />
                     </PermissionRoute>
                   </MainLayout>
@@ -710,7 +750,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="teams" action="create">
+                    <PermissionRoute resource="teams" action="manage">
                       <AddUsers />
                     </PermissionRoute>
                   </MainLayout>
@@ -740,7 +780,13 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="custom_attribute_definitions" action="read">
+                    <PermissionRoute
+                      permissions={[
+                        'custom_attribute_definitions.create',
+                        'custom_attribute_definitions.update',
+                        'custom_attribute_definitions.delete',
+                      ]}
+                    >
                       <CustomAttributes />
                     </PermissionRoute>
                   </MainLayout>
@@ -765,6 +811,51 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/settings/ai-credentials"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="ai_api_keys" action="read">
+                      <AiCredentials />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/integration-credentials"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="ai_integration_credentials" action="read">
+                      <IntegrationCredentials />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/message-templates"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="message_templates" action="manage">
+                      <MessageTemplates />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/products"
             element={
               <PrivateRoute>
@@ -780,12 +871,57 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/settings/crm-forms"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="crm_forms" action="read">
+                      <CrmForms />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/settings/chat-pages"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="chat_pages" action="read">
+                      <ChatPages />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/products/import"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="products" action="create">
+                      <ProductsImport />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/settings/macros"
             element={
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="macros" action="read">
+                    <PermissionRoute resource="macros" action="manage">
                       <Macros />
                     </PermissionRoute>
                   </MainLayout>
@@ -1002,7 +1138,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="integrations" action="read">
+                    <PermissionRoute resource="dashboard_apps" action="read">
                       <FeatureRoute feature="integrations">
                         <DashboardAppPage />
                       </FeatureRoute>
@@ -1054,90 +1190,13 @@ const AppRouter = () => {
             }
           />
 
-          {/* Reports Routes */}
-          {/* <Route
-            path="/reports/overview"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Overview />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports/conversations"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Conversations />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports/users"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Reports.Agents />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reports/labels"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <Reports.Labels />
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          /> */}
-          <Route
-            path="/bots"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="bots" action="read">
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <h2 className="text-2xl font-bold mb-2">🤖 Bots</h2>
-                          <p className="text-muted-foreground">Página em desenvolvimento</p>
-                        </div>
-                      </div>
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-
           <Route
             path="/channels"
             element={
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="channels" action="read">
+                    <PermissionRoute resource="inboxes" action="read">
                       <Channels />
                     </PermissionRoute>
                   </MainLayout>
@@ -1152,7 +1211,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="channels" action="create">
+                    <PermissionRoute resource="inboxes" action="create">
                       <NewChannel />
                     </PermissionRoute>
                   </MainLayout>
@@ -1167,7 +1226,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="channels" action="create">
+                    <PermissionRoute resource="inboxes" action="update">
                       <ChannelSettings />
                     </PermissionRoute>
                   </MainLayout>
@@ -1182,7 +1241,7 @@ const AppRouter = () => {
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="message_templates" action="create">
+                    <PermissionRoute resource="message_templates" action="manage">
                       <EmailTemplateEditor />
                     </PermissionRoute>
                   </MainLayout>
@@ -1191,28 +1250,7 @@ const AppRouter = () => {
             }
           />
 
-          <Route
-            path="/reports"
-            element={
-              <PrivateRoute>
-                <CustomerRoute>
-                  <MainLayout>
-                    <PermissionRoute resource="reports" action="read">
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <h2 className="text-2xl font-bold mb-2">📊 Relatórios</h2>
-                          <p className="text-muted-foreground">Página em desenvolvimento</p>
-                        </div>
-                      </div>
-                    </PermissionRoute>
-                  </MainLayout>
-                </CustomerRoute>
-              </PrivateRoute>
-            }
-          />
-
-          {/* Rota principal de agents redireciona para /agents/list */}
-          <Route path="/agents" element={<Navigate to="/agents/list" replace />} />
+          <Route path="/agents" element={<AgentsIndexRedirect />} />
 
           {/* Lista de agentes */}
           <Route
@@ -1314,6 +1352,36 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/agents/custom-mcp-servers/new"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="ai_custom_mcp_servers" action="create">
+                      <CustomMCPServers />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/agents/custom-mcp-servers/:id/edit"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="ai_custom_mcp_servers" action="update">
+                      <CustomMCPServers />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/agents/tools"
             element={
               <PrivateRoute>
@@ -1344,14 +1412,46 @@ const AppRouter = () => {
           />
 
           <Route
+            path="/agents/custom-tools/new"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="ai_custom_tools" action="create">
+                      <CustomTools />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/agents/custom-tools/:id/edit"
+            element={
+              <PrivateRoute>
+                <CustomerRoute>
+                  <MainLayout>
+                    <PermissionRoute resource="ai_custom_tools" action="update">
+                      <CustomTools />
+                    </PermissionRoute>
+                  </MainLayout>
+                </CustomerRoute>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/dashboard"
             element={
               <PrivateRoute>
                 <CustomerRoute>
                   <MainLayout>
-                    <PermissionRoute resource="dashboard" action="read">
-                      <Dashboard />
-                    </PermissionRoute>
+                    {/* No PermissionRoute: `dashboard.read` is a basic auth read,
+                        not a catalog resource, so `can('dashboard','read')` denies
+                        for everyone. Dashboard is the landing page — always visible
+                        to authenticated users (EVO-2071 AC7). */}
+                    <Dashboard />
                   </MainLayout>
                 </CustomerRoute>
               </PrivateRoute>
@@ -1469,20 +1569,6 @@ const AppRouter = () => {
               }
             />
             <Route
-              path="social-login"
-              element={
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                    </div>
-                  }
-                >
-                  <SocialLoginConfig />
-                </Suspense>
-              }
-            />
-            <Route
               path="channels"
               element={
                 <Suspense
@@ -1535,34 +1621,6 @@ const AppRouter = () => {
                   }
                 >
                   <EvolutionHubConfig />
-                </Suspense>
-              }
-            />
-            <Route
-              path="inbound-email"
-              element={
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                    </div>
-                  }
-                >
-                  <InboundEmailConfig />
-                </Suspense>
-              }
-            />
-            <Route
-              path="frontend-runtime"
-              element={
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                    </div>
-                  }
-                >
-                  <FrontendRuntimeConfig />
                 </Suspense>
               }
             />

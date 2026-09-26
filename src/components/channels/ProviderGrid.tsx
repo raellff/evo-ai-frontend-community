@@ -10,6 +10,7 @@ import {
 import { ArrowLeft } from 'lucide-react';
 import { ChannelIcon } from '@/components/channels';
 import { useLanguage } from '@/hooks/useLanguage';
+import { ChannelTypeId } from '@/types/channels/providers';
 
 export interface Provider {
   id: string;
@@ -20,15 +21,7 @@ export interface Provider {
 }
 
 interface ProviderGridProps {
-  channelType:
-    | 'web_widget'
-    | 'whatsapp'
-    | 'facebook'
-    | 'instagram'
-    | 'telegram'
-    | 'sms'
-    | 'email'
-    | 'api';
+  channelType: ChannelTypeId;
   providers: Provider[];
   isDisabled?: (providerId: string) => boolean;
   disabledTooltip?: (providerId: string) => string | undefined;
@@ -61,7 +54,7 @@ const ProviderGrid: React.FC<ProviderGridProps> = ({
             onClick={() => !disabled && onSelect(provider)}
           >
             {provider.recommended && (
-              <div className="absolute -top-2 right-4 bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+              <div className="absolute -top-2 right-4 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full font-medium">
                 {t('newChannel.providers.badges.recommended')}
               </div>
             )}

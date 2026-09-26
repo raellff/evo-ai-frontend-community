@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Button,
   Dialog,
@@ -122,6 +123,16 @@ export const getSystemVariables = (t: any): VariableOption[] => [
     description: t('environmentManager.systemVariables.journey.currentStepDescription'),
     category: t('environmentManager.categories.journey'),
   },
+
+  // Conversa
+  {
+    value: '{{conversation.pipeline_stage_id}}',
+    label: t('environmentManager.systemVariables.conversation.pipelineStageId'),
+    description: t(
+      'environmentManager.systemVariables.conversation.pipelineStageIdDescription',
+    ),
+    category: t('environmentManager.categories.conversation'),
+  },
 ];
 
 export function EnvironmentManager({
@@ -145,19 +156,19 @@ export function EnvironmentManager({
 
   const handleCreateVariable = async () => {
     if (!newVariable.name.trim()) {
-      alert(t('environmentManager.form.fields.name.required'));
+      toast.error(t('environmentManager.form.fields.name.required'));
       return;
     }
 
     // Validar nome (sem espaços, apenas letras, números e underscore)
     if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(newVariable.name)) {
-      alert(t('environmentManager.form.fields.name.invalid'));
+      toast.error(t('environmentManager.form.fields.name.invalid'));
       return;
     }
 
     // Verificar se já existe
     if (variables.some(v => v.name === newVariable.name)) {
-      alert(t('environmentManager.form.fields.name.exists'));
+      toast.error(t('environmentManager.form.fields.name.exists'));
       return;
     }
 
@@ -167,7 +178,7 @@ export function EnvironmentManager({
       setNewVariable({ name: '', type: 'text', defaultValue: '', description: '' });
       setShowCreateForm(false);
     } catch (err) {
-      alert(t('environmentManager.form.messages.createError'));
+      toast.error(t('environmentManager.form.messages.createError'));
     }
   };
 
@@ -186,19 +197,19 @@ export function EnvironmentManager({
     if (!editingVariable) return;
 
     if (!newVariable.name.trim()) {
-      alert(t('environmentManager.form.fields.name.required'));
+      toast.error(t('environmentManager.form.fields.name.required'));
       return;
     }
 
     // Validar nome (sem espaços, apenas letras, números e underscore)
     if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(newVariable.name)) {
-      alert(t('environmentManager.form.fields.name.invalid'));
+      toast.error(t('environmentManager.form.fields.name.invalid'));
       return;
     }
 
     // Verificar se já existe (exceto a própria variável)
     if (variables.some(v => v.name === newVariable.name && v.id !== editingVariable.id)) {
-      alert(t('environmentManager.form.fields.name.exists'));
+      toast.error(t('environmentManager.form.fields.name.exists'));
       return;
     }
 
@@ -209,7 +220,7 @@ export function EnvironmentManager({
       setShowCreateForm(false);
       setEditingVariable(null);
     } catch (err) {
-      alert(t('environmentManager.form.messages.updateError'));
+      toast.error(t('environmentManager.form.messages.updateError'));
     }
   };
 
@@ -224,7 +235,7 @@ export function EnvironmentManager({
       await deleteVariable(deletingVariable.id);
       setDeletingVariable(null);
     } catch (err) {
-      alert(t('environmentManager.form.messages.deleteError'));
+      toast.error(t('environmentManager.form.messages.deleteError'));
     }
   };
 
@@ -343,10 +354,14 @@ export function EnvironmentManager({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-sidebar-foreground mb-2 block">
+                  <Label
+                    htmlFor="env-manager-new-name"
+                    className="text-sm font-medium text-sidebar-foreground mb-2 block"
+                  >
                     {t('environmentManager.form.fields.name.label')}
                   </Label>
                   <Input
+                    id="env-manager-new-name"
                     placeholder={t('environmentManager.form.fields.name.placeholder')}
                     value={newVariable.name}
                     onChange={e => setNewVariable(prev => ({ ...prev, name: e.target.value }))}
@@ -358,7 +373,10 @@ export function EnvironmentManager({
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-sidebar-foreground mb-2 block">
+                  <Label
+                    htmlFor="env-manager-new-type"
+                    className="text-sm font-medium text-sidebar-foreground mb-2 block"
+                  >
                     {t('environmentManager.form.fields.type.label')}
                   </Label>
                   <Select
@@ -367,7 +385,7 @@ export function EnvironmentManager({
                       setNewVariable(prev => ({ ...prev, type: value }))
                     }
                   >
-                    <SelectTrigger className="bg-sidebar border-sidebar-border">
+                    <SelectTrigger id="env-manager-new-type" className="bg-sidebar border-sidebar-border">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -380,10 +398,14 @@ export function EnvironmentManager({
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-sidebar-foreground mb-2 block">
+                  <Label
+                    htmlFor="env-manager-new-description"
+                    className="text-sm font-medium text-sidebar-foreground mb-2 block"
+                  >
                     {t('environmentManager.form.fields.description.label')}
                   </Label>
                   <Input
+                    id="env-manager-new-description"
                     placeholder={t('environmentManager.form.fields.description.placeholder')}
                     value={newVariable.description}
                     onChange={e =>
@@ -394,10 +416,14 @@ export function EnvironmentManager({
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-sidebar-foreground mb-2 block">
+                  <Label
+                    htmlFor="env-manager-new-default"
+                    className="text-sm font-medium text-sidebar-foreground mb-2 block"
+                  >
                     {t('environmentManager.form.fields.defaultValue.label')}
                   </Label>
                   <Input
+                    id="env-manager-new-default"
                     placeholder={t('environmentManager.form.fields.defaultValue.placeholder')}
                     value={newVariable.defaultValue}
                     onChange={e =>

@@ -44,7 +44,9 @@
     "deleteSuccess": "Jornada eliminada con éxito",
     "deleteError": "No fue posible eliminar la jornada",
     "duplicateSuccess": "Jornada duplicada con éxito",
-    "duplicateError": "No fue posible duplicar la jornada"
+    "duplicateError": "No fue posible duplicar la jornada",
+    "activationBlocked": "No se puede activar: corrige primero: {{issues}}",
+    "activationWarnings": "Activada con avisos: {{issues}}"
   },
   "dialog": {
     "delete": {
@@ -84,6 +86,19 @@
     },
     "saveSuccess": "Jornada guardada con éxito",
     "saveError": "No fue posible guardar la jornada",
+    "validation": {
+      "danglingExitWarning": "Jornada guardada, pero estos nodos no llegan a un nodo de Salir de la Jornada, así que no se completará: {{nodes}}",
+      "danglingExitBanner": "Esta jornada no se completará: estos nodos no tienen un camino hasta un nodo de Salir de la Jornada: {{nodes}}",
+      "requiredConfig": "{{node}}: falta configuración obligatoria ({{fields}})",
+      "triggerActionContext": "{{node}}: necesita una conversación, pero el disparador no la proporciona",
+      "danglingExit": "{{node}}: esta ruta no termina en un nodo de salida o transferencia",
+      "unreachableExit": "{{node}}: este nodo está atrapado en un bucle que nunca puede llegar a un nodo de salida o transferencia",
+      "summaryErrors": "Corrige esto antes de activar:",
+      "summaryWarnings": "Avisos:",
+      "saveIssues": "Guardado con pendientes: {{issues}}",
+      "nodeHasErrors": "El nodo tiene errores",
+      "nodeHasWarnings": "El nodo tiene avisos"
+    },
     "loadError": "No fue posible cargar la jornada",
     "status": {
       "active": "Activa",
@@ -108,7 +123,8 @@
           "contactCreated": "Contacto Creado",
           "contactUpdated": "Contacto Actualizado",
           "label": "Etiqueta",
-          "customAttribute": "Atributo Personalizado"
+          "customAttribute": "Atributo Personalizado",
+          "pipelineStageChanged": "Etapa del Pipeline Cambiada"
         },
         "descriptions": {
           "manual": "Disparo manual",
@@ -147,7 +163,8 @@
           "daysWeek": "{{count}} día/sem",
           "daysWeekPlural": "{{count}} días/sem",
           "daysWeekAt": "{{count}} día/sem a las {{time}}",
-          "daysWeekPluralAt": "{{count}} días/sem a las {{time}}"
+          "daysWeekPluralAt": "{{count}} días/sem a las {{time}}",
+          "anyStageTransition": "Activado en cualquier transición de etapa"
         }
       },
       "wait": {
@@ -251,7 +268,9 @@
         "eventChannel": "Canal del Evento",
         "oneAttachment": "+ 1 adjunto",
         "multipleAttachments": "+ {{count}} adjuntos",
-        "channelLabel": "Canal:"
+        "channelLabel": "Canal:",
+        "templateLabel": "Plantilla:",
+        "templateNotSelected": "Plantilla no seleccionada"
       },
       "sendWebhook": {
         "name": "Enviar Webhook",
@@ -313,6 +332,22 @@
       "assignBot": {
         "name": "Asignar Bot",
         "description": "Conecta un bot específico a una bandeja de entrada para automatizar respuestas"
+      },
+      "assignToPipeline": {
+        "name": "Asignar al Pipeline",
+        "description": "Agrega la conversación a un pipeline de ventas",
+        "selectPipeline": "Seleccionar pipeline",
+        "pipelineNumber": "Pipeline #{{pipelineId}}",
+        "assignTo": "Asignar conversación al",
+        "noPipelineSelected": "Ningún pipeline seleccionado"
+      },
+      "sendCannedResponse": {
+        "name": "Enviar Respuesta Predefinida",
+        "description": "Envía una respuesta predefinida a la conversación",
+        "selectResponse": "Seleccionar respuesta predefinida",
+        "responseNumber": "Respuesta n.º {{responseId}}",
+        "sendingResponse": "Enviar respuesta predefinida",
+        "noResponseSelected": "Ninguna respuesta predefinida seleccionada"
       },
       "muteConversation": {
         "name": "Silenciar Conversación",
@@ -405,6 +440,7 @@
   },
   "environmentManager": {
     "title": "Variables de Entorno",
+    "invalidExpression": "La expresión personalizada tiene llaves o paréntesis desbalanceados",
     "description": "Configure variables para usar en toda la jornada con la sintaxis {variavel}",
     "searchPlaceholder": "Buscar variables...",
     "loading": "Cargando variables...",
@@ -452,6 +488,7 @@
       "event": "Evento",
       "webhook": "Webhook",
       "journey": "Jornada",
+      "contactAttributes": "Atributos del Contacto",
       "others": "Otros"
     },
     "form": {
@@ -500,6 +537,12 @@
         "deleteError": "Error al eliminar variable. Intente nuevamente."
       }
     },
+    "mapping": {
+      "sourcePathLabel": "Ruta de origen",
+      "customPathLabel": "Ruta personalizada",
+      "variableLabel": "Variable de destino",
+      "transformLabel": "Transformación"
+    },
     "customVariables": {
       "empty": {
         "title": "Ninguna variable creada",
@@ -508,6 +551,7 @@
       },
       "actions": {
         "new": "Nueva Variable",
+        "insertVariable": "Insertar variable",
         "copy": "Copiar",
         "edit": "Editar variable",
         "delete": "Remover variable",
@@ -648,7 +692,52 @@
       "oneAttachment": "1 attachment",
       "multipleAttachments": "{{count}} attachments",
       "completeConfig": "Complete the Configuration",
-      "waitingUpload": "Wait for the upload of the attachments"
+      "waitingUpload": "Wait for the upload of the attachments",
+      "mode": "Modo",
+      "modeText": "Texto libre",
+      "modeTemplate": "Plantilla de mensaje",
+      "templateRequiredForCloud": "WhatsApp Cloud exige una plantilla aprobada por Meta — el modo Plantilla es obligatorio.",
+      "template": "Plantilla",
+      "chooseTemplate": "Elige una plantilla",
+      "loadingTemplates": "Cargando plantillas...",
+      "noTemplates": "No hay plantillas activas para este canal",
+      "templatePreview": "Vista previa",
+      "templateVariables": "Variables de la plantilla",
+      "selectChannelForTemplate": "Selecciona un canal para listar las plantillas",
+      "selectTemplateValidation": "Selecciona una plantilla",
+      "templateUnavailable": "La plantilla seleccionada ya no está disponible",
+      "fillRequiredVariables": "Completa las variables obligatorias",
+      "invalidExpression": "Expresión personalizada con llaves o paréntesis desbalanceados",
+      "chooseField": "Elige un campo",
+      "expressionPlaceholder": "Ej.: {{contact.name}} ({{pipeline.pipeline_stage.name}})",
+      "fallbackPlaceholder": "Valor de respaldo si está vacío (opcional)",
+      "variableSourcesHint": "Elige la fuente de cada variable de la plantilla; los campos de contacto, conversación y pipeline se resuelven al ejecutar el flujo",
+      "variableSources": {
+        "fixed": "Valor fijo",
+        "contact": "Contacto",
+        "conversation": "Conversación",
+        "pipeline": "Pipeline",
+        "expression": "Expresión personalizada"
+      },
+      "variableFields": {
+        "contact": {
+          "name": "Nombre",
+          "email": "Email",
+          "phone_number": "Teléfono",
+          "identifier": "Identificador"
+        },
+        "conversation": {
+          "display_id": "Número de conversación",
+          "status": "Estado"
+        },
+        "pipeline": {
+          "pipeline_stage_name": "Nombre de la etapa",
+          "pipeline_name": "Nombre del pipeline",
+          "entered_at": "Entró en la etapa el"
+        }
+      },
+      "templatesLoadError": "Error al cargar las plantillas",
+      "templateConfigured": "Plantilla configurada"
     },
     "sendWebhook": {
       "title": "Configure Webhook",
@@ -811,7 +900,29 @@
         "availableVariables": "Available Variables:",
         "contact": "Contact:",
         "system": "System:",
-        "bodyPreview": "Preview of Body:"
+        "bodyPreview": "Preview of Body:",
+        "modeStructured": "Estructurado",
+        "modeRaw": "Crudo",
+        "nestedRawOnlyHint": "Este cuerpo tiene estructuras anidadas — edítalo en modo crudo.",
+        "builder": {
+          "addField": "Añadir campo",
+          "keyLabel": "Clave",
+          "valueLabel": "Valor",
+          "keyPlaceholder": "clave",
+          "valuePlaceholder": "valor",
+          "typeLabel": "Tipo",
+          "noFields": "Aún no hay campos. Añade uno para construir el cuerpo.",
+          "removeField": "Eliminar campo",
+          "types": {
+            "string": "Texto",
+            "number": "Número",
+            "boolean": "Booleano"
+          }
+        },
+        "validation": {
+          "blankKey": "El cuerpo tiene un campo con clave vacía",
+          "duplicateKey": "El cuerpo tiene claves duplicadas"
+        }
       },
       "headers": {
         "httpHeaders": "Headers HTTP",
@@ -858,6 +969,64 @@
       "selectBotNode": "Select bot",
       "selectInboxNode": "Select inbox",
       "assignBotAction": "Assign bot"
+    },
+    "assignToPipeline": {
+      "title": "Configurar Asignar al Pipeline",
+      "loadDataError": "Error al cargar los pipelines:",
+      "pipeline": "Pipeline",
+      "loadingPipelines": "Cargando pipelines...",
+      "selectPipeline": "Selecciona un pipeline",
+      "noPipelinesFound": "Sin pipelines encontrados en la cuenta.",
+      "conversationWillBeAssigned": "La conversación será asignada al pipeline",
+      "replacesAnyPrevious": "esto reemplaza cualquier asignación previa de pipeline",
+      "loadErrorBanner": "No se pudieron cargar los pipelines. Verifica tu conexión y reabre este node."
+    },
+    "createPipelineTask": {
+      "title": "Configurar Crear Tarea de Pipeline",
+      "loadDataError": "Error al cargar los agentes:",
+      "loadErrorBanner": "No se pudieron cargar los agentes. Verifica tu conexión y reabre este node.",
+      "taskTitle": "Título",
+      "taskTitlePlaceholder": "p. ej.: Hacer seguimiento con {contact.name}",
+      "variablesHint": "Admite variables como {contact.name}.",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Detalles opcionales",
+      "assignee": "Responsable",
+      "noAssignee": "Sin responsable",
+      "dueDate": "Vencimiento",
+      "priority": "Prioridad",
+      "taskType": "Tipo de tarea",
+      "due": {
+        "none": "Sin vencimiento",
+        "in1h": "En 1 hora",
+        "in4h": "En 4 horas",
+        "in1d": "En 1 día",
+        "in3d": "En 3 días",
+        "in1w": "En 1 semana"
+      },
+      "priorities": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta",
+        "urgent": "Urgente"
+      },
+      "taskTypes": {
+        "call": "Llamada",
+        "email": "Correo electrónico",
+        "meeting": "Reunión",
+        "follow_up": "Seguimiento",
+        "note": "Nota",
+        "other": "Otro"
+      }
+    },
+    "sendCannedResponse": {
+      "title": "Configurar Enviar Respuesta Predefinida",
+      "loadDataError": "Error al cargar las respuestas predefinidas:",
+      "response": "Respuesta predefinida",
+      "loadingResponses": "Cargando respuestas predefinidas...",
+      "selectResponse": "Selecciona una respuesta predefinida",
+      "noResponsesFound": "No se encontraron respuestas predefinidas. Crea una primero.",
+      "willSendResponse": "La conversación recibirá la respuesta predefinida",
+      "loadErrorBanner": "No se pudieron cargar las respuestas predefinidas. Comprueba tu conexión y vuelve a abrir este nodo."
     },
     "changePriority": {
       "title": "Configure Priority",
@@ -1050,7 +1219,24 @@
     "exitJourney": {
       "title": "Exit Journey",
       "description": "Remove the contact from the journey",
-      "finalStepMessage": "This is a final step - there are no more steps"
+      "finalStepMessage": "This is a final step - there are no more steps",
+      "intro": "Elige el motivo registrado cuando el contacto sale del recorrido. Se guarda en las variables y registros de la sesión.",
+      "reasonLabel": "Motivo de salida",
+      "reasonPlaceholder": "Selecciona un motivo",
+      "reasonHint": "Se usa en analítica e informes de sesión.",
+      "reasonRequired": "Es obligatorio indicar un motivo de salida.",
+      "customReasonLabel": "Motivo personalizado",
+      "customReasonPlaceholder": "p. ej. opted_out",
+      "messageLabel": "Mensaje de salida (opcional)",
+      "messagePlaceholder": "p. ej. Recorrido completado correctamente",
+      "messageHint": "Una nota legible almacenada junto al motivo.",
+      "reasons": {
+        "completed": "Completado",
+        "abandoned": "Abandonado",
+        "transferred": "Transferido",
+        "error": "Error",
+        "custom": "Personalizado…"
+      }
     },
     "resolveConversation": {
       "title": "Configure Conversation Resolution",
@@ -1136,8 +1322,8 @@
       }
     },
     "actions": {
-      "save": "Save",
-      "cancel": "Cancel"
+      "save": "Guardar",
+      "cancel": "Cancelar"
     },
     "trigger": {
       "title": "Configure Trigger",
@@ -1163,8 +1349,14 @@
         "or": "OR"
       },
       "nextCondition": "next condition",
-      "cancel": "Cancel",
-      "save": "Save"
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "tabs": {
+        "basic": "Básico",
+        "advanced": "Avanzado",
+        "advancedBadgeLabel": "Datos avanzados configurados"
+      },
+      "advancedHelp": "Asigna los datos del evento entrante a variables del flujo para reutilizarlos en pasos posteriores. Referencia una variable con la sintaxis {variable}."
     },
     "setVariable": {
       "title": "Configure Set Variable",
@@ -1228,8 +1420,8 @@
         "timestamp": "Timestamp"
       },
       "buttons": {
-        "cancel": "Cancel",
-        "save": "Save",
+        "cancel": "Cancelar",
+        "save": "Guardar",
         "configureVariable": "Configure the Variable"
       },
       "placeholders": {
@@ -1290,8 +1482,8 @@
       "actions": {
         "addVariant": "Add Variant",
         "distributeEqually": "Distribute Equally",
-        "cancel": "Cancel",
-        "save": "Save"
+        "cancel": "Cancelar",
+        "save": "Guardar"
       },
       "status": {
         "total": "Total",
@@ -1335,8 +1527,8 @@
         "inactive": "Inactive"
       },
       "actions": {
-        "cancel": "Cancel",
-        "save": "Save",
+        "cancel": "Cancelar",
+        "save": "Guardar",
         "configureJourney": "Configure the Journey"
       },
       "messages": {
@@ -1378,8 +1570,8 @@
         "description": "Use variables clicking on the (x) button."
       },
       "actions": {
-        "cancel": "Cancel",
-        "save": "Save",
+        "cancel": "Cancelar",
+        "save": "Guardar",
         "configureFields": "Configure the Fields"
       }
     },
@@ -1419,8 +1611,8 @@
         "description": "Custom attributes allow you to store specific business information in each contact. Use variables clicking on the (x) button."
       },
       "actions": {
-        "cancel": "Cancel",
-        "save": "Save",
+        "cancel": "Cancelar",
+        "save": "Guardar",
         "configureAttribute": "Configure the Attribute"
       },
       "validation": {
@@ -1594,7 +1786,8 @@
       "contactCreated": "Contacto Creado",
       "contactUpdated": "Contacto Actualizado",
       "label": "Etiqueta",
-      "customAttribute": "Atributo Personalizado"
+      "customAttribute": "Atributo Personalizado",
+      "pipelineStageChanged": "Etapa del Pipeline Cambiada"
     },
     "descriptions": {
       "manual": "Los contactos serán añadidos manualmente a la jornada.",
@@ -1605,6 +1798,7 @@
       "contactUpdated": "La jornada será disparada cuando un contacto sea actualizado. Puede configurar cuáles campos deben ser alterados.",
       "label": "La jornada será disparada cuando una etiqueta sea aplicada al contacto.",
       "customAttribute": "La jornada será disparada basándose en atributos personalizados del contacto.",
+      "pipelineStageChanged": "La jornada será disparada cuando un contacto cambie de etapa en el pipeline.",
       "selectType": "Seleccione un tipo de trigger para ver su descripción."
     },
     "operators": {
@@ -1657,6 +1851,21 @@
         "atualizado": "Actualizado"
       }
     },
+    "pipelineStageChanged": {
+      "pipeline": "Pipeline",
+      "fromStage": "Etapa de origen",
+      "toStage": "Etapa de destino",
+      "selectPipeline": "Selecciona un pipeline (opcional)",
+      "loadingPipelines": "Cargando pipelines...",
+      "loadingStages": "Cargando etapas...",
+      "noPipelinesFound": "Sin pipelines encontrados en la cuenta.",
+      "anyStage": "Cualquier etapa",
+      "anyPipeline": "cualquier pipeline",
+      "anyStageTransition": "La jornada se activará en cualquier transición de etapa del pipeline.",
+      "summary": "Activado cuando un contacto cambia en {{pipeline}}, de {{from}} a {{to}}.",
+      "loadError": "Error al cargar los pipelines:",
+      "loadErrorBanner": "No se pudieron cargar los pipelines. Verifica tu conexión y reabre este node."
+    },
     "customAttribute": {
       "configuration": "Configuración del Atributo Personalizado",
       "customAttribute": "Atributo Personalizado",
@@ -1707,7 +1916,13 @@
       "triggerForAnyOccurrence": "El trigger será ejecutado para cualquier ocurrencia del evento.",
       "property": "Propiedad",
       "value": "Valor",
-      "captureEventData": "Capturar Datos del Evento"
+      "captureEventData": "Capturar Datos del Evento",
+      "eventSwitch": {
+        "title": "¿Preservar valores compatibles?",
+        "body": "Cambiaste el evento. ¿Mantener los valores de propiedad que también existen en el nuevo evento (mismo nombre y tipo) o borrarlos todos?",
+        "preserve": "Preservar compatibles",
+        "clear": "Borrar todo"
+      }
     },
     "label": {
       "configuration": "Configuración de la Etiqueta",
@@ -1781,6 +1996,13 @@
       "headersCount": "header(s) personalizado(s)",
       "captureWebhookData": "Capturar Datos del Webhook",
       "urlCopied": "URL del Webhook copiada al portapapeles"
+    }
+  },
+  "sessions": {
+    "viewer": {
+      "actions": {
+        "cancel": "Cancelar"
+      }
     }
   }
 }

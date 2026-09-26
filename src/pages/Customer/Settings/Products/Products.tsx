@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import { productsService } from '@/services/products/productsService';
+import { toFieldErrors } from './productErrors';
 import type {
   Product,
   ProductFormData,
@@ -27,7 +28,7 @@ const DEFAULT_PAGE_SIZE = 25;
 
 export default function Products() {
   const { t } = useLanguage('products');
-  const { can } = useUserPermissions();
+  const { can } = usePermissions();
   const canCreate = can('products', 'create');
   const canUpdate = can('products', 'update');
   const canDelete = can('products', 'delete');
@@ -44,6 +45,7 @@ export default function Products() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -78,16 +80,19 @@ export default function Products() {
 
   const openCreate = () => {
     setEditing(null);
+    setFormErrors({});
     setModalOpen(true);
   };
 
   const openEdit = (product: Product) => {
     setEditing(product);
+    setFormErrors({});
     setModalOpen(true);
   };
 
   const handleSubmit = async (payload: ProductFormData, files?: File[]) => {
     setSaving(true);
+    setFormErrors({});
     try {
       if (editing?.id) {
         await productsService.updateProduct(editing.id, payload, files);
@@ -101,7 +106,12 @@ export default function Products() {
       fetchProducts();
     } catch (error) {
       console.error(error);
-      toast.error(editing ? t('messages.updateError') : t('messages.createError'));
+      const fieldErrors = toFieldErrors(error);
+      if (Object.keys(fieldErrors).length > 0) {
+        setFormErrors(fieldErrors);
+      } else {
+        toast.error(editing ? t('messages.updateError') : t('messages.createError'));
+      }
     } finally {
       setSaving(false);
     }
@@ -173,6 +183,7 @@ export default function Products() {
         open={modalOpen}
         product={editing}
         loading={saving}
+        errors={formErrors}
         onOpenChange={(open) => {
           setModalOpen(open);
           if (!open) setEditing(null);

@@ -2,29 +2,27 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act, within } from '@testing-library/react';
 import { toast } from 'sonner';
 import IntegrationsConfig from './IntegrationsConfig';
+import { INTEGRATIONS } from './integrationsCatalog';
 
 const stableT = (key: string) => key;
 
 vi.mock('@/hooks/useLanguage', () => ({
-  useLanguage: () => ({
-    t: stableT,
-  }),
+  useLanguage: () => ({ t: stableT }),
 }));
 
 vi.mock('sonner', () => ({
-  toast: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 const mockGetConfig = vi.fn();
 const mockSaveConfig = vi.fn();
+const mockClearConfig = vi.fn();
 
 vi.mock('@/services/admin/adminConfigService', () => ({
   adminConfigService: {
     getConfig: (...args: unknown[]) => mockGetConfig(...args),
     saveConfig: (...args: unknown[]) => mockSaveConfig(...args),
+    clearConfig: (...args: unknown[]) => mockClearConfig(...args),
   },
 }));
 
@@ -32,27 +30,38 @@ vi.mock('@/utils/apiHelpers', () => ({
   extractError: () => ({ message: 'Test error' }),
 }));
 
-const EMPTY_DATA: Record<string, Record<string, unknown>> = {
-  linear: { LINEAR_CLIENT_ID: '', LINEAR_CLIENT_SECRET: null },
-  hubspot: { HUBSPOT_CLIENT_ID: '', HUBSPOT_CLIENT_SECRET: null },
-  shopify: { SHOPIFY_CLIENT_ID: '', SHOPIFY_CLIENT_SECRET: null },
-  slack: { SLACK_CLIENT_ID: '', SLACK_CLIENT_SECRET: null },
-};
+// The non-OAuth front-end services section self-loads its own config; stub it out
+// so these tests cover only the OAuth catalog (covered in FrontendServicesSection.spec.tsx).
+vi.mock('./FrontendServicesSection', () => ({ default: () => null }));
 
-const CONFIGURED_DATA: Record<string, Record<string, unknown>> = {
-  linear: { LINEAR_CLIENT_ID: 'linear-id', LINEAR_CLIENT_SECRET: '••••masked' },
-  hubspot: { HUBSPOT_CLIENT_ID: 'hubspot-id', HUBSPOT_CLIENT_SECRET: '••••masked' },
-  shopify: { SHOPIFY_CLIENT_ID: 'shopify-id', SHOPIFY_CLIENT_SECRET: '••••masked' },
-  slack: { SLACK_CLIENT_ID: 'slack-id', SLACK_CLIENT_SECRET: '••••masked' },
-};
+// Fixtures built from the catalog so the suite scales with INTEGRATIONS. Keyed by
+// configType (what getConfig receives).
+const EMPTY_DATA: Record<string, Record<string, unknown>> = Object.fromEntries(
+  INTEGRATIONS.map((def) => [def.configType, { [def.clientIdKey]: '', [def.clientSecretKey]: null }]),
+);
+
+const CONFIGURED_DATA: Record<string, Record<string, unknown>> = Object.fromEntries(
+  INTEGRATIONS.map((def) => [
+    def.configType,
+    { [def.clientIdKey]: `${def.key}-id`, [def.clientSecretKey]: '••••masked' },
+  ]),
+);
+
+const TOTAL = INTEGRATIONS.length;
 
 async function renderAndWait(data: Record<string, Record<string, unknown>> = EMPTY_DATA) {
-  mockGetConfig.mockImplementation((type: string) => {
-    return Promise.resolve(data[type] ?? {});
-  });
+  mockGetConfig.mockImplementation((type: string) => Promise.resolve(data[type] ?? {}));
   await act(async () => {
     render(<IntegrationsConfig />);
   });
+}
+
+// Open the configure dialog for an integration key and return its form element.
+async function openDialog(key: string) {
+  await act(async () => {
+    fireEvent.click(screen.getByTestId(`${key}-card`));
+  });
+  return screen.getByTestId(`${key}-form`);
 }
 
 describe('IntegrationsConfig', () => {
@@ -66,74 +75,59 @@ describe('IntegrationsConfig', () => {
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
-  it('loads config from all 4 integration endpoints', async () => {
+  it('loads config from every catalog integration endpoint', async () => {
     await renderAndWait();
-
-    expect(mockGetConfig).toHaveBeenCalledWith('linear');
-    expect(mockGetConfig).toHaveBeenCalledWith('hubspot');
-    expect(mockGetConfig).toHaveBeenCalledWith('shopify');
-    expect(mockGetConfig).toHaveBeenCalledWith('slack');
+    INTEGRATIONS.forEach((def) => {
+      expect(mockGetConfig).toHaveBeenCalledWith(def.configType);
+    });
+    expect(mockGetConfig).toHaveBeenCalledTimes(TOTAL);
   });
 
   it('renders title and description', async () => {
     await renderAndWait();
-
     expect(screen.getByText('integrations.title')).toBeInTheDocument();
     expect(screen.getByText('integrations.description')).toBeInTheDocument();
   });
 
-  it('renders all 4 section card titles', async () => {
-    await renderAndWait();
-
+  it('renders one card per catalog integration', async () => {
+    const { container } = await act(async () => {
+      mockGetConfig.mockImplementation((type: string) => Promise.resolve(EMPTY_DATA[type] ?? {}));
+      return render(<IntegrationsConfig />);
+    });
+    expect(container.querySelectorAll('[data-testid$="-card"]')).toHaveLength(TOTAL);
     expect(screen.getByText('integrations.linear.cardTitle')).toBeInTheDocument();
-    expect(screen.getByText('integrations.hubspot.cardTitle')).toBeInTheDocument();
-    expect(screen.getByText('integrations.shopify.cardTitle')).toBeInTheDocument();
-    expect(screen.getByText('integrations.slack.cardTitle')).toBeInTheDocument();
+    expect(screen.getByText('integrations.github.cardTitle')).toBeInTheDocument();
   });
 
-  it('renders 8 form fields (2 per integration x 4)', async () => {
-    await renderAndWait();
+  it('shows configured status on every card when secrets are masked', async () => {
+    await renderAndWait(CONFIGURED_DATA);
+    expect(screen.getAllByText('integrations.statusConfigured')).toHaveLength(TOTAL);
+  });
 
+  it('shows not-configured status on every card when empty', async () => {
+    await renderAndWait(EMPTY_DATA);
+    expect(screen.getAllByText('integrations.statusNotConfigured')).toHaveLength(TOTAL);
+  });
+
+  it('does not render any form until a card is clicked', async () => {
+    await renderAndWait();
+    expect(screen.queryByTestId('linear-form')).not.toBeInTheDocument();
+  });
+
+  it('opens a focused dialog with both fields when a card is clicked', async () => {
+    await renderAndWait();
+    await openDialog('linear');
     expect(screen.getByLabelText('integrations.linear.fields.clientId')).toBeInTheDocument();
     expect(screen.getByLabelText('integrations.linear.fields.clientSecret')).toBeInTheDocument();
-    expect(screen.getByLabelText('integrations.hubspot.fields.clientId')).toBeInTheDocument();
-    expect(screen.getByLabelText('integrations.hubspot.fields.clientSecret')).toBeInTheDocument();
-    expect(screen.getByLabelText('integrations.shopify.fields.clientId')).toBeInTheDocument();
-    expect(screen.getByLabelText('integrations.shopify.fields.clientSecret')).toBeInTheDocument();
-    expect(screen.getByLabelText('integrations.slack.fields.clientId')).toBeInTheDocument();
-    expect(screen.getByLabelText('integrations.slack.fields.clientSecret')).toBeInTheDocument();
   });
 
-  it('shows secret configured status for masked secrets', async () => {
-    await renderAndWait(CONFIGURED_DATA);
-
-    const configured = screen.getAllByText('integrations.secretConfigured');
-    expect(configured).toHaveLength(4);
-  });
-
-  it('shows secret not configured when secrets are empty', async () => {
-    await renderAndWait(EMPTY_DATA);
-
-    const notConfigured = screen.getAllByText('integrations.secretNotConfigured');
-    expect(notConfigured).toHaveLength(4);
-  });
-
-  it('renders 4 independent save buttons', async () => {
-    await renderAndWait();
-
-    const saveButtons = screen.getAllByText('integrations.save');
-    expect(saveButtons).toHaveLength(4);
-  });
-
-  it('saves Linear section independently', async () => {
+  it('saves the open integration with its client id', async () => {
     await renderAndWait(CONFIGURED_DATA);
     mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.linear);
 
-    const linearForm = screen.getByTestId('linear-form');
-    const saveBtn = within(linearForm).getByText('integrations.save');
-
+    const form = await openDialog('linear');
     await act(async () => {
-      fireEvent.click(saveBtn);
+      fireEvent.click(within(form).getByText('integrations.save'));
     });
 
     await waitFor(() => {
@@ -143,69 +137,13 @@ describe('IntegrationsConfig', () => {
     });
   });
 
-  it('saves HubSpot section independently', async () => {
-    await renderAndWait(CONFIGURED_DATA);
-    mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.hubspot);
-
-    const hubspotForm = screen.getByTestId('hubspot-form');
-    const saveBtn = within(hubspotForm).getByText('integrations.save');
-
-    await act(async () => {
-      fireEvent.click(saveBtn);
-    });
-
-    await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalledWith('hubspot', expect.objectContaining({
-        HUBSPOT_CLIENT_ID: 'hubspot-id',
-      }));
-    });
-  });
-
-  it('saves Shopify section independently', async () => {
-    await renderAndWait(CONFIGURED_DATA);
-    mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.shopify);
-
-    const shopifyForm = screen.getByTestId('shopify-form');
-    const saveBtn = within(shopifyForm).getByText('integrations.save');
-
-    await act(async () => {
-      fireEvent.click(saveBtn);
-    });
-
-    await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalledWith('shopify', expect.objectContaining({
-        SHOPIFY_CLIENT_ID: 'shopify-id',
-      }));
-    });
-  });
-
-  it('saves Slack section independently', async () => {
-    await renderAndWait(CONFIGURED_DATA);
-    mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.slack);
-
-    const slackForm = screen.getByTestId('slack-form');
-    const saveBtn = within(slackForm).getByText('integrations.save');
-
-    await act(async () => {
-      fireEvent.click(saveBtn);
-    });
-
-    await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalledWith('slack', expect.objectContaining({
-        SLACK_CLIENT_ID: 'slack-id',
-      }));
-    });
-  });
-
-  it('sends null for unmodified secrets on save', async () => {
+  it('sends null for an unmodified secret on save', async () => {
     await renderAndWait(CONFIGURED_DATA);
     mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.linear);
 
-    const linearForm = screen.getByTestId('linear-form');
-    const saveBtn = within(linearForm).getByText('integrations.save');
-
+    const form = await openDialog('linear');
     await act(async () => {
-      fireEvent.click(saveBtn);
+      fireEvent.click(within(form).getByText('integrations.save'));
     });
 
     await waitFor(() => {
@@ -215,15 +153,54 @@ describe('IntegrationsConfig', () => {
     });
   });
 
+  it('sends the modified secret value on save after typing', async () => {
+    await renderAndWait(CONFIGURED_DATA);
+    mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.linear);
+
+    await openDialog('linear');
+    const secretInput = screen.getByLabelText('integrations.linear.fields.clientSecret');
+    await act(async () => {
+      fireEvent.change(secretInput, { target: { value: 'new-secret' } });
+    });
+    const form = screen.getByTestId('linear-form');
+    await act(async () => {
+      fireEvent.click(within(form).getByText('integrations.save'));
+    });
+
+    await waitFor(() => {
+      expect(mockSaveConfig).toHaveBeenCalledWith('linear', expect.objectContaining({
+        LINEAR_CLIENT_SECRET: 'new-secret',
+      }));
+    });
+  });
+
+  it('removes the configuration via clearConfig', async () => {
+    await renderAndWait(CONFIGURED_DATA);
+    mockClearConfig.mockResolvedValue(undefined);
+
+    const form = await openDialog('linear');
+    await act(async () => {
+      fireEvent.click(within(form).getByText('integrations.remove'));
+    });
+
+    await waitFor(() => {
+      expect(mockClearConfig).toHaveBeenCalledWith('linear');
+    });
+  });
+
+  it('hides the remove action for unconfigured integrations', async () => {
+    await renderAndWait(EMPTY_DATA);
+    const form = await openDialog('linear');
+    expect(within(form).queryByText('integrations.remove')).not.toBeInTheDocument();
+  });
+
   it('shows error toast when save fails', async () => {
     await renderAndWait(CONFIGURED_DATA);
     mockSaveConfig.mockRejectedValue(new Error('Network error'));
 
-    const linearForm = screen.getByTestId('linear-form');
-    const saveBtn = within(linearForm).getByText('integrations.save');
-
+    const form = await openDialog('linear');
     await act(async () => {
-      fireEvent.click(saveBtn);
+      fireEvent.click(within(form).getByText('integrations.save'));
     });
 
     await waitFor(() => {
@@ -235,51 +212,11 @@ describe('IntegrationsConfig', () => {
 
   it('shows error toast when config loading fails', async () => {
     mockGetConfig.mockRejectedValue(new Error('Network error'));
-
     await act(async () => {
       render(<IntegrationsConfig />);
     });
-
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('integrations.messages.loadError');
     });
-  });
-
-  it('sends modified secret value on save after typing', async () => {
-    await renderAndWait(CONFIGURED_DATA);
-    mockSaveConfig.mockResolvedValue(CONFIGURED_DATA.linear);
-
-    const secretInput = screen.getByLabelText('integrations.linear.fields.clientSecret');
-
-    await act(async () => {
-      fireEvent.change(secretInput, { target: { value: 'new-secret' } });
-    });
-
-    const linearForm = screen.getByTestId('linear-form');
-    const saveBtn = within(linearForm).getByText('integrations.save');
-
-    await act(async () => {
-      fireEvent.click(saveBtn);
-    });
-
-    await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalledWith('linear', expect.objectContaining({
-        LINEAR_CLIENT_SECRET: 'new-secret',
-      }));
-    });
-  });
-
-  it('clear secret button marks secret as modified', async () => {
-    await renderAndWait(CONFIGURED_DATA);
-
-    const clearButtons = screen.getAllByTitle('integrations.clearSecret');
-    expect(clearButtons).toHaveLength(4);
-
-    await act(async () => {
-      fireEvent.click(clearButtons[0]);
-    });
-
-    const configured = screen.getAllByText('integrations.secretConfigured');
-    expect(configured).toHaveLength(3);
   });
 });

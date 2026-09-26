@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useUnansweredConversationsStore } from '@/store/unansweredConversationsStore';
 import { Link } from 'react-router-dom';
 import {
   Menu,
@@ -73,6 +74,17 @@ export default function Header({
 }: HeaderProps) {
   const { t } = useLanguage('layout');
   const [expandedMobileMenus, setExpandedMobileMenus] = useState<Set<string>>(new Set());
+  const totalUnanswered = useUnansweredConversationsStore((state) => state.totalUnanswered);
+
+  const enrichedMenuItems = useMemo(
+    () =>
+      menuItems.map((item) =>
+        item.href === '/conversations' && totalUnanswered > 0
+          ? { ...item, badge: totalUnanswered, badgeHref: '/conversations?segment=unanswered' }
+          : item,
+      ),
+    [menuItems, totalUnanswered],
+  );
 
   return (
     <div className="flex-shrink-0 bg-sidebar border-b border-sidebar-border px-0 py-3 flex items-center shadow-sm">
@@ -98,7 +110,7 @@ export default function Header({
 
               <ScrollArea className="flex-1 min-h-0 overflow-hidden p-4">
                 <nav className="space-y-1">
-                  {menuItems.map(item => {
+                  {enrichedMenuItems.map(item => {
                     const hasSubItems = item.subItems && item.subItems.length > 0;
                     const menuKey = item.id || item.href;
                     const isExpanded = expandedMobileMenus.has(menuKey);

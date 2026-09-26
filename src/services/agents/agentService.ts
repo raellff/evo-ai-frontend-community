@@ -17,6 +17,10 @@ import {
 import { processAgentData } from '@/utils/agentUtils';
 import { extractData, buildPaginationParams, extractResponse } from '@/utils/apiHelpers';
 
+export interface ListApiKeysOptions {
+  active?: boolean;
+}
+
 class AgentsService {
   // AI Agents
   async createAgent(data: AgentCreate): Promise<Agent> {
@@ -24,10 +28,21 @@ class AgentsService {
     return extractData<Agent>(response);
   }
 
-  async listAgents(page = 1, pageSize = 100, folderId?: string): Promise<AgentListResponse> {
+  async listAgents(
+    page = 1,
+    pageSize = 100,
+    folderId?: string,
+    options?: { search?: string; filterParams?: Record<string, string> },
+  ): Promise<AgentListResponse> {
     const params: any = buildPaginationParams(page, pageSize);
     if (folderId) {
       params.folder_id = folderId;
+    }
+    if (options?.search) {
+      params.search = options.search;
+    }
+    if (options?.filterParams) {
+      Object.assign(params, options.filterParams);
     }
 
     const response = await evoaiApi.get('/agents', {
@@ -113,10 +128,19 @@ class AgentsService {
     return extractData<ApiKey>(response);
   }
 
-  async listApiKeys(page = 1, pageSize = 100): Promise<ApiKey[]> {
-    const response = await evoaiApi.get('/agents/apikeys', {
-      params: buildPaginationParams(page, pageSize),
-    });
+  // The core lists only active keys unless `active` is sent explicitly, so
+  // callers picking a credential for an agent keep the default and the
+  // settings screen asks for the inactive ones as well.
+  async listApiKeys(
+    page = 1,
+    pageSize = 100,
+    options?: ListApiKeysOptions,
+  ): Promise<ApiKey[]> {
+    const params: Record<string, unknown> = buildPaginationParams(page, pageSize);
+    if (options?.active !== undefined) {
+      params.active = String(options.active);
+    }
+    const response = await evoaiApi.get('/agents/apikeys', { params });
     return extractData<ApiKey[]>(response);
   }
 
@@ -146,9 +170,13 @@ class AgentsService {
     }));
   }
 
-  async getAccessibleAgents(page = 1, pageSize = 100) {
+  async getAccessibleAgents(
+    page = 1,
+    pageSize = 100,
+    options?: { search?: string; filterParams?: Record<string, string> },
+  ) {
     try {
-      return await this.listAgents(page, pageSize);
+      return await this.listAgents(page, pageSize, undefined, options);
     } catch (error) {
       console.error('Error getting accessible agents:', error);
       throw error;
@@ -172,12 +200,17 @@ export const updateFolder = (folderId: string, data: FolderUpdate) => agentsServ
 export const deleteFolder = (folderId: string) => agentsService.deleteFolder(folderId);
 
 export const createApiKey = (data: ApiKeyCreate) => agentsService.createApiKey(data);
-export const listApiKeys = (page?: number, pageSize?: number) => agentsService.listApiKeys(page, pageSize);
+export const listApiKeys = (page?: number, pageSize?: number, options?: ListApiKeysOptions) =>
+  agentsService.listApiKeys(page, pageSize, options);
 export const updateApiKey = (keyId: string, data: ApiKeyUpdate) => agentsService.updateApiKey(keyId, data);
 export const deleteApiKey = (keyId: string) => agentsService.deleteApiKey(keyId);
 
 export const assignAgentToFolder = (agentId: string, folderId: string | null) => agentsService.assignFolder(agentId, folderId);
 export const getAccessibleFolders = (page?: number, pageSize?: number) => agentsService.getAccessibleFolders(page, pageSize);
-export const getAccessibleAgents = (page?: number, pageSize?: number) => agentsService.getAccessibleAgents(page, pageSize);
+export const getAccessibleAgents = (
+  page?: number,
+  pageSize?: number,
+  options?: { search?: string; filterParams?: Record<string, string> },
+) => agentsService.getAccessibleAgents(page, pageSize, options);
 export const shareAgent = (agentId: string) => agentsService.shareAgent(agentId);
 export const getAgentIntegrations = (agentId: string) => agentsService.getAgentIntegrations(agentId);

@@ -73,8 +73,8 @@
     "collapse": "Réduire la barre latérale",
     "closeSubmenu": "Fermer le sous-menu",
     "footer": {
-      "brand": "Evo CRM",
-      "copyright": "© {{year}} Evolution Foundation. All rights reserved.",
+      "brand": "Woow CRM",
+      "copyright": "© {{year}} Woow Agency. All rights reserved.",
       "documentation": "Documentation",
       "support": "J'ai besoin d'assistance"
     }
@@ -111,13 +111,18 @@
       "labels": "Étiquettes",
       "customAttributes": "Attributs Personnalisés",
       "cannedResponses": "Réponses Rapides",
+      "aiCredentials": "Identifiants d'IA",
+      "integrationCredentials": "Identifiants d'intégration",
+      "messageTemplates": "Modèles de Message",
       "macros": "Macros",
       "templates": "Modèles",
       "integrations": "Intégrations",
       "accessTokens": "Jetons D'accès",
       "roles": "Profils et Permissions",
       "admin": "Paramètres Admin",
-      "segments": "Segments"
+      "segments": "Segments",
+      "crmForms": "Formulaires de capture",
+      "chatPages": "Pages de chat"
     }
   }
 }

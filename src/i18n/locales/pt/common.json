@@ -1,5 +1,20 @@
 {
+  "filter": {
+    "operators": {
+      "equal_to": "Igual a",
+      "not_equal_to": "Diferente de",
+      "contains": "Contém",
+      "does_not_contain": "Não contém",
+      "is_present": "Presente",
+      "is_not_present": "Não presente"
+    }
+  },
   "base": {
+    "noResults": {
+      "title": "Nenhum resultado encontrado",
+      "description": "Nenhum item corresponde à sua pesquisa.",
+      "clearSearch": "Limpar pesquisa"
+    },
     "pagination": {
       "itemsPerPage": "Itens por página:",
       "showing": "Mostrando {{start}} a {{end}} de {{total}} itens",
@@ -135,5 +150,21 @@
   },
   "validation": {
     "required": "Este campo é obrigatório"
+  },
+  "permissions": {
+    "loadFailed": {
+      "title": "Não foi possível carregar suas permissões",
+      "description": "Isso não significa que você não tem acesso — a verificação de permissões falhou. Tente novamente.",
+      "retry": "Tentar novamente",
+      "retrying": "Tentando novamente…",
+      "signOut": "Sair"
+    }
+  },
+  "customAttributes": {
+    "loadFailed": {
+      "title": "Não foi possível carregar os atributos personalizados",
+      "description": "Isso não significa que não existem — a carga das definições falhou. Tente novamente.",
+      "retry": "Tentar novamente"
+    }
   }
 }

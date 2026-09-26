@@ -7,6 +7,7 @@
   "header": {
     "searchPlaceholder": "Buscar por nombre, SKU o descripción",
     "new": "Nuevo producto",
+    "import": "Importar",
     "filters": {
       "kindAll": "Todos los tipos",
       "statusAll": "Todos los estados"
@@ -30,8 +31,10 @@
       "price": "Precio",
       "status": "Estado",
       "variants": "Variantes",
-      "actions": "Acciones"
-    }
+      "actions": "Acciones",
+      "stock": "Stock"
+    },
+    "outOfStock": "Agotado"
   },
   "modal": {
     "createTitle": "Crear producto",
@@ -58,13 +61,22 @@
     "descriptionPlaceholder": "Descripción corta del producto (también usada por el agente de IA)",
     "labels": "Categorías / etiquetas",
     "labelsPlaceholder": "Separadas por comas, ej.: ropa, coleccion-verano",
-    "labelsHint": "Las categorías ayudan a filtrar productos y pueden ser usadas por reglas de automatización."
+    "labelsHint": "Las categorías ayudan a filtrar productos y pueden ser usadas por reglas de automatización.",
+    "skuPlaceholder": "SKU-001",
+    "purchaseUrlPlaceholder": "https://...",
+    "digitalNoStockHint": "Los productos digitales no tienen stock."
   },
   "media": {
     "uploadHint": "Arrastre imágenes aquí o use el botón de abajo.",
     "selectFiles": "Seleccionar archivos",
     "existing": "Imágenes existentes",
-    "pending": "Pendientes de subida"
+    "pending": "Pendientes de subida",
+    "limits": "Hasta {{max}} imágenes, {{size}} MB cada una.",
+    "rejected": {
+      "invalidType": "\"{{name}}\": formato no admitido.",
+      "tooLarge": "\"{{name}}\": supera {{size}} MB.",
+      "tooMany": "\"{{name}}\": se alcanzó el límite de {{max}} imágenes por producto."
+    }
   },
   "variants": {
     "empty": "Sin variantes. Haga clic en \"Agregar variante\".",
@@ -73,7 +85,8 @@
     "sku": "SKU",
     "priceOverride": "Precio (anula el predeterminado)",
     "stock": "Stock",
-    "digitalHint": "Generalmente no se usan variantes en productos digitales."
+    "digitalHint": "Generalmente no se usan variantes en productos digitales.",
+    "namePlaceholder": "ej.: P / M / G"
   },
   "actions": {
     "cancel": "Cancelar",
@@ -102,6 +115,162 @@
     "deleteSuccess": "Producto eliminado",
     "deleteError": "Error al eliminar producto"
   },
+  "import": {
+    "title": "Importar productos",
+    "subtitle": "Importa tu catálogo desde un archivo CSV o directamente desde tu tienda (WooCommerce/Shopify). Los productos se validan contra las reglas del catálogo y se guardan en una única transacción.",
+    "back": "Volver a productos",
+    "forbidden": "No tienes permiso para importar productos.",
+    "success": "{{count}} productos importados correctamente",
+    "tabs": {
+      "upload": "Carga",
+      "mapping": "Mapeo",
+      "preview": "Vista previa",
+      "done": "Listo",
+      "source": "Fuente",
+      "credentials": "Credenciales"
+    },
+    "upload": {
+      "hint": "Selecciona un CSV UTF-8 con encabezado. Límite: {{max}} filas.",
+      "selectFile": "Seleccionar CSV",
+      "backToSource": "Cambiar la fuente de importación"
+    },
+    "mapping": {
+      "file": "{{name}} — {{count}} fila(s)",
+      "changeFile": "Cambiar archivo",
+      "csvHeader": "Columna CSV",
+      "sample": "Ejemplo (1.ª fila)",
+      "field": "Asignar a",
+      "ignore": "(ignorar)",
+      "missingRequired": "Campos obligatorios sin asignar: {{fields}}",
+      "back": "Volver",
+      "next": "Continuar"
+    },
+    "fields": {
+      "name": "Nombre",
+      "slug": "Slug",
+      "kind": "Tipo",
+      "description": "Descripción",
+      "sku": "SKU",
+      "default_price": "Precio base",
+      "currency": "Moneda",
+      "purchase_url": "URL de compra",
+      "status": "Estado",
+      "stock_quantity": "Stock",
+      "labels": "Etiquetas"
+    },
+    "preview": {
+      "valid": "Filas válidas",
+      "invalid": "Filas inválidas (cliente)",
+      "conflicts": "Conflictos del servidor",
+      "runDryRun": "Ejecutar simulación",
+      "import": "Importar",
+      "backToMapping": "Volver al mapeo",
+      "errorsHeading": "{{count}} fila(s) requieren atención",
+      "row": "Fila",
+      "sku": "SKU",
+      "errors": "Errores",
+      "fetched": "{{count}} productos obtenidos de {{source}}.",
+      "backToCredentials": "Volver a credenciales",
+      "truncated": "Solo se obtuvieron los primeros {{count}} productos — la tienda tiene más de lo que esta importación puede traer de una vez.",
+      "variantsDropped": "{{count}} variante(s) no se importaron — cada producto se convierte en una sola fila del catálogo."
+    },
+    "done": {
+      "title": "Importación completada",
+      "subtitle": "Todas las filas se guardaron correctamente.",
+      "backToList": "Volver a productos",
+      "importAnother": "Importar otro archivo"
+    },
+    "errors": {
+      "emptyFile": "El archivo CSV no tiene encabezado.",
+      "tooManyRows": "El CSV tiene {{received}} filas pero el límite es {{max}}.",
+      "duplicateHeaders": "El CSV tiene columnas con nombres duplicados: {{headers}}. Renómbralas antes de subir.",
+      "emptyHeader": "El CSV tiene encabezados vacíos en la(s) posición(es): {{columns}}. Nombra todas las columnas antes de subir.",
+      "noDataRows": "El CSV solo contiene encabezado — no hay filas para importar.",
+      "parseError": "Error al analizar el CSV en la línea {{line}}: {{message}}",
+      "readError": "No se pudo leer el archivo seleccionado.",
+      "missingRequired": "Asigna los campos obligatorios antes de continuar: {{fields}}",
+      "noValidRows": "No hay filas válidas para enviar.",
+      "network": "Error de red. Inténtalo de nuevo.",
+      "unauthorized": "Tu sesión ha caducado. Inicia sesión otra vez.",
+      "forbidden": "No tienes permiso para importar productos en lote.",
+      "rateLimited": "Límite de solicitudes alcanzado (10/min). Espera un momento y vuelve a intentarlo.",
+      "dryRunInvalid": "La simulación marcó {{count}} fila(s). Corrígelas e inténtalo de nuevo.",
+      "serverInvalid": "El servidor rechazó {{count}} fila(s). El lote completo se revirtió."
+    },
+    "parseErrorCodes": {
+      "invalid_delimiter": "delimitador no válido",
+      "unexpected_quote": "comilla inesperada dentro de un campo sin comillas",
+      "unterminated_quoted_field": "campo entre comillas sin cerrar"
+    },
+    "serverErrors": {
+      "required": "es obligatorio",
+      "too_long": "es demasiado largo",
+      "invalid_kind": "debe ser físico o digital",
+      "invalid_status": "debe ser activo, inactivo o borrador",
+      "invalid_currency": "debe ser BRL, USD o EUR",
+      "must_be_non_negative": "debe ser mayor o igual a cero",
+      "must_be_integer": "debe ser un número entero",
+      "invalid_url": "debe ser una URL http(s) válida",
+      "invalid_number": "no es un número válido",
+      "duplicated_within_batch": "duplicado dentro del lote",
+      "taken": "ya está en uso",
+      "invalid_value": "no es un valor válido"
+    },
+    "source": {
+      "continue": "Continuar",
+      "csv": {
+        "title": "Archivo CSV",
+        "desc": "Sube un CSV de tu catálogo."
+      },
+      "woocommerce": {
+        "title": "WooCommerce",
+        "desc": "Conecta vía REST API (claves ck_/cs_)."
+      },
+      "shopify": {
+        "title": "Shopify",
+        "desc": "Conecta vía Admin API (token de acceso)."
+      }
+    },
+    "credentials": {
+      "back": "Volver",
+      "fetch": "Buscar productos",
+      "missing": "Completa todas las credenciales.",
+      "noProducts": "No se encontraron productos en la tienda.",
+      "fetchFailed": "Error al buscar productos: {{message}}",
+      "oneTimeNote": "Las credenciales se usan solo para esta importación y no se almacenan.",
+      "fields": {
+        "store_url": "URL de la tienda",
+        "consumer_key": "Consumer key",
+        "consumer_secret": "Consumer secret",
+        "shop_domain": "Dominio de la tienda",
+        "access_token": "Token de acceso"
+      },
+      "placeholders": {
+        "store_url": "https://myshop.com",
+        "consumer_key": "ck_...",
+        "consumer_secret": "cs_...",
+        "shop_domain": "my-shop.myshopify.com",
+        "access_token": "shpat_..."
+      }
+    },
+    "help": {
+      "trigger": "¿Cómo obtengo mis claves?",
+      "woocommerce": {
+        "title": "Claves de la API de WooCommerce",
+        "step1": "En el panel de WordPress, ve a WooCommerce → Ajustes → Avanzado → API REST.",
+        "step2": "Haz clic en \"Añadir clave\" y ponle una descripción (p. ej. Woow CRM).",
+        "step3": "En Permisos, elige \"Lectura\" y genera la clave.",
+        "step4": "Copia la Consumer key (ck_...) y la Consumer secret (cs_...) — la secret solo se muestra una vez."
+      },
+      "shopify": {
+        "title": "Token de la Admin API de Shopify",
+        "step1": "En el admin de Shopify, ve a Configuración → Apps y canales de venta → Desarrollar apps.",
+        "step2": "Crea una app y, en Configuración de la Admin API, concede el permiso read_products.",
+        "step3": "Instala la app en la tienda.",
+        "step4": "Copia el token de acceso de la Admin API (shpat_...) y usa el dominio .myshopify.com."
+      }
+    }
+  },
   "pipelinePanel": {
     "title": "Productos vendidos",
     "empty": "Aún no hay productos vinculados a esta tarjeta.",
@@ -119,5 +288,20 @@
     "noVariant": "Sin variante",
     "quantity": "Cantidad",
     "notes": "Notas (opcional)"
+  },
+  "currency": {
+    "BRL": "Real (BRL)",
+    "USD": "Dólar (USD)",
+    "EUR": "Euro (EUR)"
+  },
+  "validation": {
+    "nameRequired": "El nombre es obligatorio",
+    "priceRequired": "El precio es obligatorio",
+    "priceMin": "El precio debe ser 0 o mayor",
+    "urlInvalid": "Introduce una URL válida (http/https)",
+    "requiredLegend": "Los campos marcados con * son obligatorios",
+    "skuTaken": "Este SKU ya está en uso",
+    "variantPriceCurrency": "en {{currency}}",
+    "fixErrors": "Completa los campos obligatorios para continuar."
   }
 }

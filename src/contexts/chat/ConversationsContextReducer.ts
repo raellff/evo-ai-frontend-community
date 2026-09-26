@@ -1,5 +1,7 @@
 import { ConversationsState, ConversationsAction } from '@/types/chat/conversations';
 import { Conversation } from '@/types/chat/api';
+import { PaginationMeta } from '@/types/core';
+import { DEFAULT_PAGE_SIZE } from '@/constants/pagination';
 import { matchesConversationId } from '@/utils/chat/conversationMatcher';
 
 // Helper para verificar se uma conversa foi marcada como lida no localStorage
@@ -139,10 +141,35 @@ export function conversationsReducer(
         existingById.set(String(conv.id), conv);
       });
 
+      const mergedConversations = Array.from(existingById.values());
+
+      // A load-more page must never shrink the authoritative count. If a later
+      // page reports a missing/zero total (e.g. parse fallback for a differently
+      // shaped response), keep the previous total instead of overwriting it —
+      // otherwise the displayed count drops to 0 and has_next_page turns false,
+      // killing the infinite scroll mid-list.
+      const incoming = action.payload.pagination;
+      const prev = state.conversationsPagination;
+      const pageSize = incoming.page_size || prev?.page_size || DEFAULT_PAGE_SIZE;
+      const total = incoming.total && incoming.total > 0 ? incoming.total : (prev?.total ?? mergedConversations.length);
+      const total_pages =
+        incoming.total_pages && incoming.total_pages > 0
+          ? incoming.total_pages
+          : (prev?.total_pages || Math.max(1, Math.ceil(total / pageSize)));
+      const page = incoming.page || (prev?.page ?? 1) + 1;
+      const mergedPagination: PaginationMeta = {
+        ...incoming,
+        page,
+        page_size: pageSize,
+        total,
+        total_pages,
+        has_next_page: page < total_pages,
+      };
+
       return {
         ...state,
-        conversations: Array.from(existingById.values()),
-        conversationsPagination: action.payload.pagination,
+        conversations: mergedConversations,
+        conversationsPagination: mergedPagination,
         conversationsLoading: false,
         conversationsError: null,
         unreadCounts: {
@@ -288,50 +315,56 @@ export function conversationsReducer(
     case 'UPDATE_CONTACT_IN_CONVERSATIONS': {
       const updatedContact = action.payload;
 
-      // Atualiza meta.sender em todas as conversas que usam esse contato
+      const isSameContactId = (id: string | number | null | undefined): boolean =>
+        id !== null && id !== undefined && String(id) === String(updatedContact.id);
+
+      // The conversation list ships `contact` and no `meta` (ConversationSerializer);
+      // only websocket-born conversations carry `meta.sender`. Matching on
+      // `meta.sender` alone skipped every REST-loaded conversation.
+      const belongsToContact = (conv: Conversation): boolean =>
+        isSameContactId(conv.contact?.id) || isSameContactId(conv.meta?.sender?.id);
+
+      // contact.updated omits what it did not resolve, so an empty field means
+      // "keep the current value" — blanking the visible name is the bug itself.
+      const patchContact = (contact: Conversation['contact']): Conversation['contact'] =>
+        contact && isSameContactId(contact.id)
+          ? {
+              ...contact,
+              name: updatedContact.name || contact.name,
+              email: updatedContact.email || contact.email,
+              phone_number: updatedContact.phone_number || contact.phone_number,
+              avatar: updatedContact.avatar || contact.avatar,
+              avatar_url: updatedContact.avatar_url || contact.avatar_url,
+            }
+          : contact;
+
+      const patchMeta = (meta: Conversation['meta']): Conversation['meta'] =>
+        meta?.sender && isSameContactId(meta.sender.id)
+          ? {
+              ...meta,
+              sender: {
+                ...meta.sender,
+                name: updatedContact.name || meta.sender.name,
+                email: updatedContact.email || meta.sender.email,
+                phone_number: updatedContact.phone_number || meta.sender.phone_number,
+                avatar_url: updatedContact.avatar_url || meta.sender.avatar_url,
+              },
+            }
+          : meta;
+
       const updatedConversations = state.conversations
-      .filter(conv => conv !== null && conv !== undefined && conv.id)
-      .map(conv => {
-        const sender = conv.meta?.sender;
-        if (!sender || String(sender.id) !== String(updatedContact.id)) {
-          return conv;
-        }
+        .filter(conv => conv !== null && conv !== undefined && conv.id)
+        .map(conv =>
+          belongsToContact(conv)
+            ? { ...conv, contact: patchContact(conv.contact), meta: patchMeta(conv.meta) }
+            : conv,
+        );
 
-        return {
-          ...conv,
-          meta: {
-            ...conv.meta,
-            sender: {
-              ...sender,
-              name: updatedContact.name,
-              email: updatedContact.email || sender.email,
-              phone_number: updatedContact.phone_number || sender.phone_number,
-              avatar_url: updatedContact.avatar_url || sender.avatar_url,
-            },
-          },
-        };
-      });
-
-      // Atualizar dados da conversa selecionada, se for o mesmo contato
-      let updatedSelectedConversationData = state.selectedConversationData;
-      if(
-        state.selectedConversationData?.meta?.sender &&
-        String(state.selectedConversationData?.meta?.sender.id) === String(updatedContact.id)
-      ) {
-        updatedSelectedConversationData = {
-          ...state.selectedConversationData,
-          meta: {
-            ...state.selectedConversationData.meta,
-            sender: {
-              ...state.selectedConversationData.meta.sender,
-              name: updatedContact.name,
-              email: updatedContact.email || state.selectedConversationData.meta.sender.email,
-              phone_number: updatedContact.phone_number || state.selectedConversationData.meta.sender.phone_number,
-              avatar_url: updatedContact.avatar_url || state.selectedConversationData.meta.sender.avatar_url,
-            },
-          },
-        };
-      }
+      const selected = state.selectedConversationData;
+      const updatedSelectedConversationData =
+        selected && belongsToContact(selected)
+          ? { ...selected, contact: patchContact(selected.contact), meta: patchMeta(selected.meta) }
+          : selected;
 
       return {
         ...state,
@@ -385,6 +418,10 @@ export function conversationsReducer(
       const unreadKey = removed ? String(removed.id) : targetId;
       const { [unreadKey]: _removed, ...remainingUnreadCounts } = state.unreadCounts; // eslint-disable-line @typescript-eslint/no-unused-vars
 
+      // O total da paginação é DERIVADO do servidor — não mutamos no client em
+      // remoções (reconcile/realtime). Entre fetches o header pode ficar levemente
+      // alto (mostra 10 com 9 linhas), mas é estável e sem corrida de
+      // double-decrement; self-heals no próximo fetch.
       return {
         ...state,
         conversations: filteredConversations,
@@ -426,12 +463,10 @@ export function conversationsReducer(
 
       return {
         ...state,
-        // Atualizar unreadCounts
         unreadCounts: {
           ...state.unreadCounts,
           [conversationIdStr]: count,
         },
-        // Também atualizar unread_count no objeto da conversa para manter sincronizado
         conversations: state.conversations
           .filter(conv => conv !== null && conv !== undefined && conv.id)
           .map(conv =>

@@ -7,23 +7,34 @@ const sendMessageSchema = z.tuple([z.string().min(1)]);
 
 const labelListSchema = z.array(idValueSchema).min(1);
 
+// Team/agent/inbox/user ids are UUID strings in this app (not Chatwoot-legacy
+// integers). Accept string|number so real selections validate; number kept for
+// robustness/legacy.
+const entityIdSchema = z.union([z.string().min(1), z.number()]);
+
 const sendEmailToTeamSchema = z.tuple([
   z.object({
-    team_ids: z.array(z.number()).min(1),
+    team_ids: z.array(entityIdSchema).min(1),
     message: z.string().min(1),
   }),
 ]);
 
-const assignTeamSchema = z.tuple([z.union([z.number(), z.null()])]);
+// Team/agent ids are UUID strings in this app — the Chatwoot-legacy integer
+// assumption (number|null) silently rejected every real selection, leaving the
+// rule invalid (button never enabled / submit blocked). `null` is the unassign
+// sentinel the select emits when cleared; number is kept for legacy/robustness.
+const assignTargetSchema = z.tuple([z.union([z.string().min(1), z.number(), z.null()])]);
 
-const assignAgentSchema = z.tuple([z.union([z.number(), z.null()])]);
+const assignTeamSchema = assignTargetSchema;
+
+const assignAgentSchema = assignTargetSchema;
 
 const sendWebhookEventSchema = z.tuple([z.string().url()]);
 
 const sendAttachmentSchema = z.tuple([
   z.object({
     attachment_ids: z.array(idValueSchema).min(1),
-    inbox_id: z.number().optional(),
+    inbox_id: entityIdSchema.optional(),
   }),
 ]);
 
@@ -50,7 +61,7 @@ const createPipelineTaskSchema = z.tuple([
     description: z.string().optional(),
     task_type: z.string().optional(),
     priority: z.string().optional(),
-    assigned_to_id: z.number().optional(),
+    assigned_to_id: entityIdSchema.optional(),
     due_in: z.string().optional(),
   }),
 ]);
@@ -70,6 +81,17 @@ const sendTemplateSchema = z.tuple([
     namespace: z.string().optional(),
     processed_params: z.record(z.string()).optional(),
     components: z.array(z.any()).optional(),
+  }),
+]);
+
+// Custom attribute is unique per (key, model); carry the model so the backend
+// disambiguates the lookup and the write target. Value is a string (empty = set
+// empty), cast at read/query time — consistent with the journey/CRM contract.
+const updateCustomAttributeSchema = z.tuple([
+  z.object({
+    custom_attribute_key: z.string().min(1),
+    custom_attribute_model: z.string().min(1),
+    custom_attribute_value: z.string(),
   }),
 ]);
 
@@ -194,6 +216,12 @@ export const actionRegistry: Record<AutomationActionType, ActionDescriptor> = {
     schema: createPipelineTaskSchema,
     defaultParams: [{ title: '' }],
     i18nKey: 'form.fields.actions.create_pipeline_task',
+  },
+  update_custom_attribute: {
+    actionName: 'update_custom_attribute',
+    schema: updateCustomAttributeSchema,
+    defaultParams: [{ custom_attribute_key: '', custom_attribute_model: '', custom_attribute_value: '' }],
+    i18nKey: 'form.fields.actions.update_custom_attribute',
   },
 };
 

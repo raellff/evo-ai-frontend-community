@@ -46,6 +46,7 @@
     "updateError": "Error updating pipeline",
     "deleteSuccess": "Pipeline deleted successfully",
     "deleteError": "Error deleting pipeline",
+    "deleteBlockedActiveItems": "This pipeline still has active items and cannot be deleted. Remove the items from the pipeline first.",
     "duplicateSuccess": "Pipeline duplicated successfully",
     "duplicateError": "Error duplicating pipeline",
     "activateSuccess": "Pipeline activated successfully",
@@ -190,7 +191,10 @@
           "description": "Finalized"
         }
       }
-    }
+    },
+    "pageTitle": "Creating a new Pipeline",
+    "back": "Back",
+    "newStageColor": "Stage color"
   },
   "createStage": {
     "title": "Create New Stage",
@@ -199,6 +203,7 @@
     "namePlaceholder": "Ex: Leads Qualified",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Describe the purpose of this stage...",
+    "characterCount": "{{current}}/{{max}} characters",
     "color": "Stage Color",
     "colorSelected": "Selected Color",
     "stageType": "Stage Type",
@@ -318,7 +323,9 @@
     },
     "cancel": "Cancel",
     "saving": "Saving...",
-    "save": "Save Changes"
+    "save": "Save Changes",
+    "scheduleAction": "Schedule action",
+    "stageLabel": "Stage:"
   },
   "editConversation": {
     "title": "Edit Conversation in Pipeline",
@@ -396,22 +403,48 @@
     "selectAgent": "Select agent...",
     "selectPipeline": "Select pipeline...",
     "selectLabel": "Select label...",
+    "selectAgentBot": "Select AI agent...",
+    "selectTemplate": "Select template...",
     "noOtherStages": "No other stages available",
     "noOtherPipelines": "No other pipelines available",
     "noStagesInPipeline": "No stages in the selected pipeline",
     "noAgents": "No agents available",
+    "noAgentBots": "No AI agents available",
+    "noTemplates": "No templates available",
     "noLabels": "No labels available",
+    "aiMessagePlaceholder": "What should the agent say? (optional)",
+    "directMessagePlaceholder": "Message to send...",
+    "finalizeMessagePlaceholder": "Closing message (optional)...",
+    "inactivity": {
+      "minutes": "minutes",
+      "hour": "hour",
+      "hours": "hours",
+      "days": "days",
+      "base": {
+        "no_customer_reply": "Customer not replying",
+        "stage_stagnation": "Stuck in stage"
+      }
+    },
     "triggers": {
       "label_added": "Label added",
       "conversation_status_changed": "Conversation status changed",
-      "custom_attribute_updated": "Custom attribute updated"
+      "custom_attribute_updated": "Custom attribute updated",
+      "inactivity": "On inactivity"
     },
     "actions": {
       "move_to_stage": "Move to stage",
       "move_to_pipeline": "Move to another pipeline",
       "assign_agent": "Assign agent",
-      "apply_label": "Apply label"
-    }
+      "apply_label": "Apply label",
+      "send_ai_message": "Message via AI agent",
+      "send_direct_message": "Direct message",
+      "send_template": "Send template",
+      "finalize": "End conversation"
+    },
+    "templatePending": "Awaiting Meta approval",
+    "templatesPendingHint": "Your templates are still awaiting Meta approval.",
+    "noTemplatesHint": "No templates created yet.",
+    "manageTemplates": "Open Message Templates"
   },
   "editStage": {
     "title": "Edit Stage",
@@ -500,7 +533,11 @@
       "conversations": "Conversations",
       "completedPipelines": "Completed Pipelines",
       "createdAt": "Created At",
-      "actions": "Actions"
+      "actions": "Actions",
+      "totalValue": "Total Value",
+      "items": "Leads",
+      "stages": "Stages",
+      "won": "Won"
     },
     "actions": {
       "view": "View",
@@ -510,7 +547,8 @@
       "idCopied": "ID copied to clipboard",
       "activate": "Activate",
       "deactivate": "Deactivate",
-      "delete": "Delete"
+      "delete": "Delete",
+      "setAsDefault": "Set as default"
     },
     "types": {
       "sales": "Sales",
@@ -521,7 +559,8 @@
     "status": {
       "active": "Active",
       "inactive": "Inactive"
-    }
+    },
+    "default": "Default"
   },
   "pipelineSwitcher": {
     "loading": "Loading pipeline...",
@@ -594,19 +633,40 @@
         "resolved": "Resolved",
         "pending": "Pending",
         "snoozed": "Snoozed"
+      },
+      "filters": "Filters",
+      "all": "All",
+      "apply": "Apply",
+      "periodFilter": "Period",
+      "priorityFilter": "Priority",
+      "period": {
+        "all": "All time",
+        "today": "Today",
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "month": "This month"
+      },
+      "priority": {
+        "alta": "High",
+        "media": "Medium",
+        "baixa": "Low"
       }
     },
     "copyId": "Copy ID",
     "idCopied": "ID copied to clipboard",
     "header": {
-      "conversations": "Items",
+      "conversations": "Leads",
       "stages": "Stages",
       "totalValue": "Total Value",
       "addItem": "Add Item",
       "addConversation": "Add Item",
       "editPipeline": "Edit Pipeline",
       "reorderStages": "Reorder Stages",
-      "deletePipeline": "Delete Pipeline"
+      "deletePipeline": "Delete Pipeline",
+      "private": "Private",
+      "noDescription": "No description",
+      "captureForms": "Capture Forms",
+      "purchaseWebhook": "Purchase webhook"
     },
     "stage": {
       "addStage": "Add Stage",
@@ -631,7 +691,11 @@
         "unknown": "Unknown"
       },
       "valueLabel": "Total Value:",
-      "system": "System"
+      "system": "System",
+      "moveCard": "Move card",
+      "moveTo": "Move to",
+      "addItemShort": "Add item",
+      "openConversation": "Open conversation"
     },
     "conversation": {
       "unknownUser": "Unknown User",
@@ -641,7 +705,9 @@
       "status": {
         "open": "Open",
         "resolved": "Resolved",
-        "unknown": "Unknown"
+        "unknown": "Unknown",
+        "pending": "Pending",
+        "snoozed": "Snoozed"
       },
       "valueLabel": "Total Value:",
       "system": "System"
@@ -789,6 +855,25 @@
     }
   },
   "dialog": {
+      "deactivatePipeline": {
+      "lookupFailed": "We could not check what depends on this pipeline. Deactivate anyway?",
+      "draft": "draft",
+      "viaRoutingRule": "via routing rule",
+      "namesRedacted": "{{count}} form in total — you do not have permission to see their names.",
+      "namesRedacted_plural": "{{count}} forms in total — you do not have permission to see their names.",
+          "title": "Deactivate pipeline",
+          "description": "\"{{name}}\" will be hidden from every pipeline picker. Anything already inside it stays where it is.",
+          "checking": "Checking what depends on this pipeline…",
+          "formsHeading": "{{count}} capture form sends leads here:",
+          "formsHeading_plural": "{{count}} capture forms send leads here:",
+          "noForms": "No capture form feeds this pipeline.",
+          "draftsHeading": "{{count}} draft form targets this pipeline (not capturing yet):",
+          "draftsHeading_plural": "{{count}} draft forms target this pipeline (not capturing yet):",
+          "published": "published",
+          "partialWarning": "Only capture forms were checked. Automations and journeys were not inspected.",
+          "cancel": "Cancel",
+          "confirm": "Deactivate"
+      },
     "deletePipeline": {
       "title": "Delete Pipeline",
       "description": "Are you sure you want to delete this pipeline? This action cannot be undone and will affect all related data.",
@@ -796,5 +881,47 @@
       "delete": "Delete Pipeline",
       "deleting": "Deleting..."
     }
+  },
+  "purchaseWebhook": {
+    "title": "Purchase webhook",
+    "subtitle": "An approved purchase on a payment platform becomes a lead in this pipeline: {{pipeline}}",
+    "platform": "Payment platform",
+    "platformPlaceholder": "Pick the platform",
+    "loadingPlatforms": "Loading platforms...",
+    "notConfigured": "no credential saved",
+    "credentialsHint": "Platform credentials live on the CRM Integrations screen.",
+    "destinationRequired": "This platform's credential is public — configure the \"URL destination secret\" on the CRM Integrations screen first.",
+    "product": "Product (optional)",
+    "productPlaceholder": "Labels this URL's leads with this product; empty = the platform's own",
+    "generate": "Generate URL",
+    "urlWhitelabel": "URL on your brand's domain",
+    "urlGlobal": "Webhook URL",
+    "copy": "Copy",
+    "copiedShort": "Copied",
+    "copied": "URL copied",
+    "copyError": "Could not copy — copy the URL by hand",
+    "regenerateHint": "Paste it in the platform's panel as the approved-purchase webhook destination. If you change the credential or the destination secret, generate and register it again.",
+    "loadError": "Failed to load the platforms",
+    "mintError": "Failed to generate the URL"
+  },
+  "captureForms": {
+    "title": "Capture Forms",
+    "subtitle": "Lead capture forms for {{pipeline}}",
+    "newForm": "New Form",
+    "empty": "No capture forms for this pipeline yet.",
+    "leadsCount": "{{count}} leads",
+    "published": "Published",
+    "draft": "Draft",
+    "copyLink": "Copy link",
+    "openLink": "Open",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete the form \"{{name}}\"?",
+    "linkCopied": "Link copied",
+    "saved": "Form saved",
+    "deleted": "Form deleted",
+    "loadError": "Failed to load forms",
+    "saveError": "Failed to save form",
+    "deleteError": "Failed to delete form"
   }
 }

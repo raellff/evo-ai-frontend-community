@@ -74,7 +74,7 @@
     "closeSubmenu": "Fechar submenu",
     "footer": {
       "brand": "Woow CRM",
-      "copyright": "© {{year}} Woow Agência. All rights reserved.",
+      "copyright": "© {{year}} Woow Agência. Todos os direitos reservados.",
       "documentation": "Documentação",
       "support": "Preciso de suporte"
     }
@@ -100,8 +100,8 @@
     },
     "agents": {
       "list": "Agentes de IA",
-      "customTools": "Custom Tools",
-      "customMcps": "Custom MCPs"
+      "customTools": "Ferramentas Personalizadas",
+      "customMcps": "MCPs Personalizados"
     },
     "settings": {
       "account": "Conta",
@@ -111,13 +111,18 @@
       "labels": "Etiquetas",
       "customAttributes": "Atributos Personalizados",
       "cannedResponses": "Respostas Rápidas",
+      "aiCredentials": "Credenciais de IA",
+      "integrationCredentials": "Credenciais de integração",
+      "messageTemplates": "Modelos de Mensagem",
       "macros": "Macros",
       "templates": "Templates",
       "integrations": "Integrações",
       "accessTokens": "Tokens de Acesso",
       "roles": "Perfis e Permissões",
       "admin": "Configurações Admin",
-      "segments": "Segmentos"
+      "segments": "Segmentos",
+      "crmForms": "Formulários de captura",
+      "chatPages": "Páginas de chat"
     }
   }
 }

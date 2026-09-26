@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useCallback } from 'react
 import { toast } from 'sonner';
 import { chatService } from '@/services/chat/chatService';
 import { extractConversationsData } from '@/utils/chat/responseHelpers';
-import { ConversationFilter, QuickFilterTab, Conversation } from '@/types/chat/api';
+import { ConversationFilter, QuickFilterTab, Conversation, ConversationsQuery } from '@/types/chat/api';
 import { PaginationMeta } from '@/types/core';
 import { useLanguage } from '@/hooks/useLanguage';
 import {
@@ -27,11 +27,13 @@ type FiltersAction =
   | { type: 'SET_SEARCH_TERM'; payload: string }
   | { type: 'SET_APPLYING_FILTERS'; payload: boolean };
 
-// 🎯 FILTRO PADRÃO: Inicializar com filtro "open" desde o início
-const DEFAULT_FILTER: ConversationFilter = {
+// 🎯 FILTRO PADRÃO = "All": todos os status (status=all). EXPLÍCITO (nunca [])
+// para o matcher de realtime fazer match-all sem vazar; status é navegação
+// (chips), não filtro. Baseline do realtime + alvo do "Limpar filtros".
+export const DEFAULT_FILTER: ConversationFilter = {
   attribute_key: 'status',
   filter_operator: 'equal_to',
-  values: ['open'], // Array para API, mas será convertido para string no modal
+  values: ['all'],
   query_operator: 'and',
 };
 
@@ -80,12 +82,12 @@ interface FiltersContextValue {
   setFilters: (filters: ConversationFilter[]) => void;
   applyFilters: (
     filters: ConversationFilter[],
-    onSuccess: (conversations: Conversation[], pagination: PaginationMeta) => void,
+    onSuccess: (conversations: Conversation[], pagination: PaginationMeta, query?: ConversationsQuery) => void,
     onError: (error: string) => void,
   ) => Promise<void>;
   applySearch: (
     searchTerm: string,
-    onSuccess: (conversations: Conversation[], pagination: PaginationMeta) => void,
+    onSuccess: (conversations: Conversation[], pagination: PaginationMeta, query?: ConversationsQuery) => void,
     onError: (error: string) => void,
   ) => Promise<void>;
   setQuickFilter: (tab: QuickFilterTab) => void;
@@ -110,7 +112,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const applyFilters = useCallback(
     async (
       filters: ConversationFilter[],
-      onSuccess: (conversations: Conversation[], pagination: PaginationMeta) => void,
+      onSuccess: (conversations: Conversation[], pagination: PaginationMeta, query?: ConversationsQuery) => void,
       onError: (error: string) => void,
     ) => {
       dispatch({ type: 'SET_APPLYING_FILTERS', payload: true });
@@ -121,19 +123,19 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
           // Se não há filtros, carregar conversas normais
           const response = await chatService.getConversations();
           const { conversations, pagination } = extractConversationsData(response);
-          onSuccess(conversations, pagination);
+          onSuccess(conversations, pagination, { kind: 'list', params: {} });
         } else if (shouldUseAdvancedFilters(filters)) {
           // Usar filtros avançados (POST /filter)
           const filterRequest = convertFiltersToApiFormat(filters);
           const response = await chatService.filterConversations(filterRequest);
           const { conversations, pagination } = extractConversationsData(response);
-          onSuccess(conversations, pagination);
+          onSuccess(conversations, pagination, { kind: 'filter', request: filterRequest });
         } else {
           // Usar filtros simples (GET /conversations)
           const params = convertFiltersToUrlParams(filters);
           const response = await chatService.getConversations(params);
           const { conversations, pagination } = extractConversationsData(response);
-          onSuccess(conversations, pagination);
+          onSuccess(conversations, pagination, { kind: 'list', params });
         }
       } catch (error) {
         const errorMessage =
@@ -152,7 +154,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const applySearch = useCallback(
     async (
       searchTerm: string,
-      onSuccess: (conversations: Conversation[], pagination: PaginationMeta) => void,
+      onSuccess: (conversations: Conversation[], pagination: PaginationMeta, query?: ConversationsQuery) => void,
       onError: (error: string) => void,
     ) => {
       dispatch({ type: 'SET_SEARCH_TERM', payload: searchTerm });
@@ -166,7 +168,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
           try {
             const response = await chatService.getConversations();
             const { conversations, pagination } = extractConversationsData(response);
-            onSuccess(conversations, pagination);
+            onSuccess(conversations, pagination, { kind: 'list', params: {} });
           } catch (error) {
             const errorMessage =
               error instanceof Error
@@ -194,7 +196,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
             };
             const response = await chatService.filterConversations(filterRequest);
             const { conversations, pagination } = extractConversationsData(response);
-            onSuccess(conversations, pagination);
+            onSuccess(conversations, pagination, { kind: 'filter', request: filterRequest });
             return;
           } else {
             const filterParams = convertFiltersToUrlParams(state.activeFilters);
@@ -204,7 +206,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
 
         const response = await chatService.getConversations(finalParams);
         const { conversations, pagination } = extractConversationsData(response);
-        onSuccess(conversations, pagination);
+        onSuccess(conversations, pagination, { kind: 'list', params: finalParams });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : t('contexts.filters.errors.search');

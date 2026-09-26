@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
 import {
   Plus,
 } from 'lucide-react';
@@ -15,6 +15,7 @@ interface CustomMCPServersHeaderProps {
   onClearSelection: () => void;
   activeFilters?: HeaderFilter[];
   showFilters?: boolean;
+  hideTitle?: boolean;
 }
 
 export default function CustomMCPServersHeader({
@@ -27,9 +28,10 @@ export default function CustomMCPServersHeader({
   onClearSelection,
   activeFilters = [],
   showFilters = true,
+  hideTitle = false,
 }: CustomMCPServersHeaderProps) {
   const { t } = useLanguage('customMcpServers');
-  const { can, isReady } = useUserPermissions();
+  const { can, isReady } = usePermissions();
 
   const primaryAction: HeaderAction | undefined = isReady && can('ai_custom_mcp_servers', 'create') ? {
     label: t('header.newServer'),
@@ -41,6 +43,7 @@ export default function CustomMCPServersHeader({
     <BaseHeader
       title={t('header.title')}
       subtitle={t('header.subtitle')}
+      hideTitle={hideTitle}
       totalCount={totalCount}
       selectedCount={selectedCount}
       searchValue={searchValue}

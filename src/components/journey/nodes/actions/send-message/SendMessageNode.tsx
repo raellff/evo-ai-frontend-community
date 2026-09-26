@@ -2,12 +2,43 @@ import { MessageSquare, Settings, Paperclip } from 'lucide-react';
 import { BaseFlowNode } from '@/components/base';
 import { useLanguage } from '@/hooks/useLanguage';
 
+// EVO-1267: maps one template placeholder to a value source. Root sources
+// (contact/conversation/pipeline) resolve server-side against the live
+// conversation; 'fixed' is a literal; 'expression' is a template string that
+// may mix several {{root.path}} placeholders.
+export type TemplateVariableSource =
+  | 'contact'
+  | 'conversation'
+  | 'pipeline'
+  | 'fixed'
+  | 'expression';
+
+export interface TemplateVariableMapping {
+  variable: string;
+  source: TemplateVariableSource;
+  path?: string;
+  value?: string;
+  expression?: string;
+  fallback?: string;
+}
+
 export interface SendMessageNodeData {
   label?: string;
   description?: string;
   message?: string;
   inboxId?: string;
   inboxName?: string;
+
+  // Template mode (EVO-1255): 'text' keeps the free-form message; 'template'
+  // sends a CRM message template (mandatory for WhatsApp Cloud channels).
+  messageMode?: 'text' | 'template';
+  templateId?: string;
+  templateName?: string;
+  templateLanguage?: string;
+  templateParams?: Record<string, string>;
+  // Variable source mappings (EVO-1267); wins over templateParams on the
+  // same variable name at runtime.
+  templateVariables?: TemplateVariableMapping[];
 
   // Opção para usar canal do evento gerado
   useEventChannel?: boolean;
@@ -41,7 +72,15 @@ interface SendMessageNodeProps {
 export function SendMessageNode({ selected, data, id }: SendMessageNodeProps) {
   const { t } = useLanguage('journey');
 
+  const isTemplateMode = data.messageMode === 'template';
+
   const getDisplayText = () => {
+    if (isTemplateMode) {
+      return data.templateName
+        ? `${t('flowEditor.nodes.sendMessage.templateLabel')} ${data.templateName}`
+        : t('flowEditor.nodes.sendMessage.templateNotSelected');
+    }
+
     if (!data.message || data.message.trim() === '') {
       return t('flowEditor.nodes.sendMessage.description');
     }
@@ -112,7 +151,7 @@ export function SendMessageNode({ selected, data, id }: SendMessageNodeProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-medium text-foreground truncate">
-              Enviar Mensagem
+              {t('flowEditor.nodes.sendMessage.name')}
             </h3>
           </div>
           <div className="flex-shrink-0">

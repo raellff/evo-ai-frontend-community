@@ -6,45 +6,7 @@ import es from './es/journey.json';
 import fr from './fr/journey.json';
 // Renamed to avoid shadowing vitest's `it` block helper.
 import itLocale from './it/journey.json';
-
-function flatten(obj: unknown, prefix = ''): string[] {
-  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) return [];
-  const keys: string[] = [];
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-    const path = prefix ? `${prefix}.${k}` : k;
-    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-      keys.push(...flatten(v, path));
-    } else {
-      keys.push(path);
-    }
-  }
-  return keys;
-}
-
-function flattenWithValues(obj: unknown, prefix = ''): Record<string, unknown> {
-  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) return {};
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
-    const path = prefix ? `${prefix}.${k}` : k;
-    if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-      Object.assign(out, flattenWithValues(v, path));
-    } else {
-      out[path] = v;
-    }
-  }
-  return out;
-}
-
-/**
- * Return the value at a dot-delimited path. Returns `undefined` if any
- * segment is missing.
- */
-function getAtPath(obj: unknown, path: string): unknown {
-  return path.split('.').reduce<unknown>((acc, seg) => {
-    if (acc === null || acc === undefined || typeof acc !== 'object') return undefined;
-    return (acc as Record<string, unknown>)[seg];
-  }, obj);
-}
+import { findLeaks, flatten, getAtPath } from './_lib/parity';
 
 describe('journey i18n parity (EVO-1260)', () => {
   const enKeys = new Set(flatten(en));
@@ -106,83 +68,220 @@ describe('journey i18n parity (EVO-1260)', () => {
     expect(empties).toEqual([]);
   });
 
-  // Generalised non-empty check across EN and pt-BR (the lock-step pair):
-  // every string value must be non-empty. Catches an entire-file regression
-  // class (e.g. a script writing "" to a key during a future sweep) that
-  // the EVO-1260-only check above misses.
+  // EVO-1275: the event-switch confirm-modal keys were added to ALL six
+  // locales (the strict en↔pt-BR mirror would otherwise leave pt/es/fr/it
+  // unguarded against silent drift/removal). Assert presence + non-empty
+  // across every shipped locale, mirroring the EVO-1260 pattern above.
+  const evo1275Keys = [
+    'triggerComponents.event.eventSwitch.title',
+    'triggerComponents.event.eventSwitch.body',
+    'triggerComponents.event.eventSwitch.preserve',
+    'triggerComponents.event.eventSwitch.clear',
+  ];
+
   it.each([
     ['en', en],
     ['pt-BR', ptBR],
-  ])('%s has non-empty string values for every key', (_name, locale) => {
-    const flat = flattenWithValues(locale);
-    const empties: string[] = [];
-    for (const [k, v] of Object.entries(flat)) {
-      if (typeof v !== 'string') continue;
-      if (v.trim() === '') empties.push(k);
-    }
-    expect(empties).toEqual([]);
+    ['pt', pt],
+    ['es', es],
+    ['fr', fr],
+    ['it', itLocale],
+  ])('%s contains every EVO-1275 event-switch key, non-empty', (_name, locale) => {
+    const offenders = evo1275Keys.filter((k) => {
+      const v = getAtPath(locale, k);
+      return typeof v !== 'string' || v.trim() === '';
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  // EVO-1742: the structured webhook-body builder keys were added to ALL
+  // six locales. The strict en↔pt-BR mirror covers those two; assert
+  // presence + non-empty across every shipped locale so pt/es/fr/it can't
+  // silently drift (same pattern as EVO-1260 / EVO-1275 above).
+  const evo1742Keys = [
+    'panels.sendWebhook.body.modeStructured',
+    'panels.sendWebhook.body.modeRaw',
+    'panels.sendWebhook.body.nestedRawOnlyHint',
+    'panels.sendWebhook.body.builder.addField',
+    'panels.sendWebhook.body.builder.keyLabel',
+    'panels.sendWebhook.body.builder.valueLabel',
+    'panels.sendWebhook.body.builder.keyPlaceholder',
+    'panels.sendWebhook.body.builder.valuePlaceholder',
+    'panels.sendWebhook.body.builder.typeLabel',
+    'panels.sendWebhook.body.builder.noFields',
+    'panels.sendWebhook.body.builder.removeField',
+    'panels.sendWebhook.body.builder.types.string',
+    'panels.sendWebhook.body.builder.types.number',
+    'panels.sendWebhook.body.builder.types.boolean',
+    'panels.sendWebhook.body.validation.blankKey',
+    'panels.sendWebhook.body.validation.duplicateKey',
+  ];
+
+  it.each([
+    ['en', en],
+    ['pt-BR', ptBR],
+    ['pt', pt],
+    ['es', es],
+    ['fr', fr],
+    ['it', itLocale],
+  ])('%s contains every EVO-1742 webhook-body key, non-empty', (_name, locale) => {
+    const offenders = evo1742Keys.filter((k) => {
+      const v = getAtPath(locale, k);
+      return typeof v !== 'string' || v.trim() === '';
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  // EVO-1926: the create-pipeline-task panel block (incl. taskType +
+  // taskTypes.*) existed only in en/pt-BR; es/fr/it/pt carried a
+  // pre-existing drift and were missing the block entirely. Port the
+  // full block to every locale and lock it in across all six (same
+  // presence + non-empty pattern as EVO-1260 / EVO-1275 / EVO-1742).
+  const evo1926Keys = [
+    'panels.createPipelineTask.title',
+    'panels.createPipelineTask.loadDataError',
+    'panels.createPipelineTask.loadErrorBanner',
+    'panels.createPipelineTask.taskTitle',
+    'panels.createPipelineTask.taskTitlePlaceholder',
+    'panels.createPipelineTask.variablesHint',
+    'panels.createPipelineTask.description',
+    'panels.createPipelineTask.descriptionPlaceholder',
+    'panels.createPipelineTask.assignee',
+    'panels.createPipelineTask.noAssignee',
+    'panels.createPipelineTask.dueDate',
+    'panels.createPipelineTask.priority',
+    'panels.createPipelineTask.taskType',
+    'panels.createPipelineTask.due.none',
+    'panels.createPipelineTask.due.in1h',
+    'panels.createPipelineTask.due.in4h',
+    'panels.createPipelineTask.due.in1d',
+    'panels.createPipelineTask.due.in3d',
+    'panels.createPipelineTask.due.in1w',
+    'panels.createPipelineTask.priorities.low',
+    'panels.createPipelineTask.priorities.medium',
+    'panels.createPipelineTask.priorities.high',
+    'panels.createPipelineTask.priorities.urgent',
+    'panels.createPipelineTask.taskTypes.call',
+    'panels.createPipelineTask.taskTypes.email',
+    'panels.createPipelineTask.taskTypes.meeting',
+    'panels.createPipelineTask.taskTypes.follow_up',
+    'panels.createPipelineTask.taskTypes.note',
+    'panels.createPipelineTask.taskTypes.other',
+  ];
+
+  it.each([
+    ['en', en],
+    ['pt-BR', ptBR],
+    ['pt', pt],
+    ['es', es],
+    ['fr', fr],
+    ['it', itLocale],
+  ])('%s contains every EVO-1926 create-pipeline-task key, non-empty', (_name, locale) => {
+    const offenders = evo1926Keys.filter((k) => {
+      const v = getAtPath(locale, k);
+      return typeof v !== 'string' || v.trim() === '';
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  // EVO-1904: the exit-journey config-panel keys (exitReason / exitMessage)
+  // were added to ALL six locales. The strict en↔pt-BR mirror covers those
+  // two; assert presence + non-empty across every shipped locale so
+  // pt/es/fr/it can't silently drift (same pattern as EVO-1260 above).
+  const evo1904Keys = [
+    'panels.exitJourney.intro',
+    'panels.exitJourney.reasonLabel',
+    'panels.exitJourney.reasonPlaceholder',
+    'panels.exitJourney.reasonHint',
+    'panels.exitJourney.reasonRequired',
+    'panels.exitJourney.customReasonLabel',
+    'panels.exitJourney.customReasonPlaceholder',
+    'panels.exitJourney.messageLabel',
+    'panels.exitJourney.messagePlaceholder',
+    'panels.exitJourney.messageHint',
+    'panels.exitJourney.reasons.completed',
+    'panels.exitJourney.reasons.abandoned',
+    'panels.exitJourney.reasons.transferred',
+    'panels.exitJourney.reasons.error',
+    'panels.exitJourney.reasons.custom',
+  ];
+
+  it.each([
+    ['en', en],
+    ['pt-BR', ptBR],
+    ['pt', pt],
+    ['es', es],
+    ['fr', fr],
+    ['it', itLocale],
+  ])('%s contains every EVO-1904 exit-journey key, non-empty', (_name, locale) => {
+    const offenders = evo1904Keys.filter((k) => {
+      const v = getAtPath(locale, k);
+      return typeof v !== 'string' || v.trim() === '';
+    });
+    expect(offenders).toEqual([]);
   });
 
   // Anti-leakage: catches the EVO-1260 review finding class — pt-BR
   // values byte-identical to EN that are NOT legitimate tech terms,
-  // sample literals, or pure-interpolation strings. The prior parity
-  // checks (presence + non-empty) passed mechanically while pt-BR
-  // still rendered English to the user.
+  // sample literals, or pure-interpolation strings. Uses the shared
+  // helper (EVO-1430) with a journey-specific allowlist.
+  const JOURNEY_ALLOWED_IDENTICAL = new Set<string>([
+    // bare tech terms used identically in pt-BR
+    'Webhook', 'JSON', 'URL', 'Auth', 'API', 'HTTP', 'HTTPS', 'OAuth',
+    'Bearer', 'Token', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'UUID',
+    'UTC', 'SLA', 'CRM', 'ID', 'Trigger', 'Triggers', 'Tag', 'Status',
+    'Timeout', 'Headers', 'Header', 'Timestamp', 'XML', 'Total', 'Logs',
+    'Form Data', 'Pipeline', 'Pipeline #{{pipelineId}}',
+    // time units
+    'min', 'h', 'd', 's', 'ms',
+    // tech-term phrases (with optional required-marker asterisk)
+    'Bearer Token', 'Bearer Token *', 'API Key', 'API Key *',
+    'Basic Auth', 'Headers HTTP', 'Templates JSON', 'Bot:',
+    // "Template" is the established pt-BR loanword across the Send Message
+    // block (Template de mensagem, Escolha um template, …) — kept identical
+    // to EN by design, so the labels match the surrounding copy.
+    'Template', 'Template:',
+    // "Follow-up" is the established pt-BR loanword for the pipeline task type
+    // (kept identical to EN by design).
+    'Follow-up',
+    // strings whose only "language" content is the variable placeholder
+    'Webhook {{method}}', 'Basic auth: {{username}}', 'Timeout: {{timeout}}s',
+    // sample literals used as placeholders in form fields
+    'X-API-Key', 'Content-Type', 'application/json',
+    // EN file already contains the Portuguese word "Valor" at this key
+    // (apparently authored in pt-first); pt-BR matches by coincidence.
+    'Valor',
+  ]);
+
   it('pt-BR has no English leakage (pt-BR !== EN except for whitelisted tech terms)', () => {
-    // Some bare tech-term entries below are not currently present as
-    // standalone string values; they are kept on purpose so that a future
-    // key like { "foo": "URL" } is allowlisted automatically. Lean
-    // alternative: prune to only-currently-used and accept that future
-    // additions need an allowlist update.
-    const ALLOWED_IDENTICAL_VALUES = new Set<string>([
-      // bare tech terms used identically in pt-BR
-      'Webhook', 'JSON', 'URL', 'Auth', 'API', 'HTTP', 'HTTPS', 'OAuth',
-      'Bearer', 'Token', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'UUID',
-      'UTC', 'SLA', 'CRM', 'ID', 'Trigger', 'Triggers', 'Tag', 'Status',
-      'Timeout', 'Headers', 'Header', 'Timestamp', 'XML', 'Total', 'Logs',
-      'Form Data',
-      // time units
-      'min', 'h', 'd', 's', 'ms',
-      // symbol-only operators (unicode notequal is the literal char)
-      '=', '≠', '>', '<',
-      // tech-term phrases (with optional required-marker asterisk)
-      'Bearer Token', 'Bearer Token *', 'API Key', 'API Key *',
-      'Basic Auth', 'Headers HTTP', 'Templates JSON', 'Bot:',
-      // strings whose only "language" content is the variable placeholder
-      '{{duration}} {{unit}}', 'Webhook {{method}}', 'Ex: {{example}}',
-      'Basic auth: {{username}}', 'Timeout: {{timeout}}s',
-      // sample literals used as placeholders in form fields
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      'sk-1234567890abcdef...',
-      'X-API-Key',
-      'https://api.exemplo.com/webhook',
-      'Content-Type',
-      'application/json',
-      'Ex: João Silva',
-      'Ex: ID-12345',
-      'Ex: button_clicked, page_viewed',
-      // EN file already contains the Portuguese word "Valor" at this key
-      // (apparently authored in pt-first); pt-BR matches by coincidence.
-      'Valor',
-    ]);
+    const leaks = findLeaks(en, ptBR, JOURNEY_ALLOWED_IDENTICAL);
+    expect(leaks).toEqual([]);
+  });
 
-    // Pure-interpolation values whose only content is a placeholder
-    // followed by a numeric or symbolic suffix (e.g. "{{count}}/1000",
-    // "{{progress}}%"). These have no translatable language.
-    const PURE_INTERPOLATION_RE = /^\{\{[a-zA-Z_][a-zA-Z0-9_]*\}\}[^a-zA-Z]*$/;
+  // Every EN leaf labelled exactly "Save" or "Cancel". Discovered, not listed,
+  // so a newly orphaned pair is covered without editing this file.
+  const saveCancelKeys = flatten(en).filter((k) => {
+    const v = getAtPath(en, k);
+    return v === 'Save' || v === 'Cancel';
+  });
 
-    const enFlat = flattenWithValues(en);
-    const ptFlat = flattenWithValues(ptBR);
-    const leaks: string[] = [];
-    for (const [key, enVal] of Object.entries(enFlat)) {
-      const ptVal = ptFlat[key];
-      if (typeof enVal !== 'string' || typeof ptVal !== 'string') continue;
-      if (!enVal.trim()) continue;
-      if (enVal !== ptVal) continue;
-      if (ALLOWED_IDENTICAL_VALUES.has(enVal)) continue;
-      if (PURE_INTERPOLATION_RE.test(enVal)) continue;
-      leaks.push(`${key} = ${JSON.stringify(enVal)}`);
-    }
+  // Reworded EN copy empties the set and passes the cases below vacuously.
+  it('discovers the Save/Cancel keys it guards', () => {
+    expect(saveCancelKeys.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['pt', pt],
+    ['es', es],
+    ['fr', fr],
+    ['it', itLocale],
+  ])('%s translates every Save/Cancel key', (_name, locale) => {
+    // An absent key renders the EN literal via fallbackLng, so it leaks the
+    // same as a key holding the EN value.
+    const leaks = saveCancelKeys.filter((k) => {
+      const v = getAtPath(locale, k);
+      return v === undefined || v === getAtPath(en, k);
+    });
     expect(leaks).toEqual([]);
   });
 });

@@ -21,6 +21,15 @@ import {
   X,
 } from 'lucide-react';
 import { CustomTool, CustomToolFormData } from '@/types/ai';
+import {
+  KeyValueEditor,
+  AdvancedJsonCollapse,
+  TestRequestButton,
+  CredentialRefsEditor,
+  mergeRetiredHeaders,
+  splitAuthHeaders,
+  useVaultMigrationState,
+} from '@/components/ai_agents/shared';
 
 
 interface CustomToolFormProps {
@@ -36,7 +45,8 @@ interface FormData {
   description: string;
   method: string;
   endpoint: string;
-  headers: Record<string, string>;
+  headers: Record<string, unknown>;
+  credential_refs: Record<string, string>;
   path_params: Record<string, unknown>;
   query_params: Record<string, unknown>;
   body_params: Record<string, unknown>;
@@ -54,6 +64,7 @@ const initialFormData: FormData = {
   method: 'GET',
   endpoint: '',
   headers: {},
+  credential_refs: {},
   path_params: {},
   query_params: {},
   body_params: {},
@@ -75,18 +86,21 @@ export default function CustomToolForm({
   onCancel,
 }: CustomToolFormProps) {
   const { t } = useLanguage('customTools');
+  const { t: tVault } = useLanguage('integrationCredentials');
+  // Story 2.7: with the consumer retired, inline auth headers become read-only
+  // pointers to the vault. Guard failure reads as not retired: nothing is
+  // removed from a broken installation.
+  const migrationState = useVaultMigrationState();
+  const headersRetired = Boolean(migrationState.retired.custom_tools);
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [headersJson, setHeadersJson] = useState('{}');
-  const [bodyParamsJson, setBodyParamsJson] = useState('{}');
-  const [queryParamsJson, setQueryParamsJson] = useState('{}');
-  const [pathParamsJson, setPathParamsJson] = useState('{}');
   const [valuesJson, setValuesJson] = useState('{}');
   const [errorHandlingJson, setErrorHandlingJson] = useState('{}');
+  const [inputModesJson, setInputModesJson] = useState('[]');
+  const [outputModesJson, setOutputModesJson] = useState('[]');
   const [tagsInput, setTagsInput] = useState('');
   const [newExample, setNewExample] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialize form data when tool changes
   useEffect(() => {
     if (tool && mode !== 'create') {
       const newFormData: FormData = {
@@ -94,34 +108,31 @@ export default function CustomToolForm({
         description: tool.description || '',
         method: tool.method || 'GET',
         endpoint: tool.endpoint || '',
-        headers: tool.headers as Record<string, string> || {},
-        path_params: tool.path_params as Record<string, unknown> || {},
-        query_params: tool.query_params as Record<string, unknown> || {},
-        body_params: tool.body_params as Record<string, unknown> || {},
-        error_handling: tool.error_handling as Record<string, unknown> || {},
-        values: tool.values as Record<string, unknown> || {},
+        headers: (tool.headers as Record<string, unknown>) || {},
+        credential_refs: tool.credential_refs || {},
+        path_params: (tool.path_params as Record<string, unknown>) || {},
+        query_params: (tool.query_params as Record<string, unknown>) || {},
+        body_params: (tool.body_params as Record<string, unknown>) || {},
+        error_handling: (tool.error_handling as Record<string, unknown>) || {},
+        values: (tool.values as Record<string, unknown>) || {},
         tags: tool.tags || [],
         examples: tool.examples || [],
-        input_modes: tool.input_modes as string[] || [],
-        output_modes: tool.output_modes as string[] || [],
+        input_modes: (tool.input_modes as string[]) || [],
+        output_modes: (tool.output_modes as string[]) || [],
       };
 
       setFormData(newFormData);
-      setHeadersJson(JSON.stringify(newFormData.headers, null, 2));
-      setBodyParamsJson(JSON.stringify(newFormData.body_params, null, 2));
-      setQueryParamsJson(JSON.stringify(newFormData.query_params, null, 2));
-      setPathParamsJson(JSON.stringify(newFormData.path_params, null, 2));
       setValuesJson(JSON.stringify(newFormData.values, null, 2));
       setErrorHandlingJson(JSON.stringify(newFormData.error_handling, null, 2));
+      setInputModesJson(JSON.stringify(newFormData.input_modes, null, 2));
+      setOutputModesJson(JSON.stringify(newFormData.output_modes, null, 2));
       setTagsInput(newFormData.tags.join(', '));
     } else {
       setFormData(initialFormData);
-      setHeadersJson('{}');
-      setBodyParamsJson('{}');
-      setQueryParamsJson('{}');
-      setPathParamsJson('{}');
       setValuesJson('{}');
       setErrorHandlingJson('{}');
+      setInputModesJson('[]');
+      setOutputModesJson('[]');
       setTagsInput('');
     }
   }, [tool, mode]);
@@ -132,29 +143,24 @@ export default function CustomToolForm({
       [field]: value,
     }));
 
-    // Clear error when user types
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const handleHeadersChange = (value: string) => {
-    setHeadersJson(value);
-    try {
-      const parsed = JSON.parse(value);
-      setFormData(prev => ({ ...prev, headers: parsed }));
-      if (errors.headers) {
-        setErrors(prev => ({ ...prev, headers: '' }));
-      }
-    } catch {
-      // Invalid JSON, don't update formData but show error on submit
+  const handleKvChange = (
+    field: 'headers' | 'body_params' | 'query_params' | 'path_params',
+  ) => (next: Record<string, unknown>) => {
+    setFormData(prev => ({ ...prev, [field]: next }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const handleJsonFieldChange = (
-    field: 'body_params' | 'query_params' | 'path_params' | 'values' | 'error_handling',
+  const handleAdvancedJsonChange = (
+    field: 'values' | 'error_handling',
     value: string,
-    setter: (value: string) => void
+    setter: (value: string) => void,
   ) => {
     setter(value);
     try {
@@ -164,7 +170,26 @@ export default function CustomToolForm({
         setErrors(prev => ({ ...prev, [field]: '' }));
       }
     } catch {
-      // Invalid JSON, don't update formData but show error on submit
+      // Surface on submit
+    }
+  };
+
+  const handleModesJsonChange = (
+    field: 'input_modes' | 'output_modes',
+    value: string,
+    setter: (value: string) => void,
+  ) => {
+    setter(value);
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        setFormData(prev => ({ ...prev, [field]: parsed as string[] }));
+        if (errors[field]) {
+          setErrors(prev => ({ ...prev, [field]: '' }));
+        }
+      }
+    } catch {
+      // Surface on submit
     }
   };
 
@@ -213,30 +238,6 @@ export default function CustomToolForm({
     }
 
     try {
-      JSON.parse(headersJson);
-    } catch {
-      newErrors.headers = t('form.validation.headersInvalid');
-    }
-
-    try {
-      JSON.parse(bodyParamsJson);
-    } catch {
-      newErrors.body_params = t('form.validation.bodyParamsInvalid');
-    }
-
-    try {
-      JSON.parse(queryParamsJson);
-    } catch {
-      newErrors.query_params = t('form.validation.queryParamsInvalid');
-    }
-
-    try {
-      JSON.parse(pathParamsJson);
-    } catch {
-      newErrors.path_params = t('form.validation.pathParamsInvalid');
-    }
-
-    try {
       JSON.parse(valuesJson);
     } catch {
       newErrors.values = t('form.validation.valuesInvalid');
@@ -246,6 +247,24 @@ export default function CustomToolForm({
       JSON.parse(errorHandlingJson);
     } catch {
       newErrors.error_handling = t('form.validation.errorHandlingInvalid');
+    }
+
+    try {
+      const parsedInputModes = JSON.parse(inputModesJson);
+      if (!Array.isArray(parsedInputModes)) {
+        newErrors.input_modes = t('form.validation.inputModesInvalid');
+      }
+    } catch {
+      newErrors.input_modes = t('form.validation.inputModesInvalid');
+    }
+
+    try {
+      const parsedOutputModes = JSON.parse(outputModesJson);
+      if (!Array.isArray(parsedOutputModes)) {
+        newErrors.output_modes = t('form.validation.outputModesInvalid');
+      }
+    } catch {
+      newErrors.output_modes = t('form.validation.outputModesInvalid');
     }
 
     setErrors(newErrors);
@@ -265,6 +284,7 @@ export default function CustomToolForm({
       method: formData.method,
       endpoint: formData.endpoint.trim(),
       headers: formData.headers,
+      credential_refs: formData.credential_refs,
       path_params: formData.path_params,
       query_params: formData.query_params,
       body_params: formData.body_params,
@@ -278,6 +298,11 @@ export default function CustomToolForm({
 
     onSubmit(submitData);
   };
+
+  const showBodyParams =
+    formData.method === 'POST' ||
+    formData.method === 'PUT' ||
+    formData.method === 'PATCH';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -366,109 +391,169 @@ export default function CustomToolForm({
             {errors.endpoint && <p className="text-sm text-destructive">{errors.endpoint}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="headers">{t('form.fields.headers.label')}</Label>
-            <Textarea
-              id="headers"
-              value={headersJson}
-              onChange={e => handleHeadersChange(e.target.value)}
-              placeholder={t('form.fields.headers.placeholder')}
-              disabled={loading}
-              rows={6}
-              className={`font-mono ${errors.headers ? 'border-destructive' : ''}`}
-            />
-            {errors.headers && <p className="text-sm text-destructive">{errors.headers}</p>}
-            <p className="text-sm text-muted-foreground">
-              {t('form.fields.headers.hint')}
-            </p>
-          </div>
-
-          {(formData.method === 'POST' || formData.method === 'PUT' || formData.method === 'PATCH') && (
+          {headersRetired ? (
+            // Retired: the auth entries the form received stay read-only AND
+            // stay in the payload untouched — the update replaces the stored
+            // object wholesale, so dropping them here would erase the migrated
+            // secret through the UI (the 1.6 modal bug, negative-proof tested).
             <div className="space-y-2">
-              <Label htmlFor="body_params">{t('form.fields.bodyParams.label')}</Label>
-              <Textarea
-                id="body_params"
-                value={bodyParamsJson}
-                onChange={e => handleJsonFieldChange('body_params', e.target.value, setBodyParamsJson)}
-                placeholder={t('form.fields.bodyParams.placeholder')}
-                disabled={loading}
-                rows={6}
-                className={`font-mono ${errors.body_params ? 'border-destructive' : ''}`}
-              />
-              {errors.body_params && <p className="text-sm text-destructive">{errors.body_params}</p>}
-              <p className="text-sm text-muted-foreground">
-                {t('form.fields.bodyParams.hint')}
+              {Object.keys(splitAuthHeaders(formData.headers).auth).map(name => (
+                <div
+                  key={name}
+                  className="flex items-center gap-2 text-sm border rounded-md px-3 py-2"
+                >
+                  <span className="font-mono">{name}</span>
+                  <span className="font-mono text-muted-foreground">••••</span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {tVault('retirement.managedByVault')}
+                  </span>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                {tVault('retirement.authHeadersLocked')}
               </p>
+              <KeyValueEditor
+                id="headers"
+                label={t('form.fields.headers.labelKv')}
+                value={splitAuthHeaders(formData.headers).others}
+                onChange={next =>
+                  setFormData(prev => ({
+                    ...prev,
+                    headers: mergeRetiredHeaders(prev.headers, next as Record<string, unknown>),
+                  }))
+                }
+                disabled={loading}
+                hint={t('form.fields.headers.hint')}
+                keyPlaceholder={t('form.fields.headers.keyPlaceholder')}
+                valuePlaceholder={t('form.fields.headers.valuePlaceholder')}
+              />
             </div>
+          ) : (
+            <KeyValueEditor
+              id="headers"
+              label={t('form.fields.headers.labelKv')}
+              value={formData.headers}
+              onChange={handleKvChange('headers')}
+              disabled={loading}
+              hint={t('form.fields.headers.hint')}
+              keyPlaceholder={t('form.fields.headers.keyPlaceholder')}
+              valuePlaceholder={t('form.fields.headers.valuePlaceholder')}
+            />
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="query_params">{t('form.fields.queryParams.label')}</Label>
-            <Textarea
-              id="query_params"
-              value={queryParamsJson}
-              onChange={e => handleJsonFieldChange('query_params', e.target.value, setQueryParamsJson)}
-              placeholder={t('form.fields.queryParams.placeholder')}
-              disabled={loading}
-              rows={6}
-              className={`font-mono ${errors.query_params ? 'border-destructive' : ''}`}
-            />
-            {errors.query_params && <p className="text-sm text-destructive">{errors.query_params}</p>}
-            <p className="text-sm text-muted-foreground">
-              {t('form.fields.queryParams.hint')}
-            </p>
-          </div>
+          {/* Vault-backed auth headers (EVO-2250 story 2.4): each entry maps
+              one header name to one vault credential — inline headers above
+              keep working as the fallback until story 2.7. */}
+          <CredentialRefsEditor
+            id="credential_refs"
+            value={formData.credential_refs}
+            onChange={refs => setFormData(prev => ({ ...prev, credential_refs: refs }))}
+            disabled={loading}
+            keyPlaceholder={t('form.fields.headers.keyPlaceholder')}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="path_params">{t('form.fields.pathParams.label')}</Label>
-            <Textarea
-              id="path_params"
-              value={pathParamsJson}
-              onChange={e => handleJsonFieldChange('path_params', e.target.value, setPathParamsJson)}
-              placeholder={t('form.fields.pathParams.placeholder')}
+          {showBodyParams && (
+            <KeyValueEditor
+              id="body_params"
+              label={t('form.fields.bodyParams.labelKv')}
+              value={formData.body_params}
+              onChange={handleKvChange('body_params')}
               disabled={loading}
-              rows={6}
-              className={`font-mono ${errors.path_params ? 'border-destructive' : ''}`}
+              hint={t('form.fields.bodyParams.hint')}
+              keyPlaceholder={t('form.fields.bodyParams.keyPlaceholder')}
+              valuePlaceholder={t('form.fields.bodyParams.valuePlaceholder')}
             />
-            {errors.path_params && <p className="text-sm text-destructive">{errors.path_params}</p>}
-            <p className="text-sm text-muted-foreground">
-              {t('form.fields.pathParams.hint')}
-            </p>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="values">{t('form.fields.values.label')}</Label>
-            <Textarea
-              id="values"
-              value={valuesJson}
-              onChange={e => handleJsonFieldChange('values', e.target.value, setValuesJson)}
-              placeholder={t('form.fields.values.placeholder')}
-              disabled={loading}
-              rows={6}
-              className={`font-mono ${errors.values ? 'border-destructive' : ''}`}
-            />
-            {errors.values && <p className="text-sm text-destructive">{errors.values}</p>}
-            <p className="text-sm text-muted-foreground">
-              {t('form.fields.values.hint')}
-            </p>
-          </div>
+          <KeyValueEditor
+            id="query_params"
+            label={t('form.fields.queryParams.labelKv')}
+            value={formData.query_params}
+            onChange={handleKvChange('query_params')}
+            disabled={loading}
+            hint={t('form.fields.queryParams.hint')}
+            keyPlaceholder={t('form.fields.queryParams.keyPlaceholder')}
+            valuePlaceholder={t('form.fields.queryParams.valuePlaceholder')}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="error_handling">{t('form.fields.errorHandling.label')}</Label>
-            <Textarea
-              id="error_handling"
-              value={errorHandlingJson}
-              onChange={e => handleJsonFieldChange('error_handling', e.target.value, setErrorHandlingJson)}
-              placeholder={t('form.fields.errorHandling.placeholder')}
-              disabled={loading}
-              rows={6}
-              className={`font-mono ${errors.error_handling ? 'border-destructive' : ''}`}
-            />
-            {errors.error_handling && <p className="text-sm text-destructive">{errors.error_handling}</p>}
-            <p className="text-sm text-muted-foreground">
-              {t('form.fields.errorHandling.hint')}
-            </p>
-          </div>
+          <KeyValueEditor
+            id="path_params"
+            label={t('form.fields.pathParams.labelKv')}
+            value={formData.path_params}
+            onChange={handleKvChange('path_params')}
+            disabled={loading}
+            hint={t('form.fields.pathParams.hint')}
+            keyPlaceholder={t('form.fields.pathParams.keyPlaceholder')}
+            valuePlaceholder={t('form.fields.pathParams.valuePlaceholder')}
+          />
+
+          <TestRequestButton
+            mode={mode === 'create' ? 'create' : 'edit'}
+            toolId={tool?.id}
+            disabled={loading}
+          />
+
+          <AdvancedJsonCollapse title={t('advancedConfig.title')}>
+            <div className="space-y-2">
+              <Label htmlFor="values">{t('form.fields.values.label')}</Label>
+              <Textarea
+                id="values"
+                value={valuesJson}
+                onChange={e => handleAdvancedJsonChange('values', e.target.value, setValuesJson)}
+                placeholder={t('form.fields.values.placeholder')}
+                disabled={loading}
+                rows={6}
+                className={`font-mono ${errors.values ? 'border-destructive' : ''}`}
+              />
+              {errors.values && <p className="text-sm text-destructive">{errors.values}</p>}
+              <p className="text-sm text-muted-foreground">{t('form.fields.values.hint')}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="error_handling">{t('form.fields.errorHandling.label')}</Label>
+              <Textarea
+                id="error_handling"
+                value={errorHandlingJson}
+                onChange={e => handleAdvancedJsonChange('error_handling', e.target.value, setErrorHandlingJson)}
+                placeholder={t('form.fields.errorHandling.placeholder')}
+                disabled={loading}
+                rows={6}
+                className={`font-mono ${errors.error_handling ? 'border-destructive' : ''}`}
+              />
+              {errors.error_handling && <p className="text-sm text-destructive">{errors.error_handling}</p>}
+              <p className="text-sm text-muted-foreground">{t('form.fields.errorHandling.hint')}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="input_modes">{t('form.fields.inputModes.label')}</Label>
+              <Textarea
+                id="input_modes"
+                value={inputModesJson}
+                onChange={e => handleModesJsonChange('input_modes', e.target.value, setInputModesJson)}
+                placeholder={t('form.fields.inputModes.placeholder')}
+                disabled={loading}
+                rows={3}
+                className={`font-mono ${errors.input_modes ? 'border-destructive' : ''}`}
+              />
+              {errors.input_modes && <p className="text-sm text-destructive">{errors.input_modes}</p>}
+              <p className="text-sm text-muted-foreground">{t('form.fields.inputModes.hint')}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="output_modes">{t('form.fields.outputModes.label')}</Label>
+              <Textarea
+                id="output_modes"
+                value={outputModesJson}
+                onChange={e => handleModesJsonChange('output_modes', e.target.value, setOutputModesJson)}
+                placeholder={t('form.fields.outputModes.placeholder')}
+                disabled={loading}
+                rows={3}
+                className={`font-mono ${errors.output_modes ? 'border-destructive' : ''}`}
+              />
+              {errors.output_modes && <p className="text-sm text-destructive">{errors.output_modes}</p>}
+              <p className="text-sm text-muted-foreground">{t('form.fields.outputModes.hint')}</p>
+            </div>
+          </AdvancedJsonCollapse>
         </div>
       </div>
 

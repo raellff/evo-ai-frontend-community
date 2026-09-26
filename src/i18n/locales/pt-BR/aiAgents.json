@@ -418,8 +418,7 @@
       "more": "mais",
       "createFirst": "Crie seu primeiro servidor MCP personalizado",
       "serversSelected": "{{count}} servidor(s) selecionado(s)",
-      "selectServers": "Selecionar Servidores",
-      "addSelected": "Adicionar Selecionados ({{count}})",
+      "saveSelection": "Salvar seleção ({{count}})",
       "save": "Adicionar",
       "cancel": "Cancelar"
     },
@@ -553,6 +552,18 @@
     "agentType": "{{type}}",
     "testAI": "Teste sua IA",
     "profile": {
+      "summary": {
+        "title": "Resumo do Agente",
+        "type": "Tipo",
+        "native": "Nativo",
+        "external": "Externo",
+        "model": "Modelo",
+        "createdAt": "Criado em",
+        "subAgents": "Sub-agentes",
+        "products": "Produtos",
+        "tipTitle": "Dica de configuração",
+        "tipBody": "Preencha o Papel e o Objetivo para que o agente entenda melhor seu contexto e responda com mais precisão."
+      },
       "title": "Informações pessoais",
       "subtitle": "Configure as informações básicas do seu agente",
       "name": "Nome do agente",
@@ -738,6 +749,8 @@
         "theAgentShould": "o agente deve",
         "minute": "minuto",
         "minutes": "minutos",
+        "hour": "hora",
+        "hours": "horas",
         "interactWithClient": "Interagir com cliente",
         "finalizeService": "Finalizar atendimento",
         "whatShouldAgentSay": "O que o agente deve falar?",
@@ -758,10 +771,15 @@
         "selectTeamPlaceholder": "Selecione um time",
         "returnOnFinish": "Devolver ao finalizar",
         "instructions": "Instruções:",
-        "instructionsPlaceholder": "Quando o cliente quiser falar sobre tal assunto...",
+        "instructionsPlaceholder": "Descreva as condições para transferir o atendimento (ex: quando o cliente pedir para falar com um humano)...",
         "addRule": "Adicionar regra de transferência",
         "modalTitle": "Regras de Transferência",
         "modalDescription": "Configure quando e como o agente deve transferir conversas para humanos ou times."
+      },
+      "modalFooter": {
+        "cancel": "Cancelar",
+        "save": "Salvar",
+        "saving": "Salvando..."
       },
       "pipelineRules": {
         "description": "Configure instruções para o agente manipular pipelines e atribuir conversas a estágios específicos.",
@@ -859,10 +877,10 @@
       "title": "Integrações",
       "subtitle": "Conecte o seu agente a outros aplicativos, isso permite que ele obtenha informações mais precisas ou agende reuniões para você.",
       "comingSoon": "Em breve...",
-      "activate": "ATIVAR",
-      "active": "ATIVO",
-      "configure": "CONFIGURAR",
-      "notAvailable": "NÃO DISPONÍVEL",
+      "activate": "Ativar",
+      "active": "Ativado",
+      "configure": "Configurar",
+      "notAvailable": "Em breve",
       "elevenlabs": {
         "description": "Com ElevenLabs você da a capacidade do seu agente responder seus clientes em áudio, tornando ainda mais humanizado.",
         "configTitle": "Configurar ElevenLabs",
@@ -1039,7 +1057,7 @@
         "deactivate": "Desativar integração"
       },
       "github": {
-        "description": "Com GitHub seu agente será capaz de acessar repositórios, issues, pull requests e outras informações do GitHub.",
+        "description": "Integre seu agente com GitHub para acessar repositórios e informações de código.",
         "configTitle": "Configurar GitHub",
         "connectTitle": "Conectar com GitHub",
         "connectDescription": "Conecte sua conta GitHub para permitir que o agente acesse repositórios e informações de código",
@@ -1197,23 +1215,6 @@
         "saveConfig": "SALVAR CONFIGURAÇÕES",
         "disconnect": "Desconectar"
       },
-      "github": {
-        "description": "Integre seu agente com GitHub para acessar repositórios e informações de código.",
-        "configTitle": "Configurar GitHub",
-        "connectTitle": "Conectar com GitHub",
-        "connectDescription": "Conecte sua conta GitHub para permitir que o agente acesse repositórios e informações de código",
-        "connectButton": "Conectar com GitHub",
-        "connecting": "Conectando...",
-        "connected": "Conectado",
-        "connectedAs": "Conectado como",
-        "connectedDescription": "Sua conta GitHub está conectada e o agente pode acessar seus repositórios.",
-        "toolsTitle": "Ferramentas Disponíveis",
-        "toolsDescription": "Selecione quais ferramentas do GitHub o agente poderá usar",
-        "selectAll": "Selecionar todas",
-        "noTools": "Nenhuma ferramenta disponível",
-        "saveConfig": "SALVAR CONFIGURAÇÕES",
-        "disconnect": "Desconectar"
-      },
       "canva": {
         "description": "Com Canva seu agente será capaz de criar e editar designs, apresentações e materiais visuais.",
         "configTitle": "Configurar Canva",
@@ -1268,6 +1269,7 @@
   },
   "actions": {
     "save": "Salvar",
+    "close": "Fechar",
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
@@ -1325,7 +1327,7 @@
       "subtitle": "Escolha o tipo que melhor se adequa ao seu caso de uso",
       "types": {
         "llm": {
-          "label": "LLM (Modelo de Linguagem)",
+          "label": "Assistente de IA (Nativo)",
           "description": "IA conversacional — raciocina, responde perguntas e conversa usando modelo de linguagem"
         },
         "task": {
@@ -1345,13 +1347,14 @@
           "description": "Repete sub-agentes até atingir uma condição ou número de iterações"
         },
         "external": {
-          "label": "Integrações Externas",
+          "label": "Externo (Integrações)",
           "description": "Delega para fluxos do Flowise, n8n, Typebot, Dify ou OpenAI"
         }
       },
       "badges": {
         "mostPopular": "Mais Popular"
-      }
+      },
+      "advanced": "Tipos avançados"
     },
     "step3": {
       "titles": {
@@ -1525,6 +1528,7 @@
   "chat": {
     "newConversation": "Nova Conversa",
     "searchConversations": "Buscar conversas...",
+    "conversations": "Conversas",
     "noConversations": "Nenhuma conversa",
     "loading": "Carregando conversa...",
     "chatWithAgent": "Chat com {{name}}",
@@ -1532,7 +1536,7 @@
     "selectConversation": "Selecione uma conversa",
     "chooseOrStart": "Escolha uma conversa existente ou inicie uma nova.",
     "selectOrCreateSession": "Selecione uma conversa ou crie uma nova",
-    "selectSessionMessage": "Escolha uma conversa existente na lista ao lado ou clique em \"Nova Conversa\" para começar.",
+    "selectSessionMessage": "Abra o ícone de conversas para escolher uma existente ou clique em \"+\" para começar uma nova.",
     "typeMessage": "Digite sua mensagem...",
     "deleteSession": "Deletar Sessão",
     "deleteSessionConfirm": "Tem certeza que deseja deletar esta sessão? Esta ação não pode ser desfeita.",
@@ -1560,9 +1564,6 @@
     },
     "notion": {
       "description": "Acesse e atualize páginas, databases e blocos do Notion."
-    },
-    "stripe": {
-      "description": "Gerencie pagamentos, assinaturas e informações de clientes no Stripe."
     },
     "stripe": {
       "description": "Gerencie pagamentos, assinaturas e informações de clientes no Stripe."

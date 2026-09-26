@@ -15,6 +15,10 @@ import { toast } from 'sonner';
 import { journeyService } from '@/services';
 import type { Journey } from '@/types/automation';
 import { useLanguage } from '@/hooks/useLanguage';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { validateJourney } from '@/utils/journeyFlowValidation';
+import { JourneyValidationProvider } from '@/contexts/JourneyValidationContext';
+import { buildFlowTriggers } from './journeyFlowTriggers';
 import { BaseFlowEditor, type NodeType, type NodeCategory } from '@/components/base';
 import { EnvironmentManager } from '@/components/journey/environment-manager';
 import { JourneyEditorHeader } from '@/components/journey/shared/JourneyEditorHeader';
@@ -41,6 +45,7 @@ import {
   ScheduledActionNode,
   SplitNode,
   ExitJourneyNode,
+  ExitJourneyPanel,
   SendWebhookNode,
   AddLabelNode,
   RemoveLabelNode,
@@ -52,6 +57,10 @@ import {
   AssignAgentNode,
   AssignTeamNode,
   AssignBotNode,
+  AssignToPipelineNode,
+  MoveToPipelineStageNode,
+  CreatePipelineTaskNode,
+  SendCannedResponseNode,
   SendEmailTeamNode,
   SendTranscriptNode,
   MuteConversationNode,
@@ -78,6 +87,10 @@ import {
   AssignAgentPanel,
   AssignTeamPanel,
   AssignBotPanel,
+  AssignToPipelinePanel,
+  MoveToPipelineStagePanel,
+  CreatePipelineTaskPanel,
+  SendCannedResponsePanel,
   SendEmailTeamPanel,
   SendTranscriptPanel,
   MuteConversationPanel,
@@ -100,6 +113,7 @@ import {
   MoveRight,
   ArrowRight,
   MessageSquare,
+  MessageSquareReply,
   Variable,
   Users,
   Mail,
@@ -109,6 +123,8 @@ import {
   AlertTriangle,
   Clock,
   Bot,
+  Workflow,
+  ClipboardList,
 } from 'lucide-react';
 
 /**
@@ -145,11 +161,24 @@ function JourneyFlowEditor() {
   const recoveryCandidate = useFlowEditorStore((s) => s.recoveryCandidate);
   const recoveryEpoch = useFlowEditorStore((s) => s.recoveryEpoch);
   const currentSnapshot = useFlowEditorStore((s) => s.currentSnapshot);
+  // EVO-1744: the full pre-activation validation (required config + trigger↔action
+  // coherence + terminal-path, folded in). Memoized on the snapshot like before.
+  const journeyValidation = useMemo(
+    () =>
+      currentSnapshot
+        ? validateJourney(currentSnapshot.nodes, currentSnapshot.edges)
+        : null,
+    [currentSnapshot],
+  );
 
   const isSaving = status === 'saving';
   const hasUnsavedChanges = status !== 'idle';
   const relativeNow = useRelativeTime(lastSavedAt);
   const [showSessionsViewer, setShowSessionsViewer] = useState(false);
+  // EVO-2191: /journeys/:id/sessions* is gated by journeys.manage_sessions on the
+  // CRM proxy, so the entry point is withheld instead of opening a viewer that 403s.
+  const { can, isReady: permissionsReady } = usePermissions();
+  const canManageSessions = permissionsReady && can('journeys', 'manage_sessions');
 
   // Node types mapping para Journey
   const nodeTypes = useMemo(
@@ -171,6 +200,10 @@ function JourneyFlowEditor() {
       'assign-agent-node': AssignAgentNode,
       'assign-team-node': AssignTeamNode,
       'assign-bot-node': AssignBotNode,
+      'assign-to-pipeline-node': AssignToPipelineNode,
+      'move-to-pipeline-stage-node': MoveToPipelineStageNode,
+      'create-pipeline-task-node': CreatePipelineTaskNode,
+      'send-canned-response-node': SendCannedResponseNode,
       'send-email-team-node': SendEmailTeamNode,
       'send-transcript-node': SendTranscriptNode,
       'mute-conversation-node': MuteConversationNode,
@@ -307,6 +340,15 @@ function JourneyFlowEditor() {
         searchKeywords: ['chat', 'text', 'reply', 'whatsapp', 'sms', 'communicate', 'send'],
       },
       {
+        id: 'send-canned-response-node',
+        name: t('flowEditor.nodes.sendCannedResponse.name'),
+        icon: MessageSquareReply,
+        color: 'text-blue-400',
+        category: 'communication',
+        description: t('flowEditor.nodes.sendCannedResponse.description'),
+        searchKeywords: ['canned', 'quick', 'reply', 'preset', 'template', 'response', 'faq'],
+      },
+      {
         id: 'send-webhook-node',
         name: t('flowEditor.nodes.sendWebhook.name'),
         icon: Send,
@@ -398,6 +440,33 @@ function JourneyFlowEditor() {
         description: t('flowEditor.nodes.assignBot.description'),
         searchKeywords: ['bot', 'automation', 'ai', 'assistant', 'automate'],
       },
+      {
+        id: 'assign-to-pipeline-node',
+        name: t('flowEditor.nodes.assignToPipeline.name'),
+        icon: Workflow,
+        color: 'text-amber-400',
+        category: 'contact',
+        description: t('flowEditor.nodes.assignToPipeline.description'),
+        searchKeywords: ['pipeline', 'funnel', 'sales', 'stage', 'crm', 'deal'],
+      },
+      {
+        id: 'move-to-pipeline-stage-node',
+        name: t('flowEditor.nodes.moveToPipelineStage.name'),
+        icon: Workflow,
+        color: 'text-amber-400',
+        category: 'contact',
+        description: t('flowEditor.nodes.moveToPipelineStage.description'),
+        searchKeywords: ['pipeline', 'stage', 'move', 'funnel', 'sales', 'crm'],
+      },
+      {
+        id: 'create-pipeline-task-node',
+        name: t('flowEditor.nodes.createPipelineTask.name'),
+        icon: ClipboardList,
+        color: 'text-amber-400',
+        category: 'contact',
+        description: t('flowEditor.nodes.createPipelineTask.description'),
+        searchKeywords: ['task', 'todo', 'pipeline', 'follow up', 'crm', 'reminder'],
+      },
     ],
     conversation: [
       {
@@ -455,6 +524,7 @@ function JourneyFlowEditor() {
       'exit-journey-node': flowTokens.node.exit.border,
       'transfer-journey-node': flowTokens.node.exit.border,
       'send-message-node': flowTokens.node.action.message.border,
+      'send-canned-response-node': flowTokens.node.action.message.border,
       'send-transcript-node': flowTokens.node.action.message.border,
       'send-email-team-node': flowTokens.node.action.message.border,
       'send-webhook-node': flowTokens.node.action.webhook.border,
@@ -465,6 +535,9 @@ function JourneyFlowEditor() {
       'assign-agent-node': flowTokens.node.action.pipeline.border,
       'assign-team-node': flowTokens.node.action.pipeline.border,
       'assign-bot-node': flowTokens.node.action.pipeline.border,
+      'assign-to-pipeline-node': flowTokens.node.action.pipeline.border,
+      'move-to-pipeline-stage-node': flowTokens.node.action.pipeline.border,
+      'create-pipeline-task-node': flowTokens.node.action.pipeline.border,
       'change-priority-node': flowTokens.node.action.pipeline.border,
       'mute-conversation-node': flowTokens.node.action.pipeline.border,
       'defer-conversation-node': flowTokens.node.action.pipeline.border,
@@ -516,6 +589,8 @@ function JourneyFlowEditor() {
           return <UpdateCustomAttributePanel {...commonProps} />;
         case 'transfer-journey-node':
           return <TransferJourneyPanel {...commonProps} />;
+        case 'exit-journey-node':
+          return <ExitJourneyPanel {...commonProps} />;
         case 'send-message-node':
           return <SendMessagePanel {...commonProps} />;
         case 'set-variable-node':
@@ -526,6 +601,14 @@ function JourneyFlowEditor() {
           return <AssignTeamPanel {...commonProps} />;
         case 'assign-bot-node':
           return <AssignBotPanel {...commonProps} />;
+        case 'assign-to-pipeline-node':
+          return <AssignToPipelinePanel {...commonProps} />;
+        case 'move-to-pipeline-stage-node':
+          return <MoveToPipelineStagePanel {...commonProps} />;
+        case 'create-pipeline-task-node':
+          return <CreatePipelineTaskPanel {...commonProps} />;
+        case 'send-canned-response-node':
+          return <SendCannedResponsePanel {...commonProps} />;
         case 'send-email-team-node':
           return <SendEmailTeamPanel {...commonProps} />;
         case 'send-transcript-node':
@@ -616,48 +699,9 @@ function JourneyFlowEditor() {
         edges: snapshot.edges,
       };
 
-      // Extrair triggers dos nodes
-      const nodes = Array.isArray(flowData.nodes) ? flowData.nodes : [];
-      const flowTriggers = nodes
-        .filter((node: any) => node.type === 'journey-trigger-node')
-        .map((triggerNode: any) => ({
-          id: triggerNode.id,
-          type: triggerNode.data.triggerType || 'Manual',
-          name: `${triggerNode.data.triggerType || 'manual'} trigger`,
-          enabled: true,
-          conditions: {
-            eventName: triggerNode.data.eventName,
-            segmentId: triggerNode.data.segmentId,
-            labelId: triggerNode.data.labelId,
-            attributeName: triggerNode.data.customAttributeName,
-            webhookUrl: triggerNode.data.webhookUrl,
-          },
-          metadata: {
-            // Salvar todos os dados específicos no metadata
-            triggerType: triggerNode.data.triggerType,
-            eventName: triggerNode.data.eventName,
-            eventProperties: triggerNode.data.eventProperties,
-            contactFields: triggerNode.data.contactFields,
-            labelId: triggerNode.data.labelId,
-            labelName: triggerNode.data.labelName,
-            labelAction: triggerNode.data.labelAction,
-            customAttributeName: triggerNode.data.customAttributeName,
-            customAttributeDisplayName: triggerNode.data.customAttributeDisplayName,
-            customAttributeOperator: triggerNode.data.customAttributeOperator,
-            customAttributeValue: triggerNode.data.customAttributeValue,
-            scheduleType: triggerNode.data.scheduleType,
-            scheduleDate: triggerNode.data.scheduleDate,
-            scheduleTime: triggerNode.data.scheduleTime,
-            recurringPattern: triggerNode.data.recurringPattern,
-            recurringDays: triggerNode.data.recurringDays,
-            recurringTime: triggerNode.data.recurringTime,
-            recurringInterval: triggerNode.data.recurringInterval,
-            webhookUrl: triggerNode.data.webhookUrl,
-            webhookSecret: triggerNode.data.webhookSecret,
-            webhookMethod: triggerNode.data.webhookMethod,
-            expectedHeaders: triggerNode.data.expectedHeaders,
-          },
-        }));
+      // Extrair triggers dos nodes (ver journeyFlowTriggers.ts — o metadata
+      // alimenta os matchers do evo-flow, incl. labelAction/segmentAction).
+      const flowTriggers = buildFlowTriggers(flowData.nodes);
 
       const updatedJourney = {
         ...currentJourney,
@@ -674,7 +718,23 @@ function JourneyFlowEditor() {
       // requirement of EVO-1258).
       useFlowEditorStore.getState().commitSave(new Date(), snapshot);
       if (!opts?.silent) {
-        toast.success(t('flowEditor.saveSuccess'));
+        // Save is a draft action — it never blocks. Surface any validation
+        // issues (errors + warnings) so the user knows before they try to
+        // activate from the list, where errors DO block (EVO-1744).
+        const { errors, warnings } = validateJourney(
+          snapshot.nodes,
+          snapshot.edges,
+        );
+        const issues = [...errors, ...warnings];
+        if (issues.length > 0) {
+          toast.warning(
+            t('flowEditor.validation.saveIssues', {
+              issues: issues.map((i) => t(i.messageKey, i.params)).join(' · '),
+            }),
+          );
+        } else {
+          toast.success(t('flowEditor.saveSuccess'));
+        }
       }
     } catch (error) {
       console.error('Erro ao salvar jornada:', error);
@@ -801,7 +861,7 @@ function JourneyFlowEditor() {
         backLabel={t('flowEditor.back')}
         title={t('flowEditor.title', { name: journey.name })}
         subtitle={journey.description || undefined}
-        onViewSessions={() => setShowSessionsViewer(true)}
+        onViewSessions={canManageSessions ? () => setShowSessionsViewer(true) : undefined}
         viewSessionsLabel={t('flowEditor.viewSessions')}
         environmentSlot={<EnvironmentManager journeyId={id} />}
         onSave={saveChanges}
@@ -832,6 +892,34 @@ function JourneyFlowEditor() {
                 })
               : t('flowEditor.saveErrorBannerNoRetry', { reason: lastError })}
           </p>
+        </FlowFeedbackBanner>
+      ) : null}
+
+      {/* EVO-1744: pre-activation summary — errors block activation (from the
+          list), warnings don't. Each rule's message is listed per node. */}
+      {journeyValidation && journeyValidation.errors.length > 0 ? (
+        <FlowFeedbackBanner variant="error" className="mx-4 mt-2">
+          <p className="font-medium">
+            {t('flowEditor.validation.summaryErrors')}
+          </p>
+          <ul className="mt-1 list-disc pl-5 text-sm">
+            {journeyValidation.errors.map((issue, idx) => (
+              <li key={idx}>{t(issue.messageKey, issue.params)}</li>
+            ))}
+          </ul>
+        </FlowFeedbackBanner>
+      ) : null}
+
+      {journeyValidation && journeyValidation.warnings.length > 0 ? (
+        <FlowFeedbackBanner variant="warn" className="mx-4 mt-2">
+          <p className="font-medium">
+            {t('flowEditor.validation.summaryWarnings')}
+          </p>
+          <ul className="mt-1 list-disc pl-5 text-sm">
+            {journeyValidation.warnings.map((issue, idx) => (
+              <li key={idx}>{t(issue.messageKey, issue.params)}</li>
+            ))}
+          </ul>
         </FlowFeedbackBanner>
       ) : null}
 
@@ -893,6 +981,9 @@ function JourneyFlowEditor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <JourneyValidationProvider
+        value={{ byNodeId: journeyValidation?.byNodeId ?? {} }}
+      >
       <BaseFlowEditor
         key={`flow-canvas-${recoveryEpoch}`}
         flowData={flowData}
@@ -916,13 +1007,14 @@ function JourneyFlowEditor() {
         miniMapNodeColors={miniMapNodeColors}
         customHelperLines={true}
         configPanelSystem={true}
-        className="h-full bg-sidebar"
+        className="h-full bg-flow-canvas-bg"
         canvasWrapperClassName="flex-1"
       />
+      </JourneyValidationProvider>
 
       {/* Footer com informações */}
-      <div className="border-t border-sidebar-border bg-sidebar p-3 flex-shrink-0">
-        <div className="flex items-center justify-between text-xs text-sidebar-foreground/60">
+      <div className="border-t border-flow-panel-divider bg-flow-canvas-bg p-3 flex-shrink-0">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>
               Status:{' '}
@@ -931,7 +1023,7 @@ function JourneyFlowEditor() {
             <span>
               {journey.createdAt
                 ? t('flowEditor.createdAt', {
-                  date: new Date(journey.createdAt).toLocaleString('pt-BR'),
+                  date: new Date(journey.createdAt).toLocaleString(currentLanguage),
                 })
                 : t('flowEditor.invalidDate')}
             </span>

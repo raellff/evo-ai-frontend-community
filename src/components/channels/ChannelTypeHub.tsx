@@ -1,0 +1,86 @@
+import { useMemo } from 'react';
+import { Skeleton } from '@evoapi/design-system';
+import { useLanguage } from '@/hooks/useLanguage';
+import { Inbox } from '@/types/channels/inbox';
+import { getChannelTypes } from '@/constants/channelTypes';
+import { buildChannelTypeStatuses, ChannelTypeStatus } from '@/utils/channelStatus';
+import useLiveChannelStatus from '@/hooks/channels/useLiveChannelStatus';
+import ChannelTypeCard from './ChannelTypeCard';
+import { useGlobalConfig } from '@/contexts/GlobalConfigContext';
+
+interface ChannelTypeHubProps {
+  inboxes: Inbox[];
+  isLoading: boolean;
+  onAdd: (typeStatus: ChannelTypeStatus) => void;
+  onOpenInbox: (inbox: Inbox) => void;
+  onDelete: (inbox: Inbox) => void;
+}
+
+export default function ChannelTypeHub({
+  inboxes,
+  isLoading,
+  onAdd,
+  onOpenInbox,
+  onDelete,
+}: ChannelTypeHubProps) {
+  const { t, currentLanguage } = useLanguage('channels');
+  const { states: liveStates, loadingIds, failedIds } = useLiveChannelStatus(inboxes);
+  const config = useGlobalConfig();
+
+  // Email can only be connected once an OAuth integration (Gmail or Outlook) is set
+  // up. If neither is, the email card mirrors the disabled provider grid: its action
+  // is disabled with an explanatory tooltip instead of leading to a dead-end screen
+  // where every provider is greyed out.
+  const emailIntegrationConfigured =
+    (typeof config.googleOAuthClientId === 'string' && config.googleOAuthClientId.length > 0) ||
+    (typeof config.azureAppId === 'string' && config.azureAppId.length > 0);
+
+  // getChannelTypes() reads translated labels, so recompute when language changes.
+  const typeStatuses = useMemo(
+    () => buildChannelTypeStatuses(getChannelTypes(), inboxes, liveStates),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inboxes, liveStates, currentLanguage],
+  );
+
+  // Only ids present in the live overlay were confirmed live by the probe;
+  // everything else renders as stored state, never as real-time.
+  const liveVerifiedIds = useMemo(() => new Set(Object.keys(liveStates)), [liveStates]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 8 }).map((_, idx) => (
+          <Skeleton key={idx} className="h-44" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold text-sidebar-foreground">{t('overview.title')}</h2>
+        <p className="text-sm text-sidebar-foreground/60">{t('overview.subtitle')}</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start gap-6">
+        {typeStatuses.map(typeStatus => (
+          <ChannelTypeCard
+            key={typeStatus.type.id}
+            typeStatus={typeStatus}
+            onAdd={onAdd}
+            onOpenInbox={onOpenInbox}
+            onDelete={onDelete}
+            liveVerifiedIds={liveVerifiedIds}
+            liveLoadingIds={loadingIds}
+            liveFailedIds={failedIds}
+            disabledReason={
+              typeStatus.type.type === 'email' && !emailIntegrationConfigured
+                ? t('overview.noIntegrationConfigured')
+                : undefined
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

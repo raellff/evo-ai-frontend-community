@@ -151,6 +151,68 @@
       "update": "Salvar Alterações"
     }
   },
+  "wizard": {
+    "progress": {
+      "identity": "Identidade",
+      "connection": "Ligação",
+      "advanced": "Avançado",
+      "finish": "Finalizar"
+    },
+    "step1": {
+      "title": "Vamos identificar o seu servidor MCP",
+      "subtitle": "Dê um nome, descrição e etiquetas para a sua equipa encontrar depois."
+    },
+    "step2": {
+      "title": "Como é que ele se liga?",
+      "subtitle": "Indique o URL do servidor e os cabeçalhos HTTP enviados em cada pedido."
+    },
+    "step3": {
+      "title": "Definições avançadas",
+      "subtitle": "Opcional. Ajuste o tempo limite do pedido e quantas vezes tentar de novo."
+    },
+    "step4": {
+      "title": "Toques finais",
+      "subtitle": "Reveja as definições antes de guardar o seu servidor MCP.",
+      "reviewHint": "Confira os detalhes abaixo. Pode voltar atrás para alterar qualquer coisa."
+    },
+    "actions": {
+      "continue": "Continuar",
+      "back": "Voltar",
+      "create": "Criar servidor MCP",
+      "save": "Guardar alterações",
+      "cancel": "Cancelar"
+    },
+    "mode": {
+      "label": "Modo de edição",
+      "form": "Formulário",
+      "json": "JSON avançado"
+    },
+    "advanced": {
+      "title": "Configuração avançada (JSON)",
+      "subtitle": "Edite a configuração inteira do servidor como JSON cru.",
+      "hint": "Campos: name, description, url, headers, timeout, retry_count, tags.",
+      "errors": {
+        "nameRequired": "O campo \"name\" é obrigatório e não pode ficar vazio.",
+        "nameType": "O campo \"name\" tem de ser texto.",
+        "descriptionType": "O campo \"description\" tem de ser texto.",
+        "urlRequired": "O campo \"url\" é obrigatório e não pode ficar vazio.",
+        "urlType": "O campo \"url\" tem de ser texto.",
+        "urlInvalid": "O campo \"url\" não é um URL válido (ex.: https://o-meu-servidor.com/mcp).",
+        "headersType": "O campo \"headers\" tem de ser um objeto.",
+        "headerValueType": "Os valores dos headers têm de ser texto: {{keys}}.",
+        "timeoutRange": "O campo \"timeout\" tem de ser um número inteiro entre {{min}} e {{max}}.",
+        "retryRange": "O campo \"retry_count\" tem de ser um número inteiro entre {{min}} e {{max}}.",
+        "tagsType": "O campo \"tags\" tem de ser uma lista de textos."
+      }
+    },
+    "test": {
+      "button": "Testar conexão",
+      "testing": "Testando…",
+      "ok_one": "Ligado — {{count}} ferramenta descoberta",
+      "ok_other": "Ligado — {{count}} ferramentas descobertas",
+      "fail": "Falha na conexão"
+    }
+  },
   "modal": {
     "title": {
       "create": "Criar Novo Servidor MCP Personalizado",

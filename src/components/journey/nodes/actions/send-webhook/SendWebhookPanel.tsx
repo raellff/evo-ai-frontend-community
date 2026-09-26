@@ -7,6 +7,11 @@ import { FlowFeedbackBanner } from '@/components/journey/_ui';
 import { VariableSelect } from '@/components/journey/environment-manager';
 import { useLanguage } from '@/hooks/useLanguage';
 import {
+  getEffectiveBodyMode,
+  isValidJsonBody,
+  validateFields,
+} from './components/webhookBody';
+import {
   WebhookBasicConfig,
   WebhookHeadersConfig,
   WebhookBodyConfig,
@@ -277,6 +282,20 @@ export function SendWebhookPanel({
       issues.push(t('panels.sendWebhook.requiredApiKey'));
     }
 
+    // Body validation — caught in the editor, not at runtime (EVO-1742).
+    const bodyApplies = ['POST', 'PUT', 'PATCH'].includes(formData.method || 'POST');
+    if (bodyApplies) {
+      const bodyMode = getEffectiveBodyMode(formData);
+      if (bodyMode === 'structured') {
+        const result = validateFields(formData.bodyStructured || []);
+        if (!result.ok) {
+          issues.push(t(`panels.sendWebhook.body.validation.${result.error}`));
+        }
+      } else if (formData.bodyType === 'json' && !isValidJsonBody(formData.body || '')) {
+        issues.push(t('panels.sendWebhook.invalidJson'));
+      }
+    }
+
     return issues;
   };
 
@@ -466,10 +485,14 @@ export function SendWebhookPanel({
                     <div key={mapping.id} className="p-3 border border-border rounded-lg space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium mb-1">
+                          <label
+                            htmlFor={`send-webhook-response-field-${mapping.id}`}
+                            className="block text-sm font-medium mb-1"
+                          >
                             {t('panels.sendWebhook.test.responseField')}
                           </label>
                           <select
+                            id={`send-webhook-response-field-${mapping.id}`}
                             value={mapping.jsonPath}
                             onChange={e =>
                               updateResponseMapping(mapping.id, { jsonPath: e.target.value })
@@ -485,10 +508,14 @@ export function SendWebhookPanel({
                           </select>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium">
+                          <Label
+                            htmlFor={`send-webhook-variable-name-${mapping.id}`}
+                            className="text-sm font-medium"
+                          >
                             {t('panels.sendWebhook.test.variableName')}
                           </Label>
                           <VariableSelect
+                            id={`send-webhook-variable-name-${mapping.id}`}
                             value={mapping.variableName || ''}
                             onValueChange={variableName => {
                               updateResponseMapping(mapping.id, { variableName });
@@ -501,10 +528,14 @@ export function SendWebhookPanel({
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-1">
+                        <label
+                          htmlFor={`send-webhook-description-${mapping.id}`}
+                          className="block text-sm font-medium mb-1"
+                        >
                           {t('panels.sendWebhook.test.description')}
                         </label>
                         <input
+                          id={`send-webhook-description-${mapping.id}`}
                           type="text"
                           value={mapping.description}
                           onChange={e =>

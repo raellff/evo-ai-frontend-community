@@ -18,7 +18,7 @@ interface WebhookConfigurationProps {
   }>;
   onWebhookUrlChange: (url: string) => void;
   onExpectedHeadersChange: (headers: Array<{ name: string; value: string }>) => void;
-  journeyId: string;
+  journeyId?: string;
   variableMappings?: DataMapping[];
   onVariableMappingsChange?: (mappings: DataMapping[]) => void;
   onVariablesChange?: (variables: JourneyVariable[]) => void;
@@ -48,7 +48,11 @@ export function WebhookConfiguration({
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    // Generate webhook URL using actual journey ID
+    // Generate the trigger webhook URL from the REAL journey id. Contexts without a
+    // journey (trigger-type Campaigns / automations) pass no journeyId (EVO-1608, ex
+    // sentinel 'campaign-trigger' que gerava uma URL .../trigger/campaign-trigger não
+    // roteável). Nesses casos NÃO auto-geramos URL — o contexto deve fornecer a sua.
+    // Campanha precisa de uma URL de trigger própria.
     if (journeyId && !webhookUrl) {
       const campaignApiUrl = import.meta.env.VITE_CAMPAIGN_API_URL || 'http://localhost:3000';
       const url = `${campaignApiUrl}/api/v1/journeys/trigger/${journeyId}`;
@@ -65,7 +69,10 @@ export function WebhookConfiguration({
     } else if (JSON.stringify(expectedHeaders) !== JSON.stringify(localHeaders)) {
       setLocalHeaders(expectedHeaders);
     }
-  }, [expectedHeaders]); // Remove localHeaders from dependencies
+    // localHeaders is intentionally excluded — it's our own mirror of expectedHeaders;
+    // including it would loop. Sync is driven solely by the incoming expectedHeaders prop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expectedHeaders]);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -108,9 +115,12 @@ export function WebhookConfiguration({
 
         {/* URL do Webhook */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">{t('triggerComponents.webhook.webhookUrl')}</Label>
+          <Label htmlFor="webhook-trigger-url" className="text-sm font-medium">
+            {t('triggerComponents.webhook.webhookUrl')}
+          </Label>
           <div className="flex gap-2">
             <Input
+              id="webhook-trigger-url"
               type="url"
               value={webhookUrl || generatedUrl}
               placeholder={t('triggerComponents.webhook.urlPlaceholder')}
@@ -157,7 +167,7 @@ export function WebhookConfiguration({
         {/* Headers Esperados */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">
+            <Label id="webhook-trigger-headers-label" className="text-sm font-medium">
               {t('triggerComponents.webhook.expectedHeaders')}
             </Label>
             <Button onClick={addHeader} variant="outline" size="sm" className="h-8 text-xs">
@@ -172,7 +182,7 @@ export function WebhookConfiguration({
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2" role="group" aria-labelledby="webhook-trigger-headers-label">
               {localHeaders.map((header, index) => (
                 <div
                   key={index}
@@ -214,7 +224,7 @@ export function WebhookConfiguration({
 
         {/* Payload de Exemplo */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">
+          <Label htmlFor="webhook-trigger-payload-example" className="text-sm font-medium">
             {t('triggerComponents.webhook.payloadStructure')}
           </Label>
           <div className="p-2 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800/30 rounded-md">
@@ -224,6 +234,7 @@ export function WebhookConfiguration({
             </p>
           </div>
           <Textarea
+            id="webhook-trigger-payload-example"
             value={JSON.stringify(
               {
                 contact_id: '<contact_id>',
@@ -294,16 +305,18 @@ export function WebhookConfiguration({
           <>
             <Separator />
             <div className="space-y-3">
-              <Label className="text-sm font-medium">
+              <Label id="webhook-trigger-capture-label" className="text-sm font-medium">
                 {t('triggerComponents.webhook.captureWebhookData')}
               </Label>
-              <VariableMapping
-                mappings={variableMappings}
-                onMappingsChange={onVariableMappingsChange}
-                paths={webhookPaths}
-                journeyId={journeyId}
-                className="bg-white dark:bg-gray-900/50 p-4 rounded-lg border"
-              />
+              <div role="group" aria-labelledby="webhook-trigger-capture-label">
+                <VariableMapping
+                  mappings={variableMappings}
+                  onMappingsChange={onVariableMappingsChange}
+                  paths={webhookPaths}
+                  journeyId={journeyId}
+                  className="bg-white dark:bg-gray-900/50 p-4 rounded-lg border"
+                />
+              </div>
             </div>
           </>
         )}

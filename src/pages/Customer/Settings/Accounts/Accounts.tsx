@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
   Button,
@@ -25,7 +25,8 @@ import {
 } from '@evoapi/design-system';
 import { Building2, UserPlus, Ban, CheckCircle2, SlidersHorizontal } from 'lucide-react';
 import EmptyState from '@/components/base/EmptyState';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { usePermissions } from '@/contexts/PermissionsContext';
+import { usePermissionGatedLoad } from '@/hooks/rbac/usePermissionGatedLoad';
 import { accountService } from '@/services/account/accountService';
 import usersService from '@/services/users/usersService';
 import { FormSwitch } from '@/components/shared/forms/FormSwitch';
@@ -48,10 +49,9 @@ const TOGGLEABLE_FEATURES: { key: string; label: string; description: string }[]
 ];
 
 export default function Accounts() {
-  const { can, isReady: permissionsReady } = useUserPermissions();
+  const { can } = usePermissions();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
-  const hasLoaded = useRef(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateAccount>(EMPTY_ACCOUNT_FORM);
@@ -89,11 +89,7 @@ export default function Accounts() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!permissionsReady || hasLoaded.current) return;
-    hasLoaded.current = true;
-    loadAccounts();
-  }, [permissionsReady, loadAccounts]);
+  usePermissionGatedLoad({ resource: 'accounts', load: loadAccounts });
 
   const handleOpenCreate = () => {
     if (!canCreate) {

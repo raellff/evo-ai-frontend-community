@@ -24,7 +24,10 @@ import ptBRLayout from './locales/pt-BR/layout.json';
 import ptBRCommon from './locales/pt-BR/common.json';
 import ptBRAccountSettings from './locales/pt-BR/accountSettings.json';
 import ptBRCannedResponses from './locales/pt-BR/cannedResponses.json';
+import ptBRMessageTemplates from './locales/pt-BR/messageTemplates.json';
 import ptBRProducts from './locales/pt-BR/products.json';
+import ptBRCrmForms from './locales/pt-BR/crmForms.json';
+import ptBRChatPages from './locales/pt-BR/chatPages.json';
 import ptBRTemplates from './locales/pt-BR/templates.json';
 import ptBRCustomAttributes from './locales/pt-BR/customAttributes.json';
 import ptBRLabels from './locales/pt-BR/labels.json';
@@ -36,6 +39,8 @@ import ptBRMarketplace from './locales/pt-BR/marketplace.json';
 import ptBRDocumentation from './locales/pt-BR/documentation.json';
 import ptBRAiAgents from './locales/pt-BR/aiAgents.json';
 import ptBRApiKeys from './locales/pt-BR/apiKeys.json';
+import ptBRAiCredentials from './locales/pt-BR/aiCredentials.json';
+import ptBRIntegrationCredentials from './locales/pt-BR/integrationCredentials.json';
 import ptBRAccessTokens from './locales/pt-BR/accessTokens.json';
 import ptBRIntegrations from './locales/pt-BR/integrations.json';
 import ptBRAttachments from './locales/pt-BR/attachments.json';
@@ -74,17 +79,23 @@ import ptLayout from './locales/pt/layout.json';
 import ptCommon from './locales/pt/common.json';
 import ptAccountSettings from './locales/pt/accountSettings.json';
 import ptCannedResponses from './locales/pt/cannedResponses.json';
+import ptMessageTemplates from './locales/pt/messageTemplates.json';
 import ptProducts from './locales/pt/products.json';
+import ptCrmForms from './locales/pt/crmForms.json';
+import ptChatPages from './locales/pt/chatPages.json';
 import ptTemplates from './locales/pt/templates.json';
 import ptCustomAttributes from './locales/pt/customAttributes.json';
 import ptLabels from './locales/pt/labels.json';
 import ptMacros from './locales/pt/macros.json';
+import ptAutomation from './locales/pt/automation.json';
 import ptTeams from './locales/pt/teams.json';
 import ptUsers from './locales/pt/users.json';
 import ptMarketplace from './locales/pt/marketplace.json';
 import ptDocumentation from './locales/pt/documentation.json';
 import ptAiAgents from './locales/pt/aiAgents.json';
 import ptApiKeys from './locales/pt/apiKeys.json';
+import ptAiCredentials from './locales/pt/aiCredentials.json';
+import ptIntegrationCredentials from './locales/pt/integrationCredentials.json';
 import ptAccessTokens from './locales/pt/accessTokens.json';
 import ptIntegrations from './locales/pt/integrations.json';
 import ptAttachments from './locales/pt/attachments.json';
@@ -123,7 +134,10 @@ import enLayout from './locales/en/layout.json';
 import enCommon from './locales/en/common.json';
 import enAccountSettings from './locales/en/accountSettings.json';
 import enCannedResponses from './locales/en/cannedResponses.json';
+import enMessageTemplates from './locales/en/messageTemplates.json';
 import enProducts from './locales/en/products.json';
+import enCrmForms from './locales/en/crmForms.json';
+import enChatPages from './locales/en/chatPages.json';
 import enTemplates from './locales/en/templates.json';
 import enCustomAttributes from './locales/en/customAttributes.json';
 import enLabels from './locales/en/labels.json';
@@ -135,6 +149,8 @@ import enMarketplace from './locales/en/marketplace.json';
 import enDocumentation from './locales/en/documentation.json';
 import enAiAgents from './locales/en/aiAgents.json';
 import enApiKeys from './locales/en/apiKeys.json';
+import enAiCredentials from './locales/en/aiCredentials.json';
+import enIntegrationCredentials from './locales/en/integrationCredentials.json';
 import enAccessTokens from './locales/en/accessTokens.json';
 import enIntegrations from './locales/en/integrations.json';
 import enAttachments from './locales/en/attachments.json';
@@ -173,17 +189,23 @@ import esLayout from './locales/es/layout.json';
 import esCommon from './locales/es/common.json';
 import esAccountSettings from './locales/es/accountSettings.json';
 import esCannedResponses from './locales/es/cannedResponses.json';
+import esMessageTemplates from './locales/es/messageTemplates.json';
 import esProducts from './locales/es/products.json';
+import esCrmForms from './locales/es/crmForms.json';
+import esChatPages from './locales/es/chatPages.json';
 import esTemplates from './locales/es/templates.json';
 import esCustomAttributes from './locales/es/customAttributes.json';
 import esLabels from './locales/es/labels.json';
 import esMacros from './locales/es/macros.json';
+import esAutomation from './locales/es/automation.json';
 import esTeams from './locales/es/teams.json';
 import esUsers from './locales/es/users.json';
 import esMarketplace from './locales/es/marketplace.json';
 import esDocumentation from './locales/es/documentation.json';
 import esAiAgents from './locales/es/aiAgents.json';
 import esApiKeys from './locales/es/apiKeys.json';
+import esAiCredentials from './locales/es/aiCredentials.json';
+import esIntegrationCredentials from './locales/es/integrationCredentials.json';
 import esAccessTokens from './locales/es/accessTokens.json';
 import esIntegrations from './locales/es/integrations.json';
 import esAttachments from './locales/es/attachments.json';
@@ -222,17 +244,23 @@ import frLayout from './locales/fr/layout.json';
 import frCommon from './locales/fr/common.json';
 import frAccountSettings from './locales/fr/accountSettings.json';
 import frCannedResponses from './locales/fr/cannedResponses.json';
+import frMessageTemplates from './locales/fr/messageTemplates.json';
 import frProducts from './locales/fr/products.json';
+import frCrmForms from './locales/fr/crmForms.json';
+import frChatPages from './locales/fr/chatPages.json';
 import frTemplates from './locales/fr/templates.json';
 import frCustomAttributes from './locales/fr/customAttributes.json';
 import frLabels from './locales/fr/labels.json';
 import frMacros from './locales/fr/macros.json';
+import frAutomation from './locales/fr/automation.json';
 import frTeams from './locales/fr/teams.json';
 import frUsers from './locales/fr/users.json';
 import frMarketplace from './locales/fr/marketplace.json';
 import frDocumentation from './locales/fr/documentation.json';
 import frAiAgents from './locales/fr/aiAgents.json';
 import frApiKeys from './locales/fr/apiKeys.json';
+import frAiCredentials from './locales/fr/aiCredentials.json';
+import frIntegrationCredentials from './locales/fr/integrationCredentials.json';
 import frAccessTokens from './locales/fr/accessTokens.json';
 import frIntegrations from './locales/fr/integrations.json';
 import frAttachments from './locales/fr/attachments.json';
@@ -271,17 +299,23 @@ import itLayout from './locales/it/layout.json';
 import itCommon from './locales/it/common.json';
 import itAccountSettings from './locales/it/accountSettings.json';
 import itCannedResponses from './locales/it/cannedResponses.json';
+import itMessageTemplates from './locales/it/messageTemplates.json';
 import itProducts from './locales/it/products.json';
+import itCrmForms from './locales/it/crmForms.json';
+import itChatPages from './locales/it/chatPages.json';
 import itTemplates from './locales/it/templates.json';
 import itCustomAttributes from './locales/it/customAttributes.json';
 import itLabels from './locales/it/labels.json';
 import itMacros from './locales/it/macros.json';
+import itAutomation from './locales/it/automation.json';
 import itTeams from './locales/it/teams.json';
 import itUsers from './locales/it/users.json';
 import itMarketplace from './locales/it/marketplace.json';
 import itDocumentation from './locales/it/documentation.json';
 import itAiAgents from './locales/it/aiAgents.json';
 import itApiKeys from './locales/it/apiKeys.json';
+import itAiCredentials from './locales/it/aiCredentials.json';
+import itIntegrationCredentials from './locales/it/integrationCredentials.json';
 import itAccessTokens from './locales/it/accessTokens.json';
 import itIntegrations from './locales/it/integrations.json';
 import itAttachments from './locales/it/attachments.json';
@@ -388,7 +422,10 @@ const resources = {
     common: ptBRCommon,
     accountSettings: ptBRAccountSettings,
     cannedResponses: ptBRCannedResponses,
+    messageTemplates: ptBRMessageTemplates,
     products: ptBRProducts,
+    crmForms: ptBRCrmForms,
+    chatPages: ptBRChatPages,
     templates: ptBRTemplates,
     customAttributes: ptBRCustomAttributes,
     labels: ptBRLabels,
@@ -400,6 +437,8 @@ const resources = {
     documentation: ptBRDocumentation,
     aiAgents: ptBRAiAgents,
     apiKeys: ptBRApiKeys,
+    aiCredentials: ptBRAiCredentials,
+    integrationCredentials: ptBRIntegrationCredentials,
     accessTokens: ptBRAccessTokens,
     integrations: ptBRIntegrations,
     attachments: ptBRAttachments,
@@ -445,17 +484,23 @@ const resources = {
     common: ptCommon,
     accountSettings: ptAccountSettings,
     cannedResponses: ptCannedResponses,
+    messageTemplates: ptMessageTemplates,
     products: ptProducts,
+    crmForms: ptCrmForms,
+    chatPages: ptChatPages,
     templates: ptTemplates,
     customAttributes: ptCustomAttributes,
     labels: ptLabels,
     macros: ptMacros,
+    automation: ptAutomation,
     teams: ptTeams,
     users: ptUsers,
     marketplace: ptMarketplace,
     documentation: ptDocumentation,
     aiAgents: ptAiAgents,
     apiKeys: ptApiKeys,
+    aiCredentials: ptAiCredentials,
+    integrationCredentials: ptIntegrationCredentials,
     accessTokens: ptAccessTokens,
     integrations: ptIntegrations,
     attachments: ptAttachments,
@@ -501,7 +546,10 @@ const resources = {
     common: enCommon,
     accountSettings: enAccountSettings,
     cannedResponses: enCannedResponses,
+    messageTemplates: enMessageTemplates,
     products: enProducts,
+    crmForms: enCrmForms,
+    chatPages: enChatPages,
     templates: enTemplates,
     customAttributes: enCustomAttributes,
     labels: enLabels,
@@ -513,6 +561,8 @@ const resources = {
     documentation: enDocumentation,
     aiAgents: enAiAgents,
     apiKeys: enApiKeys,
+    aiCredentials: enAiCredentials,
+    integrationCredentials: enIntegrationCredentials,
     accessTokens: enAccessTokens,
     integrations: enIntegrations,
     attachments: enAttachments,
@@ -558,17 +608,23 @@ const resources = {
     common: esCommon,
     accountSettings: esAccountSettings,
     cannedResponses: esCannedResponses,
+    messageTemplates: esMessageTemplates,
     products: esProducts,
+    crmForms: esCrmForms,
+    chatPages: esChatPages,
     templates: esTemplates,
     customAttributes: esCustomAttributes,
     labels: esLabels,
     macros: esMacros,
+    automation: esAutomation,
     teams: esTeams,
     users: esUsers,
     marketplace: esMarketplace,
     documentation: esDocumentation,
     aiAgents: esAiAgents,
     apiKeys: esApiKeys,
+    aiCredentials: esAiCredentials,
+    integrationCredentials: esIntegrationCredentials,
     accessTokens: esAccessTokens,
     integrations: esIntegrations,
     attachments: esAttachments,
@@ -614,17 +670,23 @@ const resources = {
     common: frCommon,
     accountSettings: frAccountSettings,
     cannedResponses: frCannedResponses,
+    messageTemplates: frMessageTemplates,
     products: frProducts,
+    crmForms: frCrmForms,
+    chatPages: frChatPages,
     templates: frTemplates,
     customAttributes: frCustomAttributes,
     labels: frLabels,
     macros: frMacros,
+    automation: frAutomation,
     teams: frTeams,
     users: frUsers,
     marketplace: frMarketplace,
     documentation: frDocumentation,
     aiAgents: frAiAgents,
     apiKeys: frApiKeys,
+    aiCredentials: frAiCredentials,
+    integrationCredentials: frIntegrationCredentials,
     accessTokens: frAccessTokens,
     integrations: frIntegrations,
     attachments: frAttachments,
@@ -670,17 +732,23 @@ const resources = {
     common: itCommon,
     accountSettings: itAccountSettings,
     cannedResponses: itCannedResponses,
+    messageTemplates: itMessageTemplates,
     products: itProducts,
+    crmForms: itCrmForms,
+    chatPages: itChatPages,
     templates: itTemplates,
     customAttributes: itCustomAttributes,
     labels: itLabels,
     macros: itMacros,
+    automation: itAutomation,
     teams: itTeams,
     users: itUsers,
     marketplace: itMarketplace,
     documentation: itDocumentation,
     aiAgents: itAiAgents,
     apiKeys: itApiKeys,
+    aiCredentials: itAiCredentials,
+    integrationCredentials: itIntegrationCredentials,
     accessTokens: itAccessTokens,
     integrations: itIntegrations,
     attachments: itAttachments,

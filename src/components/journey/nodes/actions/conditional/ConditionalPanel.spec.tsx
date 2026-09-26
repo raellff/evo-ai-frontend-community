@@ -1,0 +1,363 @@
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConditionalPanel } from './ConditionalPanel';
+import { ConditionalNodeData } from './ConditionalNode';
+import i18n from '@/i18n/config';
+
+vi.mock('@/services/pipelines/pipelinesService', () => ({
+  pipelinesService: {
+    getPipelines: vi.fn(),
+    getPipelineStages: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/customAttributes/customAttributesService', () => ({
+  customAttributesService: {
+    getCustomAttributes: vi.fn(),
+  },
+}));
+
+import { pipelinesService } from '@/services/pipelines/pipelinesService';
+import { customAttributesService } from '@/services/customAttributes/customAttributesService';
+
+const mockGetPipelines = pipelinesService.getPipelines as unknown as ReturnType<typeof vi.fn>;
+const mockGetPipelineStages =
+  pipelinesService.getPipelineStages as unknown as ReturnType<typeof vi.fn>;
+const mockGetCustomAttributes =
+  customAttributesService.getCustomAttributes as unknown as ReturnType<typeof vi.fn>;
+
+const PLAN_INTEREST_ATTR = {
+  id: 'attr-1',
+  attribute_key: 'plan_interest',
+  attribute_display_name: 'Plan Interest',
+  attribute_display_type: 'list',
+  attribute_model: 'contact_attribute',
+};
+
+const PIPELINE_STAGE_FIELD = '{{conversation.pipeline_stage_id}}';
+const PATHS_TITLE = i18n.t('journey:panels.conditional.pathsTitle');
+
+const PIPELINES = [{ id: 'pipe-1', name: 'Sales' }];
+const STAGES = [
+  { id: 'stage-1', name: 'New' },
+  { id: 'stage-2', name: 'Won' },
+];
+
+function dataWithStageCondition(value = ''): ConditionalNodeData {
+  return {
+    paths: [
+      {
+        id: 'path-1',
+        name: 'Stage path',
+        color: 'green',
+        logicalOperator: 'AND',
+        conditions: [
+          {
+            id: 'cond-1',
+            type: 'custom',
+            field: PIPELINE_STAGE_FIELD,
+            operator: 'equals',
+            value,
+          },
+        ],
+      },
+    ],
+  } as ConditionalNodeData;
+}
+
+function dataWithContactCondition(field = '{{contact.email}}'): ConditionalNodeData {
+  return {
+    paths: [
+      {
+        id: 'path-1',
+        name: 'Contact path',
+        color: 'green',
+        logicalOperator: 'AND',
+        conditions: [
+          {
+            id: 'cond-1',
+            type: 'contact',
+            field,
+            operator: 'equals',
+            value: '',
+          },
+        ],
+      },
+    ],
+  } as ConditionalNodeData;
+}
+
+// The field picker (VariableSelect) carries a stable, locale-independent test
+// id (see ConditionalPanel's `triggerTestId`) so the lookup does not depend on
+// localized placeholder copy. Use the first one (single-condition fixtures).
+function getFieldTrigger(): HTMLElement {
+  return screen.getAllByTestId('conditional-field-select')[0];
+}
+
+// The value picker is one of several comboboxes in the panel; identify it by
+// the stage placeholder it shows while no stage is selected.
+function getStageTrigger(): HTMLElement {
+  const trigger = screen
+    .getAllByRole('combobox')
+    .find(el => /select a stage|selecione um est/i.test(el.textContent || ''));
+  if (!trigger) throw new Error('stage picker trigger not found');
+  return trigger;
+}
+
+beforeEach(() => {
+  // Default: empty attribute list so the always-on fetch in the field picker
+  // resolves to a promise in every test (per-test cases override this).
+  mockGetCustomAttributes.mockResolvedValue({ data: [] });
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+describe('ConditionalPanel — pipeline stage picker', () => {
+  it('loads pipelines + stages and renders them in the value picker when the field is the pipeline stage', async () => {
+    mockGetPipelines.mockResolvedValue({ data: PIPELINES });
+    mockGetPipelineStages.mockResolvedValue({ data: STAGES });
+    const user = userEvent.setup();
+
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithStageCondition()}
+        onUpdate={vi.fn()}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    await waitFor(() => expect(mockGetPipelineStages).toHaveBeenCalledWith('pipe-1'));
+
+    await user.click(getStageTrigger());
+
+    const listbox = await screen.findByRole('listbox');
+    expect(within(listbox).getByText('[Sales] New')).toBeTruthy();
+    expect(within(listbox).getByText('[Sales] Won')).toBeTruthy();
+  });
+
+  it('persists the selected stage id (not a raw typed value) on save', async () => {
+    mockGetPipelines.mockResolvedValue({ data: PIPELINES });
+    mockGetPipelineStages.mockResolvedValue({ data: STAGES });
+    const onUpdate = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithStageCondition()}
+        onUpdate={onUpdate}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    await waitFor(() => expect(mockGetPipelineStages).toHaveBeenCalled());
+
+    await user.click(getStageTrigger());
+    const listbox = await screen.findByRole('listbox');
+    await user.click(within(listbox).getByText('[Sales] Won'));
+
+    const saveBtn = await screen.findByRole('button', {
+      name: /save|salvar|guardar|enregistrer|salva/i,
+    });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    await user.click(saveBtn);
+
+    expect(onUpdate).toHaveBeenCalled();
+    const [, updatedData] = onUpdate.mock.calls[0];
+    expect(updatedData.paths[0].conditions[0]).toMatchObject({
+      field: PIPELINE_STAGE_FIELD,
+      operator: 'equals',
+      value: 'stage-2',
+      valueLabel: '[Sales] Won',
+    });
+  });
+
+  it('does not fetch pipelines when no condition uses the pipeline stage field', async () => {
+    mockGetPipelines.mockResolvedValue({ data: PIPELINES });
+
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithContactCondition()}
+        onUpdate={vi.fn()}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    // Let any effects settle, then assert the lazy loader stayed gated.
+    await waitFor(() => expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0));
+    expect(mockGetPipelines).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConditionalPanel — contact custom attributes in the field picker', () => {
+  it('lists fetched contact custom attributes and emits {{contact.customAttributes.<key>}} on select', async () => {
+    mockGetCustomAttributes.mockResolvedValue({ data: [PLAN_INTEREST_ATTR] });
+    const onUpdate = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithContactCondition('')}
+        onUpdate={onUpdate}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(mockGetCustomAttributes).toHaveBeenCalledWith('contact_attribute'),
+    );
+
+    await user.click(getFieldTrigger());
+    const listbox = await screen.findByRole('listbox');
+    const option = within(listbox).getByText('Plan Interest');
+    await user.click(option);
+
+    const saveBtn = await screen.findByRole('button', {
+      name: /save|salvar|guardar|enregistrer|salva/i,
+    });
+    await waitFor(() => expect(saveBtn).not.toBeDisabled());
+    await user.click(saveBtn);
+
+    expect(onUpdate).toHaveBeenCalled();
+    const [, updatedData] = onUpdate.mock.calls[0];
+    expect(updatedData.paths[0].conditions[0].field).toBe(
+      '{{contact.customAttributes.plan_interest}}',
+    );
+  });
+
+  it('degrades gracefully when the custom-attributes fetch fails (no crash, picker still opens)', async () => {
+    mockGetCustomAttributes.mockRejectedValue(new Error('boom'));
+    const user = userEvent.setup();
+
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithContactCondition('')}
+        onUpdate={vi.fn()}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    await waitFor(() => expect(mockGetCustomAttributes).toHaveBeenCalled());
+
+    // Picker still opens and remains usable (system + journey variables): the
+    // listbox renders options, and the failed-fetch Contact Attributes section
+    // is simply absent (no "Plan Interest", no crash).
+    await user.click(getFieldTrigger());
+    const listbox = await screen.findByRole('listbox');
+    expect(within(listbox).getAllByRole('option').length).toBeGreaterThan(0);
+    expect(within(listbox).queryByText('Plan Interest')).toBeNull();
+  });
+});
+
+// EVO-1855: the value picker accepts free-text expressions; unbalanced
+// {{ }}/parentheses must be surfaced and block Save (reusing the shared
+// isBalancedExpression from @/utils/templateVariables).
+const SAVE_NAME = /save|salvar|guardar|enregistrer|salva/i;
+const INSERT_VARIABLE_NAME =
+  /insert variable|inserir variável|insertar variable|insérer une variable|inserisci variabile/i;
+
+describe('ConditionalPanel — expression validation', () => {
+  it('flags an unbalanced condition value: aria-invalid, inline error, Save blocked (AC1)', async () => {
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithContactCondition('{{contact.email}}')}
+        onUpdate={vi.fn()}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    const valueInput = await screen.findByPlaceholderText(/^value$/i);
+    fireEvent.change(valueInput, { target: { value: '{{contact.name' } });
+
+    expect(valueInput).toHaveAttribute('aria-invalid', 'true');
+    const describedBy = valueInput.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy as string)).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: SAVE_NAME })).toBeDisabled();
+  });
+
+  it('enables Save and persists when the condition value is balanced (AC2)', async () => {
+    const onUpdate = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithContactCondition('{{contact.email}}')}
+        onUpdate={onUpdate}
+        onClose={onClose}
+        journeyId="j1"
+      />,
+    );
+
+    const valueInput = await screen.findByPlaceholderText(/^value$/i);
+    fireEvent.change(valueInput, { target: { value: '{{contact.name}}' } });
+
+    expect(valueInput).toHaveAttribute('aria-invalid', 'false');
+
+    const saveBtn = screen.getByRole('button', { name: SAVE_NAME });
+    expect(saveBtn).not.toBeDisabled();
+
+    fireEvent.click(saveBtn);
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    const [, updated] = onUpdate.mock.calls[0];
+    expect(updated.paths[0].conditions[0].value).toBe('{{contact.name}}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes an accessible label on the value picker button (AC4)', async () => {
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithContactCondition('{{contact.email}}')}
+        onUpdate={vi.fn()}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    expect(
+      await screen.findByRole('button', { name: INSERT_VARIABLE_NAME }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('ConditionalPanel — o rótulo dos caminhos nomeia o grupo (CRM-141)', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // The group lands on the Radix Tabs root, the only place in CRM-141 where it
+  // is not a plain <div> — assert the props survive the primitive.
+  it('names the paths tabs as a group', async () => {
+    mockGetPipelines.mockResolvedValue({ data: PIPELINES });
+    mockGetPipelineStages.mockResolvedValue({ data: STAGES });
+
+    render(
+      <ConditionalPanel
+        nodeId="n1"
+        data={dataWithStageCondition()}
+        onUpdate={vi.fn()}
+        onClose={vi.fn()}
+        journeyId="j1"
+      />,
+    );
+
+    const group = await screen.findByRole('group', { name: PATHS_TITLE });
+    expect(within(group).getByRole('tablist')).toBeTruthy();
+  });
+});
