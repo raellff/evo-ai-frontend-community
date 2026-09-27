@@ -541,13 +541,13 @@ export default function NewCampaign() {
         </div>
       </div>
 
-      {/* Progress */}
-      <div className="py-6 px-6 flex-shrink-0">
-        <WizardProgress currentStep={currentStep} totalSteps={totalSteps} steps={steps} />
+      {/* Progress + content scroll together so the form is not squeezed into a tiny window */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="py-6 px-6">
+          <WizardProgress currentStep={currentStep} totalSteps={totalSteps} steps={steps} />
+        </div>
+        <div className="min-h-[480px]">{renderCurrentStep()}</div>
       </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">{renderCurrentStep()}</div>
     </div>
   );
 }
