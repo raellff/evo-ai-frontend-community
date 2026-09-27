@@ -543,12 +543,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 </div>
               )}
               {showTimestamp && timestampVariant === 'tuck' && (
-                <MessageStatus message={message} isOwn={isOwn} onRetry={onRetry} variant="tuck" />
+                <MessageStatus message={message} isOwn={isOwn} isFromBot={isFromBot} onRetry={onRetry} variant="tuck" />
               )}
             </div>
 
             {showTimestamp && timestampVariant === 'default' && (
-              <MessageStatus message={message} isOwn={isOwn} onRetry={onRetry} variant="default" />
+              <MessageStatus message={message} isOwn={isOwn} isFromBot={isFromBot} onRetry={onRetry} variant="default" />
             )}
           </div>,
         )}

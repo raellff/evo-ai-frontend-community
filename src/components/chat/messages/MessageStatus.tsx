@@ -9,6 +9,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 interface MessageStatusProps {
   message: Message;
   isOwn: boolean;
+  isFromBot?: boolean;
   onRetry?: () => void;
   // 'tuck': float:right dentro do fluxo do texto (bolha curta, estilo WhatsApp).
   // 'default': bloco separado abaixo do conteúdo (mídia/cards/preview, mais alto).
@@ -19,14 +20,25 @@ interface MessageStatusProps {
 // SendReplyJob truncates its generic rescue to 1000 chars, which is unreadable in a toast.
 const MAX_FAILURE_REASON_CHARS = 240;
 
-const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, variant = 'default' }) => {
+const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, isFromBot = false, onRetry, variant = 'default' }) => {
   const { t } = useLanguage('chat');
 
   // MessageBubble só colore a bolha (bg-primary/bg-purple-600) quando isOwn — isFromAgent/
   // isFromBot ali só ficam true junto de isOwn (ver MessageList.tsx). Notas privadas mantêm
   // fundo claro mesmo com isOwn, então ficam com o texto neutro.
   const isOnColoredBubble = isOwn && !message.private;
-  const timeTextClass = isOnColoredBubble ? 'text-white/70' : 'text-muted-foreground';
+  // Agent/own bubbles are bg-primary (purple in light, lime in dark), so their text must
+  // follow --primary-foreground; bot bubbles stay purple with white text in both themes.
+  const timeTextClass = !isOnColoredBubble
+    ? 'text-muted-foreground'
+    : isFromBot
+      ? 'text-white/80'
+      : 'text-primary-foreground/80';
+  const readIconClass = !isOnColoredBubble
+    ? 'text-primary'
+    : isFromBot
+      ? 'text-white'
+      : 'text-primary-foreground';
 
   // Every channel service writes external_error, and so does SendReplyJob's generic rescue —
   // the text may be a provider rejection or an internal exception. Show it, never name a source.
@@ -97,11 +109,11 @@ const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, 
       case 'sent':
         // Para mensagens privadas, 'sent' é o status final correto
         // Para mensagens públicas, 'sent' indica que foi enviada para o canal
-        return <Check className="h-3 w-3 text-muted-foreground" />;
+        return <Check className={`h-3 w-3 ${isOnColoredBubble ? timeTextClass : 'text-muted-foreground'}`} />;
       case 'delivered':
-        return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
+        return <CheckCheck className={`h-3 w-3 ${isOnColoredBubble ? timeTextClass : 'text-muted-foreground'}`} />;
       case 'read':
-        return <CheckCheck className="h-3 w-3 text-primary" />;
+        return <CheckCheck className={`h-3 w-3 ${readIconClass}`} />;
       case 'progress':
         return <Loader2 className="h-3 w-3 text-blue-500 animate-spin" />;
       // 'failed' never reaches here: private messages return above, public ones are
@@ -129,7 +141,7 @@ const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, 
     <div
       className={`flex items-center gap-1 mt-1.5 text-xs ${isOwn ? 'justify-end' : 'justify-start'}`}
     >
-      <span className="text-muted-foreground">{formatMessageTime(message.created_at)}</span>
+      <span className={timeTextClass}>{formatMessageTime(message.created_at)}</span>
       {getStatusIcon()}
     </div>
   );
