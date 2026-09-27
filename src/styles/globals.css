@@ -94,12 +94,36 @@
 }
 
 :root {
-  /* WoowCRM brand override — the @evoapi/design-system package ships
-     the Evo green (oklch hue ~159) as --primary. This package loads
-     before globals.css (see main.tsx), so redeclaring the token here
-     wins the cascade without needing to patch node_modules. */
-  --primary: #006aff;
+  /* CrmUX brand palette — the @evoapi/design-system package ships the Evo
+     green (oklch hue ~159) and neutral greys. This package loads before
+     globals.css (see main.tsx), so redeclaring the tokens here wins the
+     cascade without patching node_modules.
+     Logo colours: night #211C34, purple #5B4B94, lime #C6F135, paper #F7F6F3. */
+  --background: #f7f6f3;
+  --foreground: #211c34;
+  --card: #ffffff;
+  --card-foreground: #211c34;
+  --popover: #ffffff;
+  --popover-foreground: #211c34;
+  --primary: #5b4b94;
   --primary-foreground: #ffffff;
+  --secondary: #eeebf6;
+  --secondary-foreground: #211c34;
+  --muted: #efedf3;
+  --muted-foreground: #6b6580;
+  --accent: #eeebf6;
+  --accent-foreground: #3f3470;
+  --border: #e2deea;
+  --input: #e2deea;
+  --ring: #5b4b94;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #211c34;
+  --sidebar-primary: #5b4b94;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eeebf6;
+  --sidebar-accent-foreground: #3f3470;
+  --sidebar-border: #e2deea;
+  --sidebar-ring: #5b4b94;
 
   /* Flow Builder design tokens — LIGHT mode values (EVO-1253). */
   --flow-node-trigger-bg: oklch(0.95 0.05 150);
@@ -153,11 +177,32 @@
 }
 
 .dark {
-  /* WoowCRM brand override — brighter blue for legibility against the
-     dark background (mirrors the package's own light->dark lightness
-     bump for --primary). */
-  --primary: #3d8bff;
-  --primary-foreground: #ffffff;
+  /* CrmUX dark palette — night surfaces with the lime accent from the logo. */
+  --background: #211c34;
+  --foreground: #f7f6f3;
+  --card: #2a2442;
+  --card-foreground: #f7f6f3;
+  --popover: #2a2442;
+  --popover-foreground: #f7f6f3;
+  --primary: #c6f135;
+  --primary-foreground: #211c34;
+  --secondary: #332c50;
+  --secondary-foreground: #f7f6f3;
+  --muted: #332c50;
+  --muted-foreground: #a9a3bf;
+  --accent: #332c50;
+  --accent-foreground: #f7f6f3;
+  --border: #3d3560;
+  --input: #3d3560;
+  --ring: #c6f135;
+  --sidebar: #1a1629;
+  --sidebar-foreground: #f7f6f3;
+  --sidebar-primary: #c6f135;
+  --sidebar-primary-foreground: #211c34;
+  --sidebar-accent: #2a2442;
+  --sidebar-accent-foreground: #f7f6f3;
+  --sidebar-border: #332c50;
+  --sidebar-ring: #c6f135;
 
   /* Flow Builder design tokens — DARK mode overrides (EVO-1253). */
   --flow-node-trigger-bg: oklch(0.22 0.05 150);

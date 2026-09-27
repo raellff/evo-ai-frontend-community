@@ -40,7 +40,7 @@ function SelectField({ label, id, value, options, onChange, placeholder = 'Selec
           display: 'block',
           fontSize: '13px',
           fontWeight: 500,
-          color: '#fafafa',
+          color: '#f7f6f3',
           marginBottom: '6px',
           fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         }}
@@ -55,10 +55,10 @@ function SelectField({ label, id, value, options, onChange, placeholder = 'Selec
           style={{
             width: '100%',
             height: '40px',
-            background: '#09090b',
-            border: value ? '0.5px solid #3f3f46' : '0.5px solid #27272a',
+            background: '#1a1629',
+            border: value ? '0.5px solid #3d3560' : '0.5px solid #332c50',
             borderRadius: '8px',
-            color: value ? '#fafafa' : '#a1a1aa',
+            color: value ? '#f7f6f3' : '#a9a3bf',
             fontSize: '14px',
             fontFamily: 'ui-sans-serif, system-ui, sans-serif',
             padding: '0 36px 0 12px',
@@ -69,19 +69,19 @@ function SelectField({ label, id, value, options, onChange, placeholder = 'Selec
             transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
           }}
           onFocus={(e) => {
-            e.target.style.borderColor = '#006aff';
-            e.target.style.boxShadow = '0 0 0 2px rgba(0, 106, 255, 0.35)';
+            e.target.style.borderColor = '#c6f135';
+            e.target.style.boxShadow = '0 0 0 2px rgba(198, 241, 53, 0.35)';
           }}
           onBlur={(e) => {
-            e.target.style.borderColor = value ? '#3f3f46' : '#27272a';
+            e.target.style.borderColor = value ? '#3d3560' : '#332c50';
             e.target.style.boxShadow = 'none';
           }}
         >
-          <option value="" style={{ background: '#18181b', color: '#52525b' }}>
+          <option value="" style={{ background: '#211c34', color: '#6b6580' }}>
             {placeholder}
           </option>
           {options.map((opt) => (
-            <option key={opt} value={opt} style={{ background: '#18181b', color: '#fafafa' }}>
+            <option key={opt} value={opt} style={{ background: '#211c34', color: '#f7f6f3' }}>
               {opt}
             </option>
           ))}
@@ -93,7 +93,7 @@ function SelectField({ label, id, value, options, onChange, placeholder = 'Selec
             top: '50%',
             transform: 'translateY(-50%)',
             pointerEvents: 'none',
-            color: '#52525b',
+            color: '#6b6580',
           }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -241,11 +241,11 @@ export default function OnboardingPage() {
         .evo-other-input input {
           width: 100%;
           height: 40px;
-          background: #09090b;
-          border: 0.5px solid #006aff;
-          box-shadow: 0 0 0 2px rgba(0, 106, 255, 0.35);
+          background: #1a1629;
+          border: 0.5px solid #c6f135;
+          box-shadow: 0 0 0 2px rgba(198, 241, 53, 0.35);
           border-radius: 8px;
-          color: #fafafa;
+          color: #f7f6f3;
           font-size: 14px;
           font-family: ui-sans-serif, system-ui, sans-serif;
           padding: 0 12px;
@@ -253,12 +253,12 @@ export default function OnboardingPage() {
           transition: border-color 0.15s ease;
           box-sizing: border-box;
         }
-        .evo-other-input input::placeholder { color: #52525b; }
+        .evo-other-input input::placeholder { color: #6b6580; }
         .evo-submit-btn {
           width: 100%;
           height: 40px;
-          background: #006aff;
-          color: #fff;
+          background: #c6f135;
+          color: #211c34;
           border: none;
           border-radius: 8px;
           font-size: 14px;
@@ -286,7 +286,7 @@ export default function OnboardingPage() {
         style={{
           position: 'relative',
           minHeight: '100vh',
-          background: '#09090b',
+          background: '#1a1629',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -305,11 +305,11 @@ export default function OnboardingPage() {
               alignItems: 'center',
               gap: '6px',
               padding: '6px 10px',
-              background: langOpen ? '#1c1c1f' : 'transparent',
+              background: langOpen ? '#2a2442' : 'transparent',
               border: '0.5px solid',
-              borderColor: langOpen ? '#3f3f46' : '#27272a',
+              borderColor: langOpen ? '#3d3560' : '#332c50',
               borderRadius: '6px',
-              color: '#a1a1aa',
+              color: '#a9a3bf',
               fontSize: '13px',
               fontFamily: 'ui-sans-serif, system-ui, sans-serif',
               cursor: 'pointer',
@@ -318,12 +318,12 @@ export default function OnboardingPage() {
               whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = '#3f3f46';
-              (e.currentTarget as HTMLButtonElement).style.background = '#1c1c1f';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#3d3560';
+              (e.currentTarget as HTMLButtonElement).style.background = '#2a2442';
             }}
             onMouseLeave={(e) => {
               if (!langOpen) {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = '#27272a';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = '#332c50';
                 (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
               }
             }}
@@ -354,8 +354,8 @@ export default function OnboardingPage() {
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
                 right: 0,
-                background: '#18181b',
-                border: '0.5px solid #27272a',
+                background: '#211c34',
+                border: '0.5px solid #332c50',
                 borderRadius: '8px',
                 padding: '4px',
                 minWidth: '150px',
@@ -379,8 +379,8 @@ export default function OnboardingPage() {
                       padding: '8px 10px',
                       borderRadius: '5px',
                       border: 'none',
-                      background: isSelected ? 'rgba(0,106,255,0.08)' : 'transparent',
-                      color: isSelected ? '#006aff' : '#a1a1aa',
+                      background: isSelected ? 'rgba(198, 241, 53, 0.08)' : 'transparent',
+                      color: isSelected ? '#c6f135' : '#a9a3bf',
                       fontSize: '13px',
                       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
                       cursor: 'pointer',
@@ -390,20 +390,20 @@ export default function OnboardingPage() {
                     onMouseEnter={(e) => {
                       if (!isSelected) {
                         (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
-                        (e.currentTarget as HTMLButtonElement).style.color = '#fafafa';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#f7f6f3';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isSelected) {
                         (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                        (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#a9a3bf';
                       }
                     }}
                   >
                     <span>{t(lang.labelKey)}</span>
                     {isSelected && (
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                        <path d="M2 6l3 3 5-5" stroke="#006aff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M2 6l3 3 5-5" stroke="#c6f135" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </button>
@@ -416,7 +416,7 @@ export default function OnboardingPage() {
         <div
           style={{
             background: '#111113',
-            border: '0.5px solid #27272a',
+            border: '0.5px solid #332c50',
             borderRadius: '16px',
             padding: '2rem',
             width: '100%',
@@ -426,14 +426,14 @@ export default function OnboardingPage() {
         >
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.75rem' }}>
-            <AppLogo alt="Evo CRM" style={{ height: '30px' }} forceTheme="dark" />
+            <AppLogo alt="CrmUX" style={{ height: '30px' }} forceTheme="dark" />
           </div>
 
           {/* Title */}
-          <div style={{ fontSize: '20px', fontWeight: 600, color: '#fafafa', marginBottom: '6px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 600, color: '#f7f6f3', marginBottom: '6px' }}>
             {t('survey.title')}
           </div>
-          <div style={{ fontSize: '13px', color: '#a1a1aa', lineHeight: '1.55', marginBottom: '1.75rem' }}>
+          <div style={{ fontSize: '13px', color: '#a9a3bf', lineHeight: '1.55', marginBottom: '1.75rem' }}>
             {t('survey.subtitle')}
           </div>
 
@@ -443,7 +443,7 @@ export default function OnboardingPage() {
               style={{
                 flex: 1,
                 height: '3px',
-                background: '#27272a',
+                background: '#332c50',
                 borderRadius: '99px',
                 overflow: 'hidden',
               }}
@@ -456,7 +456,7 @@ export default function OnboardingPage() {
                 data-testid="progress-bar-fill"
                 style={{
                   height: '3px',
-                  background: '#006aff',
+                  background: '#c6f135',
                   borderRadius: '99px',
                   width: `${progressPct}%`,
                   transition: 'width 0.3s ease',
@@ -464,7 +464,7 @@ export default function OnboardingPage() {
               />
             </div>
             <span
-              style={{ fontSize: '11px', color: '#52525b', whiteSpace: 'nowrap' }}
+              style={{ fontSize: '11px', color: '#6b6580', whiteSpace: 'nowrap' }}
               data-testid="progress-text"
               data-filled={filledCount}
               data-total={totalSteps}
@@ -503,7 +503,7 @@ export default function OnboardingPage() {
                     display: 'block',
                     fontSize: '13px',
                     fontWeight: 500,
-                    color: '#fafafa',
+                    color: '#f7f6f3',
                     marginBottom: '6px',
                   }}
                 >
@@ -517,10 +517,10 @@ export default function OnboardingPage() {
                     style={{
                       width: '100%',
                       height: '40px',
-                      background: '#09090b',
-                      border: form.mainChannel ? '0.5px solid #3f3f46' : '0.5px solid #27272a',
+                      background: '#1a1629',
+                      border: form.mainChannel ? '0.5px solid #3d3560' : '0.5px solid #332c50',
                       borderRadius: '8px',
-                      color: form.mainChannel ? '#fafafa' : '#a1a1aa',
+                      color: form.mainChannel ? '#f7f6f3' : '#a9a3bf',
                       fontSize: '14px',
                       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
                       padding: '0 36px 0 12px',
@@ -531,19 +531,19 @@ export default function OnboardingPage() {
                       transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#006aff';
-                      e.target.style.boxShadow = '0 0 0 2px rgba(0, 106, 255, 0.35)';
+                      e.target.style.borderColor = '#c6f135';
+                      e.target.style.boxShadow = '0 0 0 2px rgba(198, 241, 53, 0.35)';
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = form.mainChannel ? '#3f3f46' : '#27272a';
+                      e.target.style.borderColor = form.mainChannel ? '#3d3560' : '#332c50';
                       e.target.style.boxShadow = 'none';
                     }}
                   >
-                    <option value="" style={{ background: '#18181b', color: '#52525b' }}>
+                    <option value="" style={{ background: '#211c34', color: '#6b6580' }}>
                       {t('survey.placeholder')}
                     </option>
                     {Array.isArray(channelOptions) && channelOptions.map((opt) => (
-                      <option key={opt} value={opt} style={{ background: '#18181b', color: '#fafafa' }}>
+                      <option key={opt} value={opt} style={{ background: '#211c34', color: '#f7f6f3' }}>
                         {opt}
                       </option>
                     ))}
@@ -555,7 +555,7 @@ export default function OnboardingPage() {
                       top: '50%',
                       transform: 'translateY(-50%)',
                       pointerEvents: 'none',
-                      color: '#52525b',
+                      color: '#6b6580',
                     }}
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -619,7 +619,7 @@ export default function OnboardingPage() {
           </div>
 
           {/* Divider */}
-          <div style={{ borderTop: '0.5px solid #27272a', margin: '1.5rem 0 1.25rem' }} />
+          <div style={{ borderTop: '0.5px solid #332c50', margin: '1.5rem 0 1.25rem' }} />
 
           {/* Submit */}
           <button
@@ -630,7 +630,7 @@ export default function OnboardingPage() {
             {loading ? t('survey.submit.loading') : t('survey.submit.idle')}
           </button>
 
-          <div style={{ textAlign: 'center', fontSize: '11px', color: '#52525b', marginTop: '1rem' }}>
+          <div style={{ textAlign: 'center', fontSize: '11px', color: '#6b6580', marginTop: '1rem' }}>
             {t('survey.footer')}
           </div>
         </div>

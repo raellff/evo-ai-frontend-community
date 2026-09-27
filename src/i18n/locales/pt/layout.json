@@ -73,8 +73,8 @@
     "collapse": "Recolher barra lateral",
     "closeSubmenu": "Fechar submenu",
     "footer": {
-      "brand": "Woow CRM",
-      "copyright": "© {{year}} Woow CRM. All rights reserved.",
+      "brand": "CrmUX",
+      "copyright": "© {{year}} CrmUX. All rights reserved.",
       "documentation": "Documentação",
       "support": "Preciso de suporte"
     }

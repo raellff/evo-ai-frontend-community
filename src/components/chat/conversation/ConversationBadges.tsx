@@ -199,7 +199,7 @@ const ConversationBadges: React.FC<ConversationBadgesProps> = ({
   };
 
   const getPipelineStageColor = () => {
-    return pipeline?.stages[0]?.color || '#006aff';
+    return pipeline?.stages[0]?.color || '#5b4b94';
   };
 
   // Se tem pipeline, mostrar pipeline + labels/prioridade em duas linhas
